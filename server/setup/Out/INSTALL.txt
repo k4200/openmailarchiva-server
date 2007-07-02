@@ -1,0 +1,14 @@
+INSTALL.txt
+
+MailArchiva Open Source Edition v0.9
+Copyright 2005 Jamie Angus Band
+
+You absolutely *must* read the Administration Guide before installing this product.
+
+It contains critical information on how to install this product.
+
+
+
+
+
+

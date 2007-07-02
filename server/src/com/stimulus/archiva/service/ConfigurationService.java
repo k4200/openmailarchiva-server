@@ -1,0 +1,61 @@
+/* Copyright (C) 2005 Jamie Angus Band 
+ * This software program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+package com.stimulus.archiva.service;
+import org.apache.log4j.Logger;
+import com.stimulus.archiva.domain.Config;
+import com.stimulus.archiva.exception.*;
+import com.stimulus.archiva.security.realm.*;
+import java.util.*;
+//import java.util.List;
+
+public class ConfigurationService {
+
+ protected static final Logger logger = Logger.getLogger(ConfigurationService.class);
+ protected static Config config = null;
+
+  public static synchronized Config getConfig() {
+      return Config.getConfig();
+  }
+
+  public static void setConfig(Config config) {
+  	Config.setConfig(config);
+  }
+  
+  public static List getLDAPAttributeValues(Config config, String username, String password) throws ArchivaException {
+      String ldapAttributes = "";
+      ADRealm ar = new ADRealm();
+      //Principal p = ar.authenticate(username,password);
+      return ar.getLDAPAttributes(config,username,password);
+  }
+  
+  public static String testAuthenticate(Config config, String username, String password)  {
+      ADRealm ar = new ADRealm();
+      //Principal p = ar.authenticate(username,password);
+      CorpGovPrincipal cgp = null;
+      try {
+          cgp = (CorpGovPrincipal)ar.auth(config,username,password);
+          if (cgp!=null) {
+              String roleName = cgp.getRole();
+              return "Authentication success. Role "+roleName+" is assigned.";
+          } else
+              return "Authentication failed.";
+      } catch (ArchivaException ae) {
+          return "Authentication failed. "+ae.getMessage()+".";
+      }
+  }
+}
+
