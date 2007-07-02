@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE taglib PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.1//EN" "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd"> 
+
+<taglib> 
+<tlibversion>1.2</tlibversion>
+<jspversion>1.1</jspversion>
+<shortname>Tooltip window</shortname>
+<uri>http://www.servletsuite.com/servlets/tooltip</uri>
+<info>tooltip window</info> 
+
+<tag>
+<name>tooltip</name>
+<tagclass>com.cj.tooltip.TooltipTag</tagclass>
+<bodycontent>JSP</bodycontent>
+<info>defines a tooltip</info>
+
+</tag>
+
+<tag>
+<name>text</name>
+<tagclass>com.cj.tooltip.TextTag</tagclass>
+<bodycontent>JSP</bodycontent>
+<info>defines a text</info>
+
+<attribute>
+<name>style</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>className</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+</tag>
+
+<tag>
+<name>help</name>
+<tagclass>com.cj.tooltip.HelpTag</tagclass>
+<bodycontent>JSP</bodycontent>
+<info>defines a help</info>
+
+<attribute>
+<name>style</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>className</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+<attribute>
+<name>width</name>
+<required>false</required>
+<rtexprvalue>true</rtexprvalue>
+</attribute>
+
+</tag>
+
+
+</taglib> 
+

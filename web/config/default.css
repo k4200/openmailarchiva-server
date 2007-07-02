@@ -1,0 +1,151 @@
+A	    {
+	color : #336699;
+	text-decoration : underline;
+	font-weight : bold;
+	background-color: #FFFFFF;
+}
+A:Visited  {color : #336699; text-decoration : none; font-weight : bold;}
+A:Active   {color : #336699; text-decoration : none; font-weight : bold;}
+A:Hover    {color : #336699; text-decoration : overline; font-weight : bold;}
+
+BODY 	{
+	color			    : #336699;
+	background-color      : #FFFFFF;
+	margin-left           : 8;
+	margin-top            : 8;
+}
+
+
+/* Skin1  - Struts Example Application */
+SPAN.LABEL {
+     	           color : #336699;
+  	     font-weight : bold;
+}
+
+TH.LABEL {
+		text-align:right;
+}
+
+H3 {
+	color : #336699;
+}
+
+
+
+P.SUBSCRIPTION {
+		  color : #336699;
+		  font-family: arial;
+		  font-weight : bold;
+		  text-align : center;
+		  font-size : 16px;
+}
+TABLE.SUBSCRIPTION {
+	background-color : ##336699;
+	color: #336699;
+
+}
+TH.SUBSCRIPTION {
+		color      : #336699;
+		background-color : #000000;
+		font-weight: bold;
+		letter-spacing : 0.2em			
+}
+TD.SUBSCRIPTION {
+		color      : #336699;
+		background-color : #FFFFFF;
+}
+
+P.SUBS {
+		  color : #336699;
+		  font-family: arial;
+		  font-weight : bold;
+		  text-align : center;
+		  font-size : 16px;
+}
+
+TABLE.SUBS {		
+		background-color : #FFFFFF;
+		border-collapse: collapse;	
+}
+TABLE.subs2 {
+		background-color : #336699;
+}
+
+
+
+TH.SUBS {
+		color      : #336699;
+		background-color : #FFFFFF;
+		font-weight: bold;
+		letter-spacing : 0.2em			
+}
+
+TR.SUBS {
+		background-color : #FFFFFF;
+}
+
+
+TD.SUBS {
+		color      : #336699;
+		background-color : #FFFFFF;
+}
+
+
+
+
+TD.ERROR {
+		background-color : #ED4F50;
+}
+
+
+TABLE.FORM {
+		background-color : #336699;
+}
+
+TH.FORM {
+		color      : #336699;
+		background-color : #FFFFFF;
+		font-weight: bold;
+		letter-spacing : 0.2em			
+}
+
+TD.FORM {
+		color		 :  #336699;
+		background-color :  #FFFFFF;
+}
+
+/**
+ * Calendar classes
+ */
+
+TD.CALENDRIER {
+	background-color: #C2C2C2; 
+	font-weight: bold; 
+	text-align: center; 
+	font-size: 10px;
+}
+
+A.CALENDRIER {
+	text-decoration: none; 
+	color: #000000;
+}
+
+.CALENDARBORDER {
+	background-color: #FFFFFF; //#000000; 
+}
+
+.CALENDARTITLE {
+	background-color: #FFFFFF; //#C9252C;
+}
+
+.CALENDARWEEK {
+	background-color: #FFFFFF;
+}
+
+.CALENDARWEEKEND {
+	background-color: #FFF4E5;
+}
+
+.CALENDARSELECTED {
+	background-color: #FF8F01;
+}
