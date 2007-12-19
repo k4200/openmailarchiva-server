@@ -16,17 +16,30 @@
 
 
 package com.stimulus.archiva.extraction;
-import com.stimulus.archiva.domain.Config;
-import com.stimulus.archiva.exception.ExtractionException;
-import java.io.*;
-
-import com.stimulus.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-public class WordExtractor implements TextExtractor
+import com.stimulus.archiva.domain.Config;
+import com.stimulus.archiva.exception.ExtractionException;
+import com.stimulus.util.TempFiles;
+public class WordExtractor implements TextExtractor, Serializable
 {
-	protected static final Logger logger = Logger.getLogger(Extractor.class.getName());
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2150155650657302354L;
+	protected static Logger logger = Logger.getLogger(Extractor.class);
 	
 
 
@@ -34,9 +47,13 @@ public class WordExtractor implements TextExtractor
  }
 
 
- protected class WordDocInputStream extends FilterInputStream
+ protected class WordDocInputStream extends FilterInputStream implements Serializable
  {
- 	File tempFile;
+ 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 9036662460208941073L;
+	File tempFile;
 
  	public WordDocInputStream(File tempFile, InputStream in) {
  	    super(in);
@@ -74,11 +91,14 @@ public class WordExtractor implements TextExtractor
      {
          this.is = is;
          this.type = type;
+    	 setDaemon(true);
      }
 
      public void run()
      {
-         try
+    
+    	 setName("WordExtractionGobbler");
+    	 try
          {
              InputStreamReader isr = new InputStreamReader(is);
              BufferedReader br = new BufferedReader(isr);
@@ -100,44 +120,36 @@ public class WordExtractor implements TextExtractor
  	try {
  		filepath = Extractor.writeTemp(is,tempFiles);
  		String[] commands = null;
- 		boolean windows =(System.getProperty("os.name").toLowerCase().indexOf("windows") != -1);
+ 		boolean windows =(System.getProperty("os.name").toLowerCase(Locale.ENGLISH).indexOf("windows") != -1);
+ 		ProcessBuilder pb = null;
  		if (!windows)
- 		   commands = new String[]{Config.getBinPath() +File.separatorChar + ".antiword" +File.separatorChar + "antiword", "-t","-m","8859-1.txt",filepath};
+ 			pb = new ProcessBuilder(Config.getBinPath() +File.separatorChar + ".antiword" +File.separatorChar + "antiword", "-t","-m","8859-1.txt",filepath);
  		else // windows
- 		    commands = new String[]{Config.getBinPath()  +File.separatorChar + "antiword" + File.separatorChar + "antiword.exe", "-t","-m","8859-1.txt",filepath};
+ 			pb = new ProcessBuilder("\""+Config.getBinPath()  +File.separatorChar + "antiword" + File.separatorChar + "antiword.exe"+"\"", "-t", "-m","8859-1.txt","\""+filepath+"\"");
 
- 		String[] env = new String[]{"HOME="+ Config.getBinPath()};
- 		if (logger.isDebugEnabled()) {
-
- 			String cmd = "";
- 			for (int i=0;i<commands.length;i++)
- 				cmd+=commands[i]+" ";
- 			logger.debug("received word doc, executing word conversion command:"+cmd);
-
-
-	 		Process debugProc = Runtime.getRuntime().exec(commands,env);
-	 		 // any error message?
-            StreamGobbler errorGobbler = new StreamGobbler(debugProc.getErrorStream(), "word extraction error");
-
-            // any output?
-            StreamGobbler outputGobbler = new StreamGobbler(debugProc.getInputStream(), "word document");
-
-            // kick them off
-            errorGobbler.start();
-            outputGobbler.start();
-            int exitVal = 0;
-            // any error???
-            try {
-            exitVal = debugProc.waitFor();
-            } catch (InterruptedException ie) {
-            	logger.debug("interrupted exec command. Cause:"+ie.toString(),ie);
-
-            }
-            logger.debug("word doc conversion process has exited {exitvalue='" + exitVal+"'}");
- 		}
-
- 		Process proc = Runtime.getRuntime().exec(commands,env);
- 		WordDocInputStream textin = new WordDocInputStream(new File(filepath),proc.getInputStream());
+ 		Map<String, String> env = pb.environment();
+ 		env.put("HOME", Config.getBinPath());
+ 		pb.directory(new File(Config.getBinPath()+File.separatorChar+"antiword"));
+ 	    Process process = pb.start();
+ 	    StreamGobbler errorGobbler = new StreamGobbler(process.getErrorStream(), "ERROR");
+ 	    errorGobbler.start();
+ 	    int exitVal = 0;
+ 	    //try {
+ 	    	List<String> cmdlist = pb.command();
+ 	    	String cmdStr = "";
+ 	    	for(String cmd: cmdlist) {
+ 	    		cmdStr += cmd + " "; 
+ 	    	}
+ 	    	logger.debug("exec() {basedir='"+pb.directory()+"',env='"+env.get("HOME")+"',cmd='"+cmdStr+"'}");
+ 	    	logger.debug("waiting for process to complete");
+ 	    	//exitVal = process.waitFor();
+ 	    	//logger.debug("process complete");
+         //} catch (InterruptedException ie) {
+        	// logger.debug("interrupted exec command. Cause:"+ie.toString(),ie);
+        // }
+		//logger.debug("exit value: " + exitVal);
+ 	   
+ 		WordDocInputStream textin = new WordDocInputStream(new File(filepath),process.getInputStream());
  		logger.debug("returning stream containing converted word text for search indexing");
  		return new InputStreamReader(textin);
  		//return new StringReader("shuttle");

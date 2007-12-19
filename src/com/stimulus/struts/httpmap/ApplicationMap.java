@@ -2,6 +2,8 @@ package com.stimulus.struts.httpmap;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+
+import java.io.Serializable;
 import java.util.Enumeration;
 
 /**
@@ -11,7 +13,7 @@ import java.util.Enumeration;
  *
  * @author Clinton Begin
  */
-public class ApplicationMap extends BaseHttpMap {
+public class ApplicationMap extends BaseHttpMap implements Serializable {
 
   private ServletContext context;
 

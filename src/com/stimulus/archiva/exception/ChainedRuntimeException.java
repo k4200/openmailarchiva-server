@@ -16,11 +16,17 @@
 
 package com.stimulus.archiva.exception;
 
+import java.io.Serializable;
+
 import org.apache.log4j.Logger;
 
-public class ChainedRuntimeException extends RuntimeException {
-  private Throwable cause = null;
-  protected static Logger logger = Logger.getLogger(ChainedRuntimeException.class.getName());
+public class ChainedRuntimeException extends RuntimeException implements Serializable  {
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -8279414563840852024L;
+private Throwable cause = null;
+protected static Logger logger = Logger.getLogger(ChainedRuntimeException.class);
 
   public ChainedRuntimeException() {
     super();

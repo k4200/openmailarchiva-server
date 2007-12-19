@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This file was auto-generated from WSDL -->
+<!-- by the Apache Axis2 version: 1.3  Built on : Aug 10, 2007 (04:45:47 LKT) -->
+<serviceGroup>
+    <service name="MailArchiva">
+        <messageReceivers>
+            <messageReceiver mep="http://www.w3.org/ns/wsdl/in-out" class="com.stimulus.archiva.webservice.MailArchivaServiceMessageReceiverInOut"/>
+        </messageReceivers>
+        <parameter name="ServiceClass">com.stimulus.archiva.webservice.MailArchivaService</parameter>
+        <parameter name="useOriginalwsdl">false</parameter>
+        <parameter name="modifyUserWSDLPortAddress">true</parameter>
+        <parameter name="cacheAttachments" locked="false">true</parameter>
+    	<parameter name="attachmentDIR" locked="false">c:\temp</parameter>
+    	<parameter name="sizeThreshold" locked="false">40000000</parameter>
+    	<parameter name="CONNECTION_TIMEOUT" locked="false">10000000</parameter>
+		<parameter name="SO_TIMEOUT" locked="false">10000000</parameter>
+		<parameter name="enableMTOM" locked="false">true</parameter>
+        <operation name="getServerVersion" mep="http://www.w3.org/ns/wsdl/in-out">
+            <actionMapping>\"\"</actionMapping>
+            <outputActionMapping>url:MAILARCHIVA/MailArchiva/getServerVersionResponse</outputActionMapping>
+        </operation>
+        <operation name="storeMessage" mep="http://www.w3.org/ns/wsdl/in-out">
+            <actionMapping>\"\"</actionMapping>
+            <outputActionMapping>url:MAILARCHIVA/MailArchiva/storeMessageResponse</outputActionMapping>
+        </operation>
+    </service>
+</serviceGroup>

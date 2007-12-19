@@ -15,7 +15,8 @@
  */
 package com.stimulus.struts;
 
-
+import javax.servlet.http.HttpServletRequest;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -33,6 +34,8 @@ import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionMessages;
 import org.apache.struts.util.MessageResources;
 
+import com.stimulus.archiva.security.realm.MailArchivaPrincipal;
+
 /**
  * All actions mapped through the BeanAction class should be mapped
  * to a subclass of BaseBean (or have no form bean mapping at all).
@@ -49,7 +52,7 @@ import org.apache.struts.util.MessageResources;
  *
  * @author Clinton Begin
  */
-public abstract class BaseBean extends ActionForm {
+public abstract class BaseBean extends ActionForm implements Serializable {
 
   public void reset(ActionMapping mapping, ServletRequest request) {
     ActionContext.initialize((HttpServletRequest)request, null);
@@ -149,16 +152,29 @@ public abstract class BaseBean extends ActionForm {
   }
   
   protected Locale getLocale() {
-      return ActionContext.getActionContext().getRequest().getLocale();
+	  Locale locale = Locale.getDefault();
+	  ActionContext context = ActionContext.getActionContext();
+	  if (context!=null) {
+		  HttpServletRequest request = context.getRequest();
+	      if (request!=null)
+	  	  	locale = request.getLocale();
+	  }
+	  if (locale.getCountry().equalsIgnoreCase("ZA"))
+	  		locale = locale.UK; // bug in JVM concerning date formatting in South Africa
+      return locale;
   }
   
-  protected List translateList(List srcList)
+  protected List translateList(List srcList, boolean toLowerCase)
   {
 	  List<String> translatedList = new ArrayList<String>();
 	  for (int i = 0; i < srcList.size(); i++)
 	  {
 		  String toTranslate = (String)srcList.get(i);
 		  String translated = getMessage(toTranslate);
+		  if (toLowerCase) {
+			  toTranslate = toTranslate.toLowerCase();
+			  translated = translated.toLowerCase();
+		  }
 		  if (translated != null)
 			  translatedList.add(translated);
 		  else
@@ -167,4 +183,16 @@ public abstract class BaseBean extends ActionForm {
 	  return translatedList;
   }
 
+  protected List translateList(List srcList) {
+	  return translateList(srcList,false);
+  }
+  
+  public MailArchivaPrincipal getMailArchivaPrincipal() {
+	 	String remoteHost = ActionContext.getActionContext().getRequest().getRemoteHost();
+	  	MailArchivaPrincipal cp = (MailArchivaPrincipal)ActionContext.getActionContext().getRequest().getUserPrincipal();  	
+	  	if (cp!=null)
+	  		cp.setIpAddress(remoteHost);
+	  	return cp;
+  }
+  
 }

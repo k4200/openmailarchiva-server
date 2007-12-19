@@ -17,14 +17,21 @@
 
 package com.stimulus.archiva.search;
 
-import com.stimulus.archiva.domain.*;
-import org.apache.log4j.Logger;
-import com.stimulus.archiva.exception.MessageSearchException;
-import com.stimulus.archiva.store.*;
+import java.io.Serializable;
 
-public class MessageSearch
+import org.apache.log4j.Logger;
+
+import com.stimulus.archiva.domain.Search;
+import com.stimulus.archiva.exception.MessageSearchException;
+import com.stimulus.archiva.security.realm.MailArchivaPrincipal;
+import com.stimulus.archiva.store.MessageStore;
+public class MessageSearch  implements Serializable
 {
-	  protected static final Logger logger = Logger.getLogger(MessageSearch.class.getName());
+	  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 5639605574225342916L;
+	protected static Logger logger = Logger.getLogger(MessageSearch.class.getName());
 	  protected MessageStore ms = null;
 	  
 	  public MessageSearch(MessageStore ms) {
@@ -35,7 +42,7 @@ public class MessageSearch
 	  public void searchMessage(Search search) throws MessageSearchException {
 		  if (search==null)
 	           throw new MessageSearchException("assertion failure: null search",logger);
-	      if (search.getUserRole()==null || search.getUserName()==null)
+	      if (((MailArchivaPrincipal)search.getPrincipal()).getRole()==null || ((MailArchivaPrincipal)search.getPrincipal()).getName()==null)
 	          throw new MessageSearchException("assertion failure: null userRole or userName",logger);
 	      String queryStr = search.getSearchQuery();
 	      logger.debug("search {searchquery='"+queryStr+"'}");

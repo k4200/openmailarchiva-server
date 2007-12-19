@@ -20,6 +20,19 @@ response.setDateHeader("Expires", 0);
 <link href="common/mailarchiva.css" rel="stylesheet" type="text/css">
 <script type="text/javascript">
 
+	function outss(str,maxLen) {
+  		adjust = 0;
+  		for (i = 0; i < str.length; i++) {
+   			if (str[i]=="#" && i+4<str.length && str[i+4] == ";") {
+    			adjust += 5;
+   			}
+  		}
+     	if (str.length-adjust>maxLen) {
+        	document.writeln(str.substring(0,maxLen-1+adjust)+"..");
+     	} else { 
+        	document.writeln(str);
+     	}
+	}
 //ID of Daily Iframe tag:
 var iframeids=["ifrm"]
 
@@ -77,7 +90,7 @@ else if (window.attachEvent)
 <script type="text/javascript">
 
 /***********************************************
-* Switch Content script- © Dynamic Drive (www.dynamicdrive.com)
+* Switch Content script- ï¿½ Dynamic Drive (www.dynamicdrive.com)
 * This notice must stay intact for legal use. Last updated April 2nd, 2005.
 * Visit http://www.dynamicdrive.com/ for full source code
 ***********************************************/
@@ -222,7 +235,7 @@ window.onunload=saveswitchstate
 
 </script>
 
-<title><bean:message key="viewmail.email"/> (<c:out value="${messageBean.message.subject}"/>)</title>
+<title><bean:message key="viewmail.email"/> ()</title>
 <link href="common/mailex.css" rel="stylesheet" type="text/css">
 </head>
 
@@ -230,7 +243,7 @@ window.onunload=saveswitchstate
 <%@include file="../common/menu.jsp"%>
 <table class="sectionheader" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr > 
-    <td height="20" width="100%"><strong><strong><bean:message key="viewmail.email"/> (<c:out value="${messageBean.message.subject}"/>)</strong></td>
+    <td height="20" width="100%"><strong><strong><bean:message key="viewmail.email"/></strong></td>
   </tr>
 </table>
 
@@ -240,74 +253,23 @@ window.onunload=saveswitchstate
     <td>&nbsp;</td>
     <td valign="top"><div align="right"><strong><bean:message key="viewmail.archived_message"/></strong></div></td>
     <td>&nbsp;</td>
-    <td><a class="emailaddress" href="downloadmessage.do"><c:out value='${messageBean.originalMessageFileName}'/></a>&nbsp;(<c:out value='${messageBean.originalMessageFileSize}'/>)</td>
+    <td><a class="emailaddress" href="downloadmessage.do?name=${messageBean.originalMessageFileName}"><c:out value='${messageBean.originalMessageFileName}' escapeXml='false'/></a>&nbsp;(<c:out value='${messageBean.originalMessageFileSize}' escapeXml='false'/>)</td>
   </tr>
   </c:if>
-  <tr> 
-    <td width="1%">&nbsp;</td>
-    <td width="15%"><div align="right"><strong><bean:message key="viewmail.subject"/></strong></div></td>
-    <td width="2%">&nbsp;</td>
-    <td width="85%"><strong><c:out value="${messageBean.message.subject}"/></strong></td>
-  </tr>
-  <tr> 
-    <td height="20">&nbsp;</td>
-    <td valign="top"><div align="right"><strong><bean:message key="viewmail.sentdate"/></strong></div></td>
-    <td>&nbsp;</td>
-    <td><c:out value="${messageBean.message.sentDate}"/><font></td>
-  </tr>
-  <c:if test="${fn:length(messageBean.message.receivedDate)>0}">
-  <tr> 
-    <td height="20">&nbsp;</td>
-    <td valign="top"><div align="right"><strong><bean:message key="viewmail.receiveddate"/></strong></div></td>
-    <td>&nbsp;</td>
-    <td><c:out value="${messageBean.message.receivedDate}"/><font></td>
-  </tr>
-  </c:if>
-  <tr> 
-    <td>&nbsp;</td>
-    <td valign="top"><div align="right"><strong><bean:message key="viewmail.from"/></strong></div></td>
-    <td>&nbsp;</td>
-    <td><a class="emailaddress" href="mailto:<c:out value='${messageBean.message.fromAddress}'/>"><c:out value='${messageBean.message.fromAddress}'/></a></td>
-  </tr>
-  <tr> 
-    <td>&nbsp;</td>
-    <td valign="top"><div align="right"><strong><bean:message key="viewmail.to"/></strong></div></td>
-    <td>&nbsp;</td>
-    <td><a class="emailaddress" href="mailto:<c:out value='${messageBean.message.toAddresses}'/>"><c:out value='${messageBean.message.toAddresses}'/></a></td>
-  </tr>
-  <c:if test="${fn:length(messageBean.message.CCAddresses)>0}">
-  <tr> 
-    <td>&nbsp;</td>
-    <td valign="top"><div align="right"><strong><bean:message key="viewmail.cc"/></strong></div></td>
-    <td>&nbsp;</td>
-    <td><a class="emailaddress" href="mailto:<c:out value='${messageBean.message.CCAddresses}'/>"><c:out value='${messageBean.message.CCAddresses}'/></a></td>
-  </tr>
-  </c:if>
-  <c:if test="${fn:length(messageBean.message.BCCAddresses)>0}">
-  <tr> 
-    <td>&nbsp;</td>
-    <td valign="top"><div align="right"><strong><bean:message key="viewmail.bcc"/></strong></div></td>
-    <td>&nbsp;</td>
-    <td><a class="emailaddress" href="mailto:<c:out value='${messageBean.message.BCCAddresses}'/>"><c:out value='${messageBean.message.BCCAddresses}'/></a></td>
-  </tr>
-  </c:if>
-  <c:if test="${fn:length(messageBean.message.flags)>0}">
-   <tr> 
-    <td>&nbsp;</td>
-    <td valign="top"><div align="right"><strong><bean:message key="viewmail.flags"/></strong></div></td>
-    <td>&nbsp;</td>
-    <td><c:out value="${messageBean.message.friendlyFlags}"/></td>
-  </tr>
-  </c:if>
-  <c:if test="${messageBean.message.priorityID!=3}">
-   <tr> 
-    <td>&nbsp;</td>
-    <td valign="top"><div align="right"><strong><bean:message key="viewmail.priority"/></strong></div></td>
-    <td>&nbsp;</td>
-    <td><font size="-1" color="red"><strong><c:out value="${messageBean.message.priority}"/></strong></td>
-  </tr>
-  </c:if>
-  
+    <c:forEach var="value" items="${messageBean.fieldValues}">
+    <c:choose>
+    <c:when test='${value.field.name == "attach"}'></c:when>
+    <c:otherwise>
+  	 <tr> 
+	    <td width="1%">&nbsp;</td>
+	    <td width="15%"><div align="right"><strong><bean:message key="${value.field.resourceKey}"/>:</strong></div></td>
+	    <td width="2%">&nbsp;</td>
+	    <td width="85%"><script type="text/javascript">outss("<c:out value='${value.display}' escapeXml='false'/>",1000)</script></td>
+  	</tr>
+  	</c:otherwise>
+  	</c:choose>
+  </c:forEach>
+  <c:if test="${messageBean.hasAttachment==true}">	
   <tr> 
     <td>&nbsp;</td>
     <td valign="top" align="right"><strong><bean:message key="viewmail.attachements"/></strong></td>
@@ -315,21 +277,30 @@ window.onunload=saveswitchstate
     <td><c:forEach var="attachments" items="${messageBean.attachments}">
     	
     	<c:if test="${attachments.isEmail==false}">
-         	<a class="emailaddress" href="downloadattachment.do?attachment=<c:out value='${attachments.name}'/>"><c:out value='${attachments.name}'/></a>&nbsp;(<c:out value='${attachments.fileSize}'/>)
+         	<a class="emailaddress" href="downloadattachment.do?attachment=<c:out value='${attachments.name}' escapeXml='false'/>"><c:out value='${attachments.name}' escapeXml='false'/></a>&nbsp;(<c:out value='${attachments.fileSize}' escapeXml='false'/>)
     	</c:if>
     	<c:if test="${attachments.isEmail==true}">
-    		<a class="emailaddress" href="viewattachment.do?attachment=<c:out value='${attachments.name}'/>"><c:out value='${attachments.name}'/></a>&nbsp;(<c:out value='${attachments.fileSize}'/>)
+    		<a class="emailaddress" href="viewattachment.do?attachment=<c:out value='${attachments.name}' escapeXml='false'/>"><c:out value='${attachments.name}' escapeXml='false'/></a>&nbsp;(<c:out value='${attachments.fileSize}' escapeXml='false'/>)
     	</c:if>
     	&nbsp;
     </c:forEach>
     </td>
   </tr>
+  </c:if>
   <tr> 
     <td>&nbsp;</td>
     <td valign="top"><div align="right" onClick="expandcontent(this, 'sc1')"><span class="showstate"></span><strong><bean:message key="viewmail.internet_headers"/></strong></div></td>
     <td>&nbsp;</td>
-    <td><div id="sc1" class="switchcontent"><c:out value='${messageBean.message.internetHeaders}' escapeXml='false'/></div></td>
+    <td><div id="sc1" class="switchcontent"><c:out value='${messageBean.internetHeaders}' escapeXml='false'/></div></td>
   </tr>
+  <c:if test="${messageBean.journalMessage==true}">
+  <tr> 
+    <td>&nbsp;</td>
+    <td valign="top"><div align="right" onClick="expandcontent(this, 'sc2')"><span class="showstate"></span><strong><bean:message key="viewmail.journal_report"/></strong></div></td>
+    <td>&nbsp;</td>
+    <td><div id="sc2" class="switchcontent"><c:out value='${messageBean.journalReport}' escapeXml='false'/></div></td>
+  </tr>
+  </c:if>
 </table>
  
 

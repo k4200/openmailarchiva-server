@@ -16,16 +16,19 @@
 
 package com.stimulus.archiva.presentation;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
+
 import org.apache.log4j.Logger;
+
 import com.stimulus.archiva.domain.Domains;
 import com.stimulus.struts.BaseBean;
 
-public class DomainBean extends BaseBean {
+public class DomainBean extends BaseBean implements Serializable {
 
 	private static final long serialVersionUID = -3532049048337701224L;
-	protected static Logger logger = Logger.getLogger(DomainBean.class.getName());
+	protected static Logger logger =  Logger.getLogger(DomainBean.class);
 	protected Domains.Domain domain;
 
     public DomainBean(Domains.Domain domain) {

@@ -1,5 +1,6 @@
 package com.stimulus.struts.httpmap;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -8,7 +9,7 @@ import java.util.*;
  *
  * @author Clinton Begin
  */
-public abstract class BaseHttpMap implements Map {
+public abstract class BaseHttpMap implements Map,Serializable {
 
   public int size() {
     return keySet().size();

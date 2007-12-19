@@ -16,9 +16,11 @@
 
 package com.stimulus.archiva.exception;
 
+import java.io.Serializable;
+
 import org.apache.log4j.Logger;
 
-public class ProcessException extends MessageStoreException {
+public class ProcessException extends MessageStoreException implements Serializable {
   /*
   public MessageExtractionException(String message) {
     super(message);
@@ -28,7 +30,12 @@ public class ProcessException extends MessageStoreException {
     super(message, cause);
   }*/
 
-  public ProcessException(String message,Logger logger) {
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 2850065824385724191L;
+
+public ProcessException(String message,Logger logger) {
     super(message, logger);
   }
 

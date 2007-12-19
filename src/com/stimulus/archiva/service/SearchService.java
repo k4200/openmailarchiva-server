@@ -15,31 +15,28 @@
  */
 
 package com.stimulus.archiva.service;
-import com.stimulus.archiva.search.*;
-import com.stimulus.archiva.exception.*;
-import com.stimulus.archiva.domain.*;
-import org.apache.log4j.*;
-//import java.util.List;
+import java.io.Serializable;
 
-public class SearchService {
+import org.apache.log4j.Logger;
+
+import com.stimulus.archiva.domain.Search;
+import com.stimulus.archiva.exception.ArchivaException;
+import com.stimulus.archiva.search.MessageSearch;
+
+public class SearchService implements Serializable {
 
   /* Constants */
-  protected static final Logger logger = Logger.getLogger(SearchService.class.getName());
+  protected static Logger logger = Logger.getLogger(SearchService.class.getName());
   protected static MessageSearch messageSearch = new MessageSearch(MessageService.getMessageStore());
-
+  protected static final Logger audit = Logger.getLogger("com.stimulus.archiva.audit");
   /* protected Fields */
 
   /* Constructors */
 
-  public static Search searchMessage(Search search) throws ArchivaException {
+  public static void searchMessage(Search search) throws ArchivaException {
   	logger.debug("searchMessage {querystring='"+search.getSearchQuery()+"'}");
-
+  	audit.info("search emails {"+search.getPrincipal()+",query='"+search.getSearchQuery()+"'}");
+    logger.debug("search email {"+search.getPrincipal()+"}");
   	messageSearch.searchMessage(search);
-  	return search;
-
   }
-
- 
-
- 
 }

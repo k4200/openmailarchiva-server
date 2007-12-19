@@ -1,1 +1,0 @@
-serialver.exe -classpath c:\dev\mailarchiva\server\bin;c:\dev\mailarchiva\server\lib\struts.jar;c:\dev\mailarchiva\server\lib\servlet.jar;c:\dev\mailarchiva\server\lib\log4j-1.2.8.jar;c:\dev\mailarchiva\server\lib\mail.jar %1

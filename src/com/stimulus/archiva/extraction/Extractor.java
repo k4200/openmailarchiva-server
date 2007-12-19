@@ -17,15 +17,32 @@
 package com.stimulus.archiva.extraction;
 
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
 import org.apache.log4j.Logger;
-import java.util.*;
+
 import com.stimulus.archiva.exception.ExtractionException;
 import com.stimulus.util.TempFiles;
-import java.io.*;
 
-public class Extractor
+public class Extractor implements Serializable
 {
-	protected static final Logger logger = Logger.getLogger(Extractor.class.getName());
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4914643971232234799L;
+	protected static Logger logger = Logger.getLogger(Extractor.class.getName());
 	protected static final Map<String,TextExtractor> handlers;
 	protected ArrayList<String> fileDeleteList = new ArrayList<String>();
 	 static {
@@ -41,17 +58,27 @@ public class Extractor
 		handlers.put("pdf", pdf);
 		TextExtractor word = new WordExtractor();
 		handlers.put("application/msword",word);
+		handlers.put("application/vnd.ms-word", word);
+		handlers.put("application/vnd.msword", word);
 		handlers.put("doc",word);
 		TextExtractor excel = new ExcelExtractor();
 		handlers.put("application/excel", excel);
+		handlers.put("application/msexcel", excel);
+		handlers.put("application/vnd.ms-excel", excel);
 		handlers.put("xls", excel);
 		TextExtractor ppt = new PowerpointExtractor();
 		handlers.put("application/vnd.ms-powerpoint", ppt);
 		handlers.put("application/mspowerpoint", ppt);
+		handlers.put("application/powerpoint", ppt);
 		handlers.put("ppt", ppt);
 		TextExtractor rtf = new RTFExtractor();
 		handlers.put("application/rtf", rtf);
 		handlers.put("rtf", rtf);
+		
+		
+		
+		
+		
 	 }
 
 	 public Extractor() {
@@ -59,7 +86,7 @@ public class Extractor
 
 	 public static Reader getText(InputStream is, String mimetype,TempFiles tempFiles) throws ExtractionException {
 	     TextExtractor extractor;
-	     extractor = (TextExtractor)handlers.get(mimetype.toLowerCase());
+	     extractor = (TextExtractor)handlers.get(mimetype.toLowerCase(Locale.ENGLISH));
 	     if(extractor == null) {
 	     	//throw new ExtractionException("failed to extract text (mimetype not supported) {mimetype='"+mimetype+"'}",logger);
 	      return null;

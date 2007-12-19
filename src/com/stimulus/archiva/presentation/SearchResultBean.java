@@ -15,131 +15,69 @@
  */
 
 package com.stimulus.archiva.presentation;
-import java.text.DateFormat;
-import java.util.Date;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import javax.mail.internet.*;
+import java.util.Locale;
+
 import org.apache.log4j.Logger;
 
-import com.stimulus.archiva.domain.*;
-import com.stimulus.util.DecodingUtil;
-import com.stimulus.struts.BaseBean;
+import com.stimulus.archiva.domain.EmailID;
+import com.stimulus.archiva.domain.Search;
+import com.stimulus.archiva.domain.Volume;
+import com.stimulus.archiva.domain.fields.EmailField;
+import com.stimulus.archiva.domain.fields.EmailFieldValue;
 
-public class SearchResultBean extends BaseBean {
+public class SearchResultBean implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -837802320118584736L;
 	protected Search.Result searchResult;
-	protected static Logger logger = Logger.getLogger(SearchResultBean.class.getName());
+	protected static Logger logger =  Logger.getLogger(SearchResultBean.class.getName());
+	protected Locale locale;
 	
-	public SearchResultBean(Search.Result searchResult) {
+	public SearchResultBean(Search.Result searchResult, Locale locale) {
 		this.searchResult = searchResult;
+		this.locale = locale;
 	}
 	
+	 public List<DisplayField> getFieldValues() {
+		 ArrayList<DisplayField>  list = new ArrayList<DisplayField>();
+		 Iterator i = EmailField.getAvailableFields().iterateValues();
+		 while (i.hasNext()) {
+			 EmailField field = (EmailField)i.next();
+			 if (field.getShowInResults()!=EmailField.ShowInResults.NORESULTS) {
+				 EmailFieldValue efv = searchResult.getFieldValue(field.getName());
+				 list.add(DisplayField.getDisplayField(efv , locale,false));
+			 }
+		 }
+		 return list;
+	 }
+	 
 	public String getUniqueID() {
 		return searchResult.getEmailId().getUniqueID();
 	}
-	public String getSubject()
-	{
-		String subject = searchResult.getSubject();
-    	if (subject==null || subject.trim().length()<2) 
-    		return "<no subject>";
-    	return subject;
-	}
-
-    public boolean getHasAttachment() {
-        return searchResult.getHasAttachment();
-    }
-    
-    public int getPriority() {
-        return searchResult.getPriority();
-    }
-    
-    protected String parseAddress(String address) {
-    	InternetAddress[] iaddress = null;
-    	try {
-    	 iaddress = InternetAddress.parse(address,false);
-    	} catch (Exception e) {
-    		return address;
-    	}
-    	String result = "";
-    	for (int i=0;i<iaddress.length;i++) {
-    		if (iaddress[i]!=null) {
-    			String personal = iaddress[i].getPersonal();
-    			if (personal==null)
-    				return address;
-    			else result += personal;
-    		}
-    		if (i<iaddress.length-1)
-    			result += ", ";
-    	}
-    	return result;
-    	
-    } 
-    public String getToAddressesT()
-	{
-		return searchResult.getToAddresses();
-		//return DecodingUtil.decodeWord(searchResult.getToAddresses());
-	}
-
-	public String getFromAddressT()
-	{
-		return searchResult.getFromAddress();
-		//return DecodingUtil.decodeWord(searchResult.getFromAddress());
-	}
 	
-	public String getToAddresses()
-	{
-		return parseAddress(searchResult.getToAddresses());
-		//return DecodingUtil.decodeWord(searchResult.getToAddresses());
+	public String getVolumeID() {
+		EmailID emailID = searchResult.getEmailId();
+		Volume volume = emailID.getVolume();
+		if (volume!=null) {
+			String volumeID = volume.getID();
+			return volumeID;
+		} else return null;
+		//return searchResult.getEmailId().getVolume().getID();
 	}
 
-	public String getFromAddress()
-	{
-		return parseAddress(searchResult.getFromAddress());
-		//return DecodingUtil.decodeWord(searchResult.getFromAddress());
-	}
 
-	public String getSentDate()
-	{
-		Date sentDate = searchResult.getSentDate();
-		if (sentDate==null)
-			return "";
-		else {
-			DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT,getLocale());
-			return formatter.format(sentDate);
-		}
-	}
-
-	public String getSize()
-	{
-		return Integer.toString(searchResult.getSize()) + "k";
-	}
-
-	public String getScore()
-	{
-		float score = searchResult.getScore();
-		return Float.toString(round(score * 100, 2)) + "%";
-	}
-	
-	private static double round(double val, int places)
-	{
-		long factor = (long) Math.pow(10, places);
-		val = val * factor;
-		long tmp = Math.round(val);
-		return (double) tmp / factor;
-	}
-
-	private static float round(float val, int places)
-	{
-		return (float) round((double) val, places);
-	}
-	  
-    public static List<SearchResultBean> getSearchResultBeans(List<Search.Result> results) {
-		  List<SearchResultBean> searchResultBeans = new LinkedList<SearchResultBean>();
+    public static List<SearchResultBean> getSearchResultBeans(List<Search.Result> results,Locale locale) {
+		List<SearchResultBean> searchResultBeans = new LinkedList<SearchResultBean>();
 		  for (Search.Result result: results)
-			  searchResultBeans.add(new SearchResultBean(result));
+			  searchResultBeans.add(new SearchResultBean(result,locale));
 		  return searchResultBeans;
 	}
 
-	
 }

@@ -14,24 +14,30 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-package com.stimulus.archiva.search;
-
-import org.apache.log4j.Logger;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.TokenFilter;
-import org.apache.lucene.analysis.Token;
-
-import com.stimulus.archiva.language.AnalyzerFactory;
+	package com.stimulus.archiva.search;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Stack;
 
-/* Many thanks to Michael J. Prichard" <michael_prich...@mac.com> for the email filter code */
+import org.apache.log4j.Logger;
+import org.apache.lucene.analysis.Token;
+import org.apache.lucene.analysis.TokenFilter;
+import org.apache.lucene.analysis.TokenStream;
 
-public class EmailFilter extends TokenFilter {
+/* Many thanks to Michael J. Prichard" <michael_prich...@mac.com> for his
+ * original the email filter code. It is rewritten. */
+
+public class EmailFilter extends TokenFilter  implements Serializable {
 	
-	protected static final Logger logger = Logger.getLogger(com.stimulus.archiva.search.EmailFilter.class.getName());
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5280145822406627625L;
+
+
+	protected static Logger logger = Logger.getLogger(com.stimulus.archiva.search.EmailFilter.class.getName());
 	    
 	 
     public static final String TOKEN_TYPE_EMAIL = "EMAILPART";
@@ -45,98 +51,85 @@ public class EmailFilter extends TokenFilter {
 
     public Token next() throws IOException {
 
-        if (emailTokenStack.size() > 0) {
+        if (emailTokenStack.size() > 0) 
             return (Token) emailTokenStack.pop();
-        }   
 
         Token token = input.next();
-        if (token == null) {
+       
+        if (token == null) 
             return null;
-        }
 
-
-        addEmailPartsToStack(token);
+        putPart(token);
 
         return token;
     }
    
-    private void addEmailPartsToStack(Token token) throws IOException {
-    	//logger.debug("email index token: {token='"+token.termText()+"'}");
-        String[] parts = null;
-        
-        if (!token.termText().contains("@")) {
-        	parts = new String[1];
-        	parts[0] = token.termText();
-        } else
-        	parts = getEmailParts(token.termText());
-
-        if (parts == null) return;
-
+    private void putPart(Token token) throws IOException {
+    	String emailAddress = token.termText();
+    	emailAddress = emailAddress.replaceAll("<", "");
+    	emailAddress = emailAddress.replaceAll(">", "");
+    	emailAddress = emailAddress.replaceAll("\"", "");
+    	
+    	String [] parts = extractEmailParts(emailAddress);
+    
+        String partout ="";
         for (int i = 0; i < parts.length; i++) {
+        	partout += parts[i]+"_";
         	if (parts[i]!=null) {
-	            Token synToken = new Token(parts[i].toLowerCase(),
+	            Token subToken = new Token(parts[i].trim(),
 	                                 token.startOffset(),
 	                                 token.endOffset(),
 	                                 TOKEN_TYPE_EMAIL);
-	            synToken.setPositionIncrement(0);
-	            emailTokenStack.push(synToken);
+	            subToken.setPositionIncrement(0);
+	            emailTokenStack.push(subToken);
         	}
         }
     }
 
-    /*
-     * Parses emails into its parts for tokenization.
-     * For example john@foo.com would be broken into
-     *
-     *    [john@foo.com]
-     *    [john]
-     *    [foo.com]
-     *    [foo]
-     *    [com]
-     *      
-     */
-    private String[] getEmailParts(String email) {
+   
+    private String[] extractWhitespaceParts(String email) {
+    	String[] whitespaceParts = email.split(" ");
+    	ArrayList<String> partsList = new ArrayList<String>();
+    	for (int i=0; i < whitespaceParts.length; i++) {
+    		partsList.add(whitespaceParts[i]);
+    	}
+    	return whitespaceParts;
+    }
+    
+    private String[] extractEmailParts(String email) {
 
-    	 // so i can add them before calling toArray
-        ArrayList<String> partsList = new ArrayList<String>();
+    	if (email.indexOf('@')==-1)
+    		return extractWhitespaceParts(email);
+    	
+    	ArrayList<String> partsList = new ArrayList<String>();
+    	
+    	String[] whitespaceParts = extractWhitespaceParts(email);
+    	
+    	 for (int w=0;w<whitespaceParts.length;w++) {
+    		 
+    		 if (whitespaceParts[w].indexOf('@')==-1)
+    			 partsList.add(whitespaceParts[w]);
+    		 else {
+    			 partsList.add(whitespaceParts[w]);
+    			 String[] splitOnAmpersand = whitespaceParts[w].split("@");
+    			 try {
+    				 partsList.add(splitOnAmpersand[0]);
+    		            partsList.add(splitOnAmpersand[1]);
+    		     } catch (ArrayIndexOutOfBoundsException ae) {}
 
-        /* let's do it */
-        // split on the @
-        String[] splitOnAmpersand = email.split("@");
-        // add the username
-        try {
-            partsList.add(splitOnAmpersand[0]);
-        } catch (ArrayIndexOutOfBoundsException ae) {
-            // ignore
-        }
+		        if (splitOnAmpersand.length > 1) {
+		            String[] splitOnDot = splitOnAmpersand[1].split("\\.");
+		            for (int i=0; i < splitOnDot.length; i++) {
+		                partsList.add(splitOnDot[i]);
+		            }
 
-        // add the full host name
-        try {
-            partsList.add(splitOnAmpersand[1]);
-        } catch (ArrayIndexOutOfBoundsException ae) {
-            // ignore
-        }
-
-        // split the host name into pieces
-        if (splitOnAmpersand.length > 1) {
-            String[] splitOnDot = splitOnAmpersand[1].split("\\.");
-            // add all pieces from splitOnDot
-            for (int i=0; i < splitOnDot.length; i++) {
-                partsList.add(splitOnDot[i]);
-            }
-
-            /*
-             *  if this is great than 2 then we need to add the domain name which
-             *  should be the last two
-             * 
-             */
-            if (splitOnDot.length > 2) {
-                String domain = splitOnDot[splitOnDot.length-2] + "." + splitOnDot[splitOnDot.length-1];
-                // add domain
-                partsList.add(domain);
-            }
-        }
-       
+		            if (splitOnDot.length > 2) {
+		                String domain = splitOnDot[splitOnDot.length-2] + "." + splitOnDot[splitOnDot.length-1];
+		                partsList.add(domain);
+		            }
+		        }
+    		 }	 
+    	 }
         return (String[]) partsList.toArray(new String[0]);       
     }
 

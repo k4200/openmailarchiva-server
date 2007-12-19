@@ -18,29 +18,42 @@
 package com.stimulus.archiva.extraction;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Serializable;
+import java.io.Writer;
+
 import org.apache.log4j.Logger;
 import org.pdfbox.encryption.DocumentEncryption;
 import org.pdfbox.pdfparser.PDFParser;
 import org.pdfbox.pdmodel.PDDocument;
 import org.pdfbox.util.PDFTextStripper;
-import com.stimulus.archiva.exception.ExtractionException;
-import java.io.*;
-import com.stimulus.util.*;
 
-public class PDFExtractor implements TextExtractor
+import com.stimulus.archiva.exception.ExtractionException;
+import com.stimulus.util.TempFiles;
+
+public class PDFExtractor implements TextExtractor, Serializable
 {
-	protected static final Logger logger = Logger.getLogger(Extractor.class.getName());
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7182261400513351604L;
+	protected static Logger logger = Logger.getLogger(Extractor.class.getName());
 
  public PDFExtractor() {
  }
 
  public Reader getText(InputStream is,TempFiles tempFiles) throws ExtractionException  {
      File file = null;
+     PDDocument document = null;
      try {
 	     PDFParser parser = new PDFParser(is);
 	     parser.parse();
-	     PDDocument document = parser.getPDDocument();
+	     document = parser.getPDDocument();
 	     
 	     if (document.isEncrypted()) {
 	         DocumentEncryption decryptor = new DocumentEncryption(document);
@@ -57,11 +70,15 @@ public class PDFExtractor implements TextExtractor
 	  	 PDFTextStripper stripper = new PDFTextStripper();
 	  	 stripper.writeText(document, output);
 	  	 output.close();
-	  	 if(document != null)
-	        document.close();
+	  	
 	  	
      } catch (Exception e) {
-         throw new ExtractionException("failed to extract pdf",e,logger);
+         throw new ExtractionException("failed to extract pdf (probable password protected document)",e,logger);
+     } finally {
+    	 try {
+	    	 if(document != null)
+	 	        document.close();
+    	 } catch (IOException io) {}
      }
      try {
 	        return new FileReader(file);

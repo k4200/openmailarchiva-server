@@ -16,12 +16,18 @@
 package com.stimulus.util;
 
 import java.io.IOException;
+import java.io.Serializable;
+
 import javax.servlet.*;
 
-public class UTF8Filter implements Filter 
+public class UTF8Filter implements Filter, Serializable
 {
 
-  public void destroy() {}
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -3301833577429221220L;
+public void destroy() {}
 
   public void doFilter(ServletRequest request,
                    ServletResponse response,

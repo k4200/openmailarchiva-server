@@ -16,8 +16,20 @@
  */
 package com.stimulus.archiva.language;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Token;
 
@@ -34,7 +46,7 @@ import org.apache.lucene.analysis.Token;
  */
 public class NGramProfile {
 
-  protected static final Logger logger = Logger.getLogger(NGramProfile.class.getName());
+	protected static Logger logger = Logger.getLogger(NGramProfile.class.getName());
     
 
   /** The minimum length allowed for a ngram. */
@@ -206,7 +218,7 @@ public class NGramProfile {
   /**
    * Normalize the profile (calculates the ngrams frequencies)
    */
-  protected void normalize() {
+  protected synchronized void normalize() {
 
     NGramEntry e = null;
     //List sorted = getSorted();
@@ -233,7 +245,7 @@ public class NGramProfile {
    * 
    * @return sorted vector of ngrams
    */
-  public List getSorted() {
+  public synchronized List getSorted() {
     // make sure sorting is done only once
     if (sorted == null) {
       sorted = new ArrayList(ngrams.values());
@@ -248,7 +260,7 @@ public class NGramProfile {
   }
   
   // Inherited JavaDoc
-  public String toString() {
+  public synchronized String toString() {
 
     StringBuffer s = new StringBuffer().append("NGramProfile: ")
                                        .append(name).append("\n");
@@ -297,7 +309,7 @@ public class NGramProfile {
         }
       }
     } catch (Exception e) {
-      logger.error("failed to calculate NGramProfile scores for matching purposes",e); 
+      logger.error(e);
     }
     return sum;
   }
@@ -354,7 +366,7 @@ public class NGramProfile {
         text.append(new String(buffer, 0, len, encoding));
       }
     } catch (IOException e) {
-      logger.error("could not create NGram profile",e);
+       logger.error("failed to create NGRAM profile",e);
     }
 
     newProfile.analyze(text);
@@ -402,107 +414,6 @@ public class NGramProfile {
       os.write(line.getBytes("UTF-8"));
     }
     os.flush();
-  }
-
-  /**
-   * main method used for testing only
-   * 
-   * @param args
-   */
-  public static void main(String args[]) {
-
-    String usage = "Usage: NGramProfile " +
-                   "[-create profilename filename encoding] " +
-                   "[-similarity file1 file2] "+
-                   "[-score profile-name filename encoding]";
-    int command = 0;
-
-    final int CREATE = 1;
-    final int SIMILARITY = 2;
-    final int SCORE = 3;
-
-    String profilename = "";
-    String filename = "";
-    String filename2 = "";
-    String encoding = "";
-    
-    if (args.length == 0) {
-      System.err.println(usage);
-      System.exit(-1);
-    }
-
-    for (int i = 0; i < args.length; i++) { // parse command line
-      if (args[i].equals("-create")) { // found -create option
-        command = CREATE;
-        profilename = args[++i];
-        filename = args[++i];
-        encoding = args[++i];
-      }
-
-      if (args[i].equals("-similarity")) { // found -similarity option
-        command = SIMILARITY;
-        filename = args[++i];
-        filename2 = args[++i];
-        encoding = args[++i];
-      }
-
-      if (args[i].equals("-score")) { // found -Score option
-        command = SCORE;
-        profilename = args[++i];
-        filename = args[++i];
-        encoding = args[++i];
-      }
-    }
-
-    try {
-
-      switch (command) {
-
-      case CREATE:
-
-        File f = new File(filename);
-        FileInputStream fis = new FileInputStream(f);
-        NGramProfile newProfile = NGramProfile.create(profilename, fis, encoding);
-        fis.close();
-        f = new File(profilename + "." + FILE_EXTENSION);
-        FileOutputStream fos = new FileOutputStream(f);
-        newProfile.save(fos);
-        System.out.println("new profile " + profilename + "." + FILE_EXTENSION + " was created.");
-        break;
-
-      case SIMILARITY:
-
-        f = new File(filename);
-        fis = new FileInputStream(f);
-        newProfile = NGramProfile.create(filename, fis, encoding);
-        newProfile.normalize();
-
-        f = new File(filename2);
-        fis = new FileInputStream(f);
-        NGramProfile newProfile2 = NGramProfile.create(filename2, fis, encoding);
-        newProfile2.normalize();
-        System.out.println("Similarity is " + newProfile.getSimilarity(newProfile2));
-        break;
-
-      case SCORE:
-        f = new File(filename);
-        fis = new FileInputStream(f);
-        newProfile = NGramProfile.create(filename, fis, encoding);
-
-        f = new File(profilename + "." + FILE_EXTENSION);
-        fis = new FileInputStream(f);
-        NGramProfile compare = new NGramProfile(profilename,
-                                                DEFAULT_MIN_NGRAM_LENGTH,
-                                                DEFAULT_MAX_NGRAM_LENGTH);
-        compare.load(fis);
-        System.out.println("Score is " + compare.getSimilarity(newProfile));
-        break;
-
-      }
-
-    } catch (Exception e) {
-      logger.error("Caught an exception:" + e); 
-    }
   }
 
   
@@ -669,7 +580,7 @@ public class NGramProfile {
       } else if (minimumCapacity > newCapacity) {
           newCapacity = minimumCapacity;
       }
-    
+	
       char newValue[] = new char[newCapacity];
       System.arraycopy(value, 0, newValue, 0, count);
       value = newValue;

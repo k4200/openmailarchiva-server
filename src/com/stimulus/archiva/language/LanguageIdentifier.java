@@ -30,19 +30,34 @@
 package com.stimulus.archiva.language;
 
 // JDK imports
-import java.io.*;
-import java.util.*;
-import com.stimulus.archiva.language.NGramProfile.NGramEntry;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Properties;
+
 import org.apache.log4j.Logger;
 
+import com.stimulus.archiva.language.NGramProfile.NGramEntry;
 
-public class LanguageIdentifier {
+
+public class LanguageIdentifier implements Serializable {
   
-  private final static int MINIMUM_SAMPLE_LENGTH = 300;
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 6583266226548053224L;
+
+private final static int MINIMUM_SAMPLE_LENGTH = 300;
 	 
   private final static int DEFAULT_ANALYSIS_LENGTH = 1500;    // 0 means full content
   
-  protected static final Logger logger = Logger.getLogger(LanguageIdentifier.class.getName());
+  protected static Logger logger = Logger.getLogger(LanguageIdentifier.class.getName());
     
   private ArrayList languages = new ArrayList();
 
@@ -168,7 +183,7 @@ public class LanguageIdentifier {
    *         language code</a> (en, fi, sv, ...) of the language that best
    *         matches the specified content.
    */
-  public String identify(StringBuffer content) {
+  public synchronized String identify(StringBuffer content) {
     //logger.debug("language identification sample:");
     //logger.debug(content.toString());
     StringBuffer text = content;

@@ -16,15 +16,25 @@
 
 package com.stimulus.archiva.extraction;
 
-import com.stimulus.archiva.exception.ExtractionException;
-import java.io.*;
+import java.io.FilterReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Serializable;
 
 import org.apache.log4j.Logger;
-import com.stimulus.util.*;
 
-public class HTMLExtractor implements TextExtractor
+import com.stimulus.archiva.exception.ExtractionException;
+import com.stimulus.util.TempFiles;
+
+public class HTMLExtractor implements TextExtractor,Serializable
 {
-	protected static final Logger logger = Logger.getLogger(Extractor.class.getName());
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7138851180242634460L;
+	protected static Logger logger = Logger.getLogger(Extractor.class.getName());
 
 	public HTMLExtractor()
 	{

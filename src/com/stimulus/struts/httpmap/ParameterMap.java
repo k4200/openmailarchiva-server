@@ -3,6 +3,8 @@ package com.stimulus.struts.httpmap;
 import com.stimulus.struts.httpmap.BaseHttpMap;
 
 import javax.servlet.http.HttpServletRequest;
+
+import java.io.Serializable;
 import java.util.Enumeration;
 
 /**
@@ -12,7 +14,7 @@ import java.util.Enumeration;
  *
  * @author Clinton Begin
  */
-public class ParameterMap extends BaseHttpMap {
+public class ParameterMap extends BaseHttpMap implements Serializable {
 
   private HttpServletRequest request;
 

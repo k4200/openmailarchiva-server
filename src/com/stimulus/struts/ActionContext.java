@@ -19,6 +19,8 @@ import com.stimulus.struts.httpmap.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.io.Serializable;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
@@ -42,9 +44,14 @@ import java.util.ArrayList;
  *
  * @author Clinton Begin
  */
-public class ActionContext {
+public class ActionContext implements Serializable {
 
-  private static final ThreadLocal localContext = new ThreadLocal();
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -2643241956613163150L;
+
+private static final ThreadLocal localContext = new ThreadLocal();
 
   private HttpServletRequest request;
   private HttpServletResponse response;

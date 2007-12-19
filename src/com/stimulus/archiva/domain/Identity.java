@@ -20,10 +20,9 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-
 import com.stimulus.archiva.exception.ConfigurationException;
 
- public abstract class Identity {
+ public abstract class Identity implements java.io.Serializable  {
 	 
 	 public static final List<String> ROLES;
 	 
@@ -39,7 +38,7 @@ import com.stimulus.archiva.exception.ConfigurationException;
 
 	 List<RoleMap> roleMaps = new LinkedList<RoleMap>();
 	 
-     protected static Logger logger = Logger.getLogger(Identity.class.getName());
+	 protected static Logger logger = Logger.getLogger(Identity.class);
      
      public Identity() {
     	 

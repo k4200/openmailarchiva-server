@@ -17,20 +17,23 @@
 
 package com.stimulus.archiva.presentation;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
+
 import org.apache.log4j.Logger;
+
 import com.stimulus.archiva.domain.ArchiveRules;
 import com.stimulus.archiva.domain.ArchiveRules.Action;
-import com.stimulus.archiva.domain.ArchiveRules.Field;
 import com.stimulus.archiva.exception.ConfigurationException;
-import com.stimulus.util.*;
 import com.stimulus.struts.BaseBean;
+import com.stimulus.util.EnumUtil;
 
-public class ArchiveRuleBean extends BaseBean {
+public class ArchiveRuleBean extends BaseBean implements Serializable {
 
 	private static final long serialVersionUID = -2975630165623482789L;
-	protected static Logger logger = Logger.getLogger(ArchiveRules.class.getName());
+	protected static Logger logger = Logger.getLogger(ArchiveRules.class);
 	protected ArchiveRules.Rule archiveRule;
 	
     public ArchiveRuleBean(ArchiveRules.Rule archiveRule) {
@@ -40,7 +43,7 @@ public class ArchiveRuleBean extends BaseBean {
   	public void setAction(String action) throws ConfigurationException {
   		 Action newAction = Action.ARCHIVE;
   		 try {
-  			newAction = Action.valueOf(action.trim().toUpperCase());
+  			newAction = Action.valueOf(action.trim().toUpperCase(Locale.ENGLISH));
   		 } catch (IllegalArgumentException iae) {
  	    		logger.error("failed to set archive rule action. action is set to an illegal value {action='"+action+"'}");
  	    		logger.info("archive rule is automatically set to archive the message (error recovery)");
@@ -48,19 +51,12 @@ public class ArchiveRuleBean extends BaseBean {
   		 archiveRule.setAction(newAction);
 	}
 	  	
-	public String getAction() { return archiveRule.getAction().toString().toLowerCase(); }
+	public String getAction() { return archiveRule.getAction().toString().toLowerCase(Locale.ENGLISH); }
 	  	
-	public String getField() { return archiveRule.getField().toString().toLowerCase(); }
+	public String getField() { return archiveRule.getField().toString().toLowerCase(Locale.ENGLISH); }
 
 	public void setField(String field) throws ConfigurationException {
-	  	Field newField = Field.TO;	
-	  	try {
-	  		newField = Field.valueOf(field.trim().toUpperCase());
-	  	} catch (IllegalArgumentException iae) {
-	    		logger.error("failed to set archive rule field. field is set to an illegal value {field='"+field+"'}");
-	    		logger.info("archive rule field is set to 'to' by default (error recovery)");
-		}
-	    archiveRule.setField(newField);
+	  	archiveRule.setField(field);
 	}
 	
 	public String getRegEx() { return archiveRule.getRegEx(); }
@@ -79,7 +75,7 @@ public class ArchiveRuleBean extends BaseBean {
     public static List<ArchiveRuleBean> getArchiveRuleBeans(ArchiveRules archiveRules) {
     	return getArchiveRuleBeans(archiveRules.getArchiveRules());
     }
-    
+    /*
     public static List<String> getFields() {
     	return EnumUtil.enumToList(ArchiveRules.Field.values());
     }
@@ -91,7 +87,7 @@ public class ArchiveRuleBean extends BaseBean {
     protected static List<Enum> getFieldEnums() {
     	return (List<Enum>)EnumUtil.enumToListEnums(ArchiveRules.Field.values());
     }
-    
+    */
     public static List<String> getActions() {
     	return EnumUtil.enumToList(ArchiveRules.Action.values());
     }

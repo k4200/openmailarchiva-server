@@ -15,18 +15,29 @@
  */
 
 package com.stimulus.archiva.domain;
-import com.stimulus.archiva.exception.*;
-import org.apache.log4j.Logger;
-import javax.mail.internet.*;
-import javax.mail.*;
 import java.io.Serializable;
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
 
- public class ArchiveRules  {
+import javax.mail.Address;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.NewsAddress;
+
+import org.apache.log4j.Logger;
+
+import com.stimulus.archiva.domain.fields.EmailField;
+import com.stimulus.archiva.domain.fields.EmailFieldValue;
+import com.stimulus.archiva.exception.ConfigurationException;
+import com.stimulus.archiva.exception.MessageException;
+import com.stimulus.util.Compare;
+
+public class ArchiveRules implements Serializable  {
 
 	 	private static final long serialVersionUID = -7175192678619225338L;
 
-		protected static Logger logger = Logger.getLogger(Email.class.getName());
+	 	protected static Logger logger = Logger.getLogger(Email.class);
 
      	protected boolean 	 archiveInbound;
      	protected boolean 	 archiveOutbound;
@@ -35,7 +46,7 @@ import java.util.*;
 
         public enum Priority { HIGHEST, HIGHER, LOWER, LOWEST  };
         public enum Action { SKIP, ARCHIVE, NOARCHIVE };  // action_label_
-        public enum Field { ALL, FROM, SUBJECT, TO, CC, BCC }; // field_label_
+ 
         public enum Location { INTERNAL, EXTERNAL };
      
         public void setArchiveInbound(boolean archiveInbound) { this.archiveInbound = archiveInbound; }
@@ -63,9 +74,9 @@ import java.util.*;
  	    }
  	    
  	    public void addArchiveRule() throws ConfigurationException {
- 	    	addArchiveRule(Action.values()[0],Field.values()[0],"");
+ 	    	addArchiveRule(Action.values()[0],"to","");
  	    }
- 	    public void addArchiveRule(Action action, Field field, String regex) throws ConfigurationException {
+ 	    public void addArchiveRule(Action action, String field, String regex) throws ConfigurationException {
  	    	Rule af = new Rule(action,field,regex);
  	    	archiveRules.add(af);
  	    }
@@ -154,10 +165,10 @@ import java.util.*;
 	               if (dom==null)
                       return Location.INTERNAL; 
 
-	               for (Iterator icount=domain.getDomains().iterator();icount.hasNext();) {
-	                   Domains.Domain d = (Domains.Domain)icount.next();
-	                   if (dom.equalsIgnoreCase(d.getName()))
-	                       return Location.INTERNAL; 
+	               for (Iterator<Domains.Domain> icount=domain.getDomains().iterator();icount.hasNext();) {
+	                   Domains.Domain d = icount.next();
+	                   if (Compare.equalsIgnoreCase(dom, d.getName()))
+	                	   return Location.INTERNAL; 
 	               }
 	           }
               return Location.EXTERNAL; 
@@ -167,9 +178,9 @@ import java.util.*;
       }
 
  	  protected Action checkAdvancedRules(Email email) {
- 	        Iterator i = archiveRules.iterator();
+ 	        Iterator<Rule> i = archiveRules.iterator();
 	        while (i.hasNext()) {
-	            Rule ar = (Rule)i.next();
+	            Rule ar = i.next();
 	            Action action = ar.shouldArchive(email);
 	            switch(action) {
 	            	case ARCHIVE:
@@ -239,10 +250,10 @@ import java.util.*;
        public class Rule {
     	   
 	 	  	protected Action action = Action.SKIP;
-	 	  	protected Field field 	= Field.ALL;
+	 	  	protected String field 	= "all";
 	 	  	protected String regex;
 
-	 	  	Rule(Action action, Field field, String regex) throws ConfigurationException {
+	 	  	Rule(Action action, String field, String regex) throws ConfigurationException {
 	 	  		setAction(action);
 	 	  		setField(field);
 	 	  		setRegEx(regex);
@@ -255,11 +266,12 @@ import java.util.*;
 	 	  	
 	 	  	public Action getAction() { return action; }
 	 	  	
-	 	  	public Field getField() { return field; }
+	 	  	public String getField() { return field; }
 
-	 	  	public void setField(Field field) throws ConfigurationException{
+	 	  	public void setField(String field) throws ConfigurationException{
 	 	  		logger.debug("set archive rule field {field='"+field+"'}");
-	 	  		this.field = field;
+	 	  		if (field!=null)
+	 	  			this.field = field.toLowerCase(Locale.ENGLISH);
 	 	  	}
 	 	  	
 	 	  	public String getRegEx() { return regex; }
@@ -271,35 +283,28 @@ import java.util.*;
 
 	 	  	public Action shouldArchive(Email email) {
 	 	  		logger.debug("shouldArchive {action='"+action+"',field='"+field+"',regex='"+regex+"'}");
-	 	  	 	
-	 	  	 	switch(field) {
- 	  	        	case FROM:
- 	  	        	    	//logger.debug("*****archive rule from address:"+email.getFromAddress().matches(regex));
- 	  	        	    	return email.getFromAddress(Email.DisplayMode.EMAIL_ONLY).matches(regex) ? action : Action.SKIP;
-
- 	  	        	case SUBJECT: try {
- 	  	        	    		return email.getSubject().matches(regex) ? action : Action.SKIP;
- 	  	        			} catch (Exception e) {
- 	  	        			    logger.debug("failed to process archive rule. exception occurred. will archive anyway. Cause:",e);
- 	  	        			}
-
- 	  	        	case TO: return email.getToAddresses(Email.DisplayMode.EMAIL_ONLY).matches(regex) ? action : Action.SKIP;
-
- 	  	        	case CC: return email.getCCAddresses(Email.DisplayMode.EMAIL_ONLY).matches(regex) ? action : Action.SKIP;
-
- 	  	        	case BCC: return email.getBCCAddresses(Email.DisplayMode.EMAIL_ONLY).matches(regex)  ? action : Action.SKIP;
-	        		
- 	  	        	case ALL: try {
-			        		    return (email.getFromAddress(Email.DisplayMode.EMAIL_ONLY).matches(regex)) ||
-			        					   (email.getSubject().matches(regex)) ||
-			        					   (email.getToAddresses(Email.DisplayMode.EMAIL_ONLY).matches(regex)) ||
-			        					   (email.getCCAddresses(Email.DisplayMode.EMAIL_ONLY).matches(regex)) ||
-			        					   (email.getBCCAddresses(Email.DisplayMode.EMAIL_ONLY).matches(regex)) ? action : Action.SKIP;
-		        			} catch (Exception e) {
-		        			    logger.debug("failed to process archive rule. exception occurred. Cause:",e);
-		        			}
-	        		default: return action;
-	 	  	    }
+	 	  		if (field.compareTo("all")==0) {
+	 	  			for (Iterator<String> it=email.getFields().values().iterator(); it.hasNext(); ) {
+		 	  	        String value = it.next();
+		 	  	        if (value!= null && value.matches(regex))
+		 	  	        	return action;
+		 	  	    }
+		 	  		return Action.SKIP;
+	 	  		} else {
+	 	  			EmailFieldValue efv = (EmailFieldValue)email.getFields().get(field);
+	 	  			
+	 	  			if (!regex.startsWith(".*"))
+	 	  					regex = ".*" + regex;
+	 	  			
+	 	  			if (!regex.endsWith(".*"))
+	 	  					regex = regex + ".*";
+	 	  			
+	 	  			if (efv!=null && efv.getField().getArchiveRule().equals(EmailField.AllowArchiveRule.ARCHIVERULE) && 
+	 	  				efv.getValue()!=null && efv.getValue().matches(regex)) 
+	 	  				return action;
+	 	  			else
+	 	  				return Action.SKIP;
+	 	  		}
 	 	  	}
 
 	 	  	public String toString() {

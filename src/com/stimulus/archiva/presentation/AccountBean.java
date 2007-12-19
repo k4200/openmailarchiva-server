@@ -16,14 +16,17 @@
 
 package com.stimulus.archiva.presentation;
 
-import com.stimulus.struts.ActionContext;
-import com.stimulus.struts.BaseBean;
+import java.io.Serializable;
+
 import org.apache.log4j.Logger;
 
-public class AccountBean extends BaseBean {
+import com.stimulus.struts.ActionContext;
+import com.stimulus.struts.BaseBean;
+
+public class AccountBean extends BaseBean  implements Serializable {
 
 	private static final long serialVersionUID = -6557623393822264395L;
-	protected static final Logger logger = Logger.getLogger(MessageBean.class.getName());
+	protected static Logger logger = Logger.getLogger(MessageBean.class.getName());
     protected static final Logger audit = Logger.getLogger("com.stimulus.archiva.audit");
     
     

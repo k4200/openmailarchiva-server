@@ -23,15 +23,28 @@ import java.util.*;
 public class MailArchivaPrincipal implements Principal, Serializable
 {
 
- protected String name;
- protected String role;
- protected List<String> emailAddresses;
+ /**
+	 * 
+	 */
+	private static final long serialVersionUID = -53101827955389377L;
+protected String name = "";
+ protected String role = "user";
+ protected List<String> emailAddresses = null;
+ protected String ipAddress = null;
 
- protected MailArchivaPrincipal(String name, String role,List<String> emailAddresses)
+
+ public MailArchivaPrincipal(String name, String role) {
+	 this(name,role,null);
+ }
+ public MailArchivaPrincipal(String name, String role,List<String> emailAddresses) {
+	 this(name,role,emailAddresses,null);
+ }
+ public MailArchivaPrincipal(String name, String role,List<String> emailAddresses, String ipAddress)
  {
      this.name = name;
      this.role = role;
      this.emailAddresses = emailAddresses;
+     this.ipAddress = ipAddress;
  }
  
 
@@ -45,6 +58,13 @@ public class MailArchivaPrincipal implements Principal, Serializable
      return role;
  }
  
+ public String getIpAddress() {
+	 return ipAddress;
+ }
+ 
+ public void setIpAddress(String ipAddress) {
+	 this.ipAddress = ipAddress;
+ }
  
  public List<String> getEmailAddresses() {
 	 return emailAddresses;
@@ -60,8 +80,12 @@ public class MailArchivaPrincipal implements Principal, Serializable
 
  public String toString()
  {
-     return "MailArchiva Principal[name = '" + name + "']";
+	 if (emailAddresses!=null && emailAddresses.size()>0)
+     	return "name='"+name+"',role='"+role+"',ipAddress='"+ipAddress+"',emailAddress='"+emailAddresses.get(0)+"'";
+	 else
+		return"name='"+name+"',role='"+role+"',ipAddress='"+ipAddress;
  }
+ 
 
  public int hashCode()
  {

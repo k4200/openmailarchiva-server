@@ -15,11 +15,22 @@
  */
 package com.stimulus.archiva.exception;
 
+import java.io.Serializable;
+
 import org.apache.log4j.Logger;
 
-public class ArchivaException extends ChainedException {
+public class ArchivaException extends ChainedException implements Serializable {
 
+
+
+/**
+	 * 
+	 */
 	private static final long serialVersionUID = 1L;
+
+/**
+	 * 
+	 */
 
 public ArchivaException(String message, Logger logger) {
       super(message, logger);

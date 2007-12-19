@@ -15,34 +15,38 @@
  */
 
 package com.stimulus.archiva.domain;
-
 import java.io.File;
 import java.io.Serializable;
-import java.util.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 import org.apache.log4j.Logger;
 
 import com.stimulus.archiva.exception.ArchivaException;
 import com.stimulus.archiva.exception.ConfigurationException;
+import com.stimulus.util.DateUtil;
 
-  public class Volume implements Comparable<Volume> {
+  public class Volume implements Comparable<Volume>,Serializable {
 
 	  private static final long serialVersionUID = 5447936271470342602L;
 	  
-      protected static Logger logger = Logger.getLogger(Volume.class.getName());
-      public enum Status { CLOSED,ACTIVE,UNUSED,NEW };
+	  protected static Logger logger = Logger.getLogger(Volume.class);
+      public enum Status { CLOSED,ACTIVE,UNUSED,NEW,UNMOUNTED,EJECTED,REMOTE };
       protected String 	path;
  	  protected String 	indexPath;
  	  protected long 	maxSize = 3000;
       protected Status	status = Status.NEW;
  	  protected long    freeIndexSpace 	 = Long.MAX_VALUE;
 	  protected long    freeArchiveSpace = Long.MAX_VALUE;
-	  protected Date	modified = null;
-	  protected Date    created = null;
+	  protected Date	modified = new Date();
+	  protected Date    created = new Date();
       protected long    usedIndexSpace 	 = 0;
       protected long    usedArchiveSpace = 0;
-      public boolean 	diskSpaceChecking = true;
+      public 	boolean diskSpaceChecking = true;
       protected boolean spaceCheck  = false;
-      
+      protected String  id;
+      private static SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
       protected Volumes volumes;
       
 	  public Volume(Volumes volumes, String path, String indexPath,  int maxSize) throws ConfigurationException {
@@ -60,11 +64,30 @@ import com.stimulus.archiva.exception.ConfigurationException;
 	  	}
 	  }
 
+	  public String getID() {
+		if (id==null) {
+			return DateUtil.convertDatetoString(getCreated()); // legacy
+		} else return id;
+	  }
+	  
+	  public void setID(String id) { this.id = id; }
+	  
 	  public long getMaxSize() { return maxSize; }
 	  public String getIndexPath() { return indexPath; }
-	  public void setIndexPath(String indexPath) { this.indexPath = indexPath.toLowerCase(); }
+	  
+	  
+	  public void setIndexPath(String indexPath) { 
+		  if (indexPath.length()>0 && indexPath.lastIndexOf(File.separator)==indexPath.length()-1)
+		  	indexPath = indexPath.substring(0,indexPath.length()-2);
+		   this.indexPath = indexPath.toLowerCase(Locale.ENGLISH); 
+		  
+	  }
 	  public String getPath() { return path; }
-	  public void setPath(String path) { this.path = path.toLowerCase();}
+	  public void setPath(String path) { 
+		  if (path.length()>0 && path.lastIndexOf(File.separator)==path.length()-1)
+		  	path = path.substring(0,path.length()-2);
+		  this.path = path.toLowerCase(Locale.ENGLISH);
+	  }
 	  public void setMaxSize(long maxSize) { this.maxSize = maxSize; }
 
 	  public long getFreeIndexSpace() { return freeIndexSpace; }
@@ -81,6 +104,7 @@ import com.stimulus.archiva.exception.ConfigurationException;
       
 	  public boolean enoughDiskSpace() {
 
+		  logger.debug("enoughDiskSpace() {usedIndexSpace='"+usedIndexSpace+"',usedArchiveSpace='"+usedArchiveSpace+"',diskSpaceWarnBytes='"+volumes.getDiskSpaceWarnBytes()+"',diskSpaceThresholdBytes='"+volumes.getDiskSpaceThresholdBytes()+"',freeArchiveSpace='"+freeArchiveSpace+"'");
 		  if (!diskSpaceChecking) {
 			  logger.warn("disk space checking is disabled due to previous error. Check file permissions on volume index and store path {"+toString()+"}");
 		  	  return true;
@@ -91,33 +115,33 @@ import com.stimulus.archiva.exception.ConfigurationException;
 			  return true;
 		  }
 			  
-          long usedSpace = usedIndexSpace > usedArchiveSpace ? usedIndexSpace : usedArchiveSpace;
+          long usedSpace = usedIndexSpace + usedArchiveSpace;
 
           // max volume size about to be exceeded
           
-          logger.debug("diskspace check {(usedSpace-DISK_SPACE_WARN)>=maxSize='"+(usedSpace-volumes.getDiskSpaceWarnBytes())+"'}");
-          if ((usedSpace-volumes.getDiskSpaceWarnBytes())>=maxSize * 1024 * 1024) {
+          logger.debug("used disk space warn check {(usedSpace+DISK_SPACE_WARN)>=maxSize='"+(usedSpace+volumes.getDiskSpaceWarnBytes())+">"+maxSize * 1024 * 1024+"'}");
+          if ((usedSpace+volumes.getDiskSpaceWarnBytes())>=maxSize * 1024 * 1024) {
              logger.warn("storage space is running low on volume. (max volume size nearly exceeded) {"+toString()+"}");
           }
           
           // max volume size is exceeded
           
-          logger.debug("diskspace check {(usedIndexSpace-DISK_SPACE_THRESHOLD)>=maxSize='"+(usedIndexSpace-volumes.getDiskSpaceThresholdBytes())+"'}");
-          if ((usedSpace-volumes.getDiskSpaceThresholdBytes())>=maxSize * 1024 * 1024) {
+          logger.debug("used disk space threshold check {(usedSpace+DISK_SPACE_THRESHOLD)>=maxSize='"+(usedSpace+volumes.getDiskSpaceThresholdBytes())+">"+maxSize * 1024 * 1024 +"'}");
+          if ((usedSpace+volumes.getDiskSpaceThresholdBytes())>=maxSize * 1024 * 1024) {
              logger.warn("there is no storage space left on volume (max volume size exceeded) {"+toString()+"}");
              return false;
           }
         
           // free index space is nearly depleted
           
-	 	 logger.debug("diskspace check {freeIndexSpace-DISK_SPACE_WARN='"+(freeIndexSpace-volumes.getDiskSpaceWarnBytes())+"'}");
+	 	 logger.debug("free index space warn check {freeIndexSpace+DISK_SPACE_WARN='"+(freeIndexSpace-volumes.getDiskSpaceWarnBytes())+"<0'}");
 	 	 if ((freeIndexSpace-volumes.getDiskSpaceWarnBytes())<=0) {
 	 	     logger.warn("storage space is running low on volume {"+toString()+"}");
 	 	  }
          
 	 	 // free index space is depleted
          
-	 	 logger.debug("diskspace check {freeIndexSpace-DISK_SPACE_THRESHOLD='"+(freeIndexSpace-volumes.getDiskSpaceThresholdBytes())+"'}");
+	 	 logger.debug("free index space threshold check {freeIndexSpace-DISK_SPACE_THRESHOLD='"+(freeIndexSpace-volumes.getDiskSpaceThresholdBytes())+"<0'}");
 	 	  
 	 	  if ((freeIndexSpace-volumes.getDiskSpaceThresholdBytes())<=0) {
 	 	     logger.warn("there is no storage space left on volume {"+toString()+"}");
@@ -125,14 +149,14 @@ import com.stimulus.archiva.exception.ConfigurationException;
 	 	  }
          // free archive space is nearly depleted
              
-          logger.debug("diskspace check {freeArchiveSpace-DISK_SPACE_WARN='"+(freeArchiveSpace-volumes.getDiskSpaceWarnBytes())+"'}");
+          logger.debug("free archive space warn check {freeArchiveSpace-DISK_SPACE_WARN='"+(freeArchiveSpace-volumes.getDiskSpaceWarnBytes())+"<0'}");
           if ((freeArchiveSpace-volumes.getDiskSpaceWarnBytes())<=0) {
               logger.warn("storage space is running low on volume {"+toString()+"}");
           }
           
           // free archive is depleted
           
-          logger.debug("diskspace check {freeArchiveSpace-DISK_SPACE_THRESHOLD='"+(freeArchiveSpace-volumes.getDiskSpaceThresholdBytes())+"'}");
+          logger.debug("free archive space threshold check {freeArchiveSpace-DISK_SPACE_THRESHOLD='"+(freeArchiveSpace-volumes.getDiskSpaceThresholdBytes())+"<0'}");
 	 	  
 	 	 if ((freeArchiveSpace-volumes.getDiskSpaceThresholdBytes())<=0) {
 	 	    logger.warn("there is no storage space left on volume {"+toString()+"}");
@@ -153,20 +177,28 @@ import com.stimulus.archiva.exception.ConfigurationException;
 		  
           if (status==newStatus)
              return;
-          
-  	    switch(status) {
-  	    	case CLOSED: throw new ConfigurationException("failed to change volume status. it is closed {newstatus='"+status+"'}",logger);
-  	    	case ACTIVE: if (newStatus!=Status.CLOSED)
-  	    	    		   throw new ConfigurationException("failed to change volume status. it can only be closed {newstatus='"+status+"'}",logger);
-  	    				 break;
-  	    	case UNUSED: if (newStatus!=Status.ACTIVE)
-  	    	    		   throw new ConfigurationException("failed to change volume status. it can only be made active {newstatus='"+status+"'}",logger);
-  	    				 break;
-  	    	case NEW: if (newStatus!=Status.UNUSED)
-  	    	    		throw new ConfigurationException("failed to change volume status. it can only be made active {newstatus='"+status+"'}",logger);
-  	    				break;
-  	    	default: throw new ConfigurationException("failed to change volume status. internal status is set to invalid value.",logger);
-  	    }
+        
+        if (newStatus!=Status.EJECTED) {
+	  	    switch(status) {
+	  	    	case CLOSED: 
+	  	    		if (newStatus!=Status.UNMOUNTED)
+	  	    			throw new ConfigurationException("failed to change volume status. it is closed {newstatus='"+status+"'}",logger);
+	  	    			break;
+	  	    	case ACTIVE: if (newStatus!=Status.CLOSED)
+	  	    	    		   throw new ConfigurationException("failed to change volume status. it can only be closed {newstatus='"+status+"'}",logger);
+	  	    				 break;
+	  	    	case UNUSED: if (newStatus!=Status.ACTIVE)
+	  	    	    		   throw new ConfigurationException("failed to change volume status. it can only be made active {newstatus='"+status+"'}",logger);
+	  	    				 break;
+	  	    	case NEW: if (newStatus!=Status.UNUSED)
+	  	    	    		throw new ConfigurationException("failed to change volume status. it can only be made active {newstatus='"+status+"'}",logger);
+	  	    				break;
+	  	    	case UNMOUNTED: if (newStatus!=Status.CLOSED)
+	  	    		throw new ConfigurationException("failed to change volume status. it can only be closed {newstatus='"+status+"'}",logger);
+	  	    		break;
+	  	    	default: throw new ConfigurationException("failed to change volume status. internal status is set to invalid value.",logger);
+	  	    }
+        }
         status = newStatus;
 	  }
 
@@ -198,11 +230,15 @@ import com.stimulus.archiva.exception.ConfigurationException;
 	  }
 	  
 	   protected synchronized void setFreeSpace() throws ArchivaException {
-		   if (!new File(getIndexPath()).exists())
-               throw new ArchivaException("cannot determine disk space (volume index path does not exist) {"+toString()+"}",logger);
-           
-           if (!new File(getPath()).exists())
-               throw new ArchivaException("cannot determine disk space (volume store path does not exist) {"+toString()+"}",logger);
+		   if (!new File(getIndexPath()).exists()) {
+			   logger.debug("cannot determine disk space (volume index path does not exist) {"+toString()+"}");
+			   return;
+		   }
+		   
+           if (!new File(getPath()).exists()) {
+        	   logger.debug("cannot determine disk space (volume store path does not exist) {"+toString()+"}");
+        	   return;
+           }
            
            long freeIndexSpace 	 = Long.MAX_VALUE / 2;
            long freeArchiveSpace = Long.MAX_VALUE / 2;
@@ -229,8 +265,8 @@ import com.stimulus.archiva.exception.ConfigurationException;
            long usedIndexSpace   = getFileOrDirectorySize(new File(getIndexPath()));
            setUsedIndexSpace(usedIndexSpace );
            setUsedArchiveSpace(usedArchiveSpace);
-           logger.debug("used index disk space {usedIndexSpace='"+usedIndexSpace + " bytes',"+toString()+"}");
-           logger.debug("used store disk space {usedStoreSpace='"+usedArchiveSpace +" bytes',"+toString()+"}");
+           logger.debug("used index disk space {usedIndexSpace='" + usedIndexSpace + "' bytes',"+toString() + "}");
+           logger.debug("used store disk space {usedStoreSpace='" + usedArchiveSpace +"' bytes',"+toString() + "}");
 	   }
 	   
 	   public synchronized void setDiskSpace()  throws ArchivaException {

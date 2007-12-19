@@ -16,8 +16,6 @@
 
 package com.stimulus.archiva.domain;
 
-import org.apache.log4j.Logger;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -25,34 +23,41 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import com.stimulus.archiva.exception.*;
-import com.stimulus.archiva.domain.Volume.Status;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.StringTokenizer;
 
-public class Volumes  {
+import org.apache.log4j.Logger;
+
+import com.stimulus.archiva.domain.Volume.Status;
+import com.stimulus.archiva.exception.ConfigurationException;
+import com.stimulus.util.Compare;
+import com.stimulus.util.DateUtil;
+
+public class Volumes  implements Serializable {
 
 	private static final long serialVersionUID = -1331431169000378587L;
 	
     public enum Priority { PRIORITY_HIGHER,PRIORITY_LOWER };
-    protected static final Logger logger 				= Logger.getLogger(Volumes.class);
+    protected static Logger		logger					= Logger.getLogger(Volumes.class);
     protected int 				diskSpaceCheckWait;
     protected int 				diskSpaceWarn;
     protected int 				diskSpaceThreshold;
     protected boolean 			diskSpaceChecking;
     protected static final String INFO_FILE				= "volumeinfo";
-    protected LinkedList<Volume> volumes              	   	= new LinkedList<Volume>();
-    private   SimpleDateFormat	format	   		        = new SimpleDateFormat("yyyyMMddHHmmssSS");
+    protected LinkedList<Volume> volumes              	= new LinkedList<Volume>();
     protected boolean  		 	shutdown 	            = true;
     protected Thread         	diskInfoWorker 	        = null;
- 
+    protected Thread			diskIrChecker           = null;
 
       public Volumes(boolean diskSpaceChecking, int diskSpaceCheckWait, int diskSpaceWarn, int diskSpaceThreshold) {
     	  this.diskSpaceCheckWait = diskSpaceCheckWait;
     	  this.diskSpaceWarn = diskSpaceWarn;
     	  this.diskSpaceThreshold = diskSpaceThreshold;
-    	  if (diskSpaceCheckWait>0)
-    		 diskInfoWorker = new DiskInfoWorker();
     	  this.diskSpaceChecking = diskSpaceChecking;
       }
       
@@ -82,29 +87,58 @@ public class Volumes  {
 	  /* Load/save volatile volume info
 	   *******************************/
 
-	  public void saveVolumeInfo(Volume v) throws ConfigurationException {
+	  public void saveVolumeInfo(Volume v, boolean overwrite) throws ConfigurationException {
 	      if (v == null)
 	          throw new ConfigurationException("assertion failure: null volume",logger);
-	      PrintWriter output = null;
-	      try {
-	        output = new PrintWriter( new FileWriter(v.getPath()+File.separator+INFO_FILE) );
-	        output.println("# Archiva "+Config.getApplicationVersion()+" Volume Information");
-	        output.println("# note: this file is crucial - do not delete it!");
-	        output.println("modified:"+convertDatetoString(v.getModified()));
-	        output.println("created:"+convertDatetoString(v.getCreated()));
-	        output.println("status:"+v.getStatus());
-
-	      } catch (IOException io) {
-	          logger.error("failed to write volumeinfo. {"+v.toString()+"} cause:",io);
-	      } finally {
-	        if (output != null) output.close();
+	      
+	      // don't save to ejected volume
+	      if (v.getStatus()==Volume.Status.EJECTED)
+	    	  return;
+	      
+	      // make a new volume unused
+	      if (v.getStatus()==Volume.Status.NEW)
+	    	  v.setStatus(Volume.Status.UNUSED);
+	      
+	      String filename = v.getPath()+File.separator+INFO_FILE;
+	      File file = new File(filename);
+	      
+	      if (overwrite || !file.exists()) { 
+		      PrintWriter output = null;
+		      try {
+		        output = new PrintWriter( new FileWriter(file) );
+		        output.println("# Archiva "+Config.getApplicationVersion()+" Volume Information");
+		        output.println("# note: this file is crucial - do not delete it!");
+		        output.println("id:"+v.getID());
+		        output.println("modified:"+DateUtil.convertDatetoString(v.getModified()));
+		        output.println("created:"+DateUtil.convertDatetoString(v.getCreated()));
+		        output.println("status:"+v.getStatus());
+	
+		      } catch (IOException io) {
+		    	  if (v.getStatus()!=Volume.Status.UNMOUNTED)
+		    		  logger.error("failed to write volumeinfo. {"+v.toString()+"} cause:",io);
+		      } finally {
+		        if (output != null) output.close();
+		      }
 	      }
 	    }
-
-	  public void loadAllVolumeInfo() throws ConfigurationException {
-	      Iterator i = volumes.iterator();
+	  
+	  public void saveAllVolumeInfo(boolean overwrite) throws ConfigurationException {
+		  logger.debug("saveAllVolumeInfo()");
+		  Iterator i = volumes.iterator();
 	      while (i.hasNext()) {
-	          Object o = (Object)i.next();
+	          Object o = i.next();
+	          if (o!=null) {
+	              Volume v = (Volume)o;
+	              saveVolumeInfo(v,overwrite);
+	          }
+	      }
+	  }
+	  
+	  public void loadAllVolumeInfo() throws ConfigurationException {
+		  logger.debug("loadAllVolumeInfo()");
+		  Iterator i = volumes.iterator();
+	      while (i.hasNext()) {
+	          Object o = i.next();
 	          if (o!=null) {
 	              Volume v = (Volume)o;
 	              loadVolumeInfo(v);
@@ -114,20 +148,25 @@ public class Volumes  {
 
 	  public void loadVolumeInfo(Volume v) throws ConfigurationException {
 
-	      if (v == null)
+	      	if (v == null)
 	          throw new ConfigurationException("assertion failure: null volume",logger);
-	      if (v.getPath().length()<1)
+	      	
+	      	logger.debug("loadVolumeInfo {path='"+v.getPath()+"',status='"+v.getStatus()+"'}");
+	      		        
+	      	if (v.getPath().length()<1)
 	          throw new ConfigurationException("assertion failure: volume path not set",logger);
-
-	        BufferedReader input = null;
+	      
+	      	
+	      	BufferedReader input = null;
 	        String line = null;
-
+	        logger.debug("volume ejection check {filename='"+v.getPath()+File.separator+INFO_FILE+"'}");
 	        File file = new File(v.getPath()+File.separator+INFO_FILE);
 	        if (!file.exists()) {
-	            v.setStatus(Volume.Status.UNUSED);
-	            logger.debug("volumeinfo does not exist (will be created when first message is archived). {"+v+"}");
+	            v.setStatus(Volume.Status.EJECTED);
+	            logger.debug("volume is ejected (volumeinfo does not exist). {"+v+"}");
 	            return;
 	        }
+
 	        try {
 
 	           input = new BufferedReader( new FileReader(v.getPath()+File.separator+INFO_FILE) );
@@ -137,17 +176,35 @@ public class Volumes  {
 	               StringTokenizer st = new StringTokenizer(line, ":");
 	               String name = st.nextToken();
 	               try {
-		               if (name.toLowerCase().trim().equals("modified"))
-		                   v.setModified(convertStringtoDate(st.nextToken().trim()));
-		               else if (name.toLowerCase().trim().equals("created"))
-		               	   v.setCreated(convertStringtoDate(st.nextToken().trim()));
-		               else if (name.toLowerCase().trim().equals("status")) {
+		               if (name.toLowerCase(Locale.ENGLISH).trim().equals("modified"))
+		                   v.setModified(DateUtil.convertStringToDate(st.nextToken().trim()));
+		               else if (name.toLowerCase(Locale.ENGLISH).trim().equals("created"))
+		               	   v.setCreated(DateUtil.convertStringToDate(st.nextToken().trim()));
+		               else if (name.toLowerCase(Locale.ENGLISH).trim().equals("id"))
+		               	   v.setID(st.nextToken().trim());
+		               else if (name.toLowerCase(Locale.ENGLISH).trim().equals("status")) {
 		            	  Status status = Status.CLOSED; // default
 		            	  try {
 		            		  status = Status.valueOf(st.nextToken().trim());
 		            	  } catch (IllegalArgumentException iae) {
 		      	  	    		logger.error("failed to load volume.info: status attribute is set to an illegal value {vol='"+v+"'}");
 		      	  	    		logger.error("volume will be set closed (due to error)");
+		            	  }
+		            	  
+		            	  // here we make doubly sure that there is not another active volume
+		            	  // if another volume is active, we close the current one and save it.
+		            	  if (status == Volume.Status.ACTIVE) {
+		            		  Volume activeVolume = getActiveVolume();
+		            		  if (activeVolume!=null && !activeVolume.getPath().equalsIgnoreCase(v.getPath())) {
+		            			  if (v.getModified().before(activeVolume.getModified())) {
+		            				  v.setStatus(Volume.Status.CLOSED);
+		            				  saveVolumeInfo(v,true);
+		            			  } else {
+		            				  activeVolume.setStatus(Volume.Status.CLOSED);
+		            				  saveVolumeInfo(activeVolume,true);
+		            			  }
+		            			  Collections.sort(volumes); 
+		            		  }
 		            	  }
 		            		  
                           v.setStatusNoAssertions(status);
@@ -173,18 +230,24 @@ public class Volumes  {
 	  }
 
 
-	  public void touch(Volume v) throws ConfigurationException {
-	      if (v.getModified()==null) {
+	  public void touchActiveVolume() throws ConfigurationException {
+		  
+		  Volume v = getActiveVolume();
+		  
+		  if (v==null)
+			  throw new ConfigurationException("failed to touch active volume. no volume is active",logger);
+	      
+		  if (v.getModified()==null) {
 	          v.setCreated(new Date());
 	      }
 	      v.setModified(new Date());
-	      saveVolumeInfo(v);
+	      saveVolumeInfo(v,true);
 	  }
 
 
  	  public void removeVolume(int id) throws ConfigurationException {
 
- 	     Volume v = (Volume)volumes.get(id);
+ 	     Volume v = volumes.get(id);
  	     if (v.getStatus()==Volume.Status.ACTIVE)
  	         throw new ConfigurationException("failed to delete active volume. it must be closed first",logger);
 	  	 volumes.remove(v);
@@ -200,13 +263,13 @@ public class Volumes  {
  	  }
 
  	  public Volume getVolume(int index) {
- 	  	return (Volume) volumes.get(index);
+ 	  	return volumes.get(index);
  	  }
 
  	  public void setVolumePriority(int id, Priority priority)  {
 
  	 	LinkedList<Volume> list = volumes;
- 	   	Volume v = (Volume)list.get(id);
+ 	   	Volume v = list.get(id);
 
  	   	if (v.getStatus()!=Volume.Status.UNUSED) // can only reorder unused
  	   	    return;
@@ -238,45 +301,69 @@ public class Volumes  {
  	  	 volumes.clear();
  	   }
 
- 	   public Volume getVolume(String uniqueId) throws ConfigurationException {
+ 	   
+ 	   public Volume getNewVolume(String id) throws ConfigurationException {
+ 		  for (Volume volume : volumes) {
+	  	  	    if (volume.getStatus()==Volume.Status.UNUSED)
+	  	  	        throw new ConfigurationException("failed to lookup new volumes {id='"+id+"'}",logger);
+	  	  	    if (Compare.equalsIgnoreCase(volume.getID(), id))
+	  	  	    	return volume;
+	  	  }
+ 		  throw new ConfigurationException("failed to lookup volumes {id='"+id+"'}",logger);
+ 	   }
+ 	   
+ 	  public Volume getLegacyVolume(String uniqueId) throws ConfigurationException {
 	  	  if (uniqueId==null)
 	  	      throw new ConfigurationException("uniqueid cannot be null",logger);
-
- 	       Date date = null;
-	  	  	try {
-	  	  	    date = format.parse(uniqueId);
+	  	  
+	  	  	Date date = null;
+		  	try {
+	  	  	    date = DateUtil.convertStringToDate(uniqueId);
 	  	  	} catch (Exception e) {
-	  	  	    logger.error("failed to parse uniqueid {id='"+uniqueId+"'}");
+	  	  	    logger.warn("failed to parse uniqueid {id='"+uniqueId+"'}");
 	  	  	}
-	
+
 	  	  	for (Volume volume : volumes) {
 	  	  	    if (volume.getStatus()==Volume.Status.UNUSED)
-	  	  	        throw new ConfigurationException("failed to lookup volumes {uniqueId='"+uniqueId+"'}",logger);
+	  	  	        throw new ConfigurationException("failed to lookup legacy volumes {uniqueId='"+uniqueId+"'}",logger);
 	  	  	    if (volume != null && volume.getModified()!=null && volume.getModified().compareTo(date)>=0) {
 	  	  	    	boolean isModified = volume.getModified().compareTo(date)>0;
-	  	  	    	logger.debug("isModified:"+isModified);
 	  	  	    	return volume;
 	  	  	    	
 	  	  	    }
 	  	  	}
 	  	  	return null;
  	   }
-
+ 	 
  	   public void closeVolume(int index) throws ConfigurationException {
  	       Object o = volumes.get(index);
  	       if (o==null)
  	           throw new ConfigurationException("failed to close volume. no such volume exists",logger);
 	   	    Volume vs = (Volume)o;
 	   	    vs.setStatus(Volume.Status.CLOSED);
-	   	    saveVolumeInfo(vs);
+	   	    saveVolumeInfo(vs,true);
 	   	    Collections.sort(volumes);
 	   	    logger.debug("volume is now closed {"+vs+"}");
  	   }
+ 	   
+ 	  public void unmountVolume(int index) throws ConfigurationException {
+	       Object o = volumes.get(index);
+	       if (o==null)
+	           throw new ConfigurationException("failed to unmount volume. no such volume exists",logger);
+	   	    Volume vs = (Volume)o;
+	   	    vs.setStatus(Volume.Status.UNMOUNTED);
+	   	    saveVolumeInfo(vs,true);
+	   	    Collections.sort(volumes);
+	   	    logger.debug("volume is now unmounted {"+vs+"}");
+	   }
+ 	  
 
  	 public Volume  getActiveVolume()  {
  		for (Volume volume : volumes) {
-		      if (volume.getStatus()==Volume.Status.ACTIVE)
-		          return volume;
+		      if (volume.getStatus()==Volume.Status.ACTIVE) {
+		          logger.debug("getActiveVolume() {"+volume+"}");
+		    	  return volume;
+		      }
 		}
 		return null;
 	  }
@@ -289,14 +376,15 @@ public class Volumes  {
 		 	    		logger.debug("volume has enough disk space {"+vol+"}");
 		 	    		return;
 		 	    	 } else {
-		 	    		logger.info("closing volume. volume has run out of disk space. {"+vol+"}");
+		 	    		
+		 	    		 logger.info("closing volume. volume has run out of disk space. {"+vol+"}");
 		 	    		vol.setStatus(Volume.Status.CLOSED);
-		 	    		saveVolumeInfo(vol);
+		 	    		saveVolumeInfo(vol,true);
 		 	    	 }
 		 	     }
 	 	 
 		 	     for (Volume volume : volumes) {
-			          if (volume.getStatus()==Volume.Status.UNUSED) {
+			          if (volume.getStatus()==Volume.Status.UNUSED ) {
 			              volume.setDiskSpace();
 			              if (volume.enoughDiskSpace()) {
 		                      volume.setStatus(Volume.Status.ACTIVE); // make the new one active
@@ -312,16 +400,86 @@ public class Volumes  {
 
     
  	   public synchronized void startDiskSpaceCheck() {
- 	      if (shutdown) {
+ 	      if (diskSpaceCheckWait>0) {
+    		 diskInfoWorker = new DiskInfoWorker();
+    		
+ 	       }
+ 	       diskIrChecker = new DiskIRChecker();
+ 		   if (shutdown) {
  	          shutdown = false;
- 	          diskInfoWorker.start();
+ 	          if (diskSpaceCheckWait>0)
+ 	        	  diskInfoWorker.start();
+ 	          diskIrChecker.start();
  	      }
  	   }
+ 	   
+	 	 protected void stopDiskSpaceCheck()  {
+	 	   
+	 	    shutdown = true;
+	 	    if (diskInfoWorker!=null)
+	 	    	diskInfoWorker.interrupt();
+	 	    if (diskIrChecker!=null)
+	 	    	diskIrChecker.interrupt();
+	 	 }
+	 	 
+	 	 protected void finalize() throws Throwable {
+	 		 super.finalize();
+	 		 stopDiskSpaceCheck();
+	 	 }
 
- 	  private class DiskInfoWorker extends Thread {
+ 	   // disk insert removal checker
+ 	  protected class DiskIRChecker extends Thread implements Serializable{
+ 		  
+ 		  
+ 		  /**
+		 * 
+		 */
+		private static final long serialVersionUID = -5888336233797871738L;
 
+		public DiskIRChecker() {
+ 			  setDaemon(true);
+ 		  }
+ 		  
+ 		  public void run() { 
+ 			 
+ 			  setName("DiskInsertRemovalChecker");
+ 			  while (!shutdown) {
+ 				  Iterator i = volumes.iterator();
+ 			      while (i.hasNext()) {
+ 			          Object o = i.next();
+ 			          if (o!=null) {
+ 			              Volume v = (Volume)o;
+ 			             File file = new File(v.getPath()+File.separator+INFO_FILE);
+ 			             // something has changed
+ 			              if (file.exists() && v.getStatus()==Volume.Status.EJECTED ||
+ 			            	  !file.exists() && v.getStatus()!=Volume.Status.EJECTED) {
+ 			            		 try {
+ 			            			 loadVolumeInfo(v);
+ 			            		 } catch (ConfigurationException ce) {
+ 			            			 logger.warn("failed to load volume info {"+v+"}");
+ 			            		 }
+ 			              }
+ 			          }
+ 			      }
+ 			     try { Thread.sleep(10000); } catch(Exception e) { shutdown = true; } 				  
+ 			  } 
+ 		  }
+ 	  }
+ 	  
+ 	  
+ 	  private class DiskInfoWorker extends Thread implements Serializable{
+ 		 
+ 		 /**
+		 * 
+		 */
+		private static final long serialVersionUID = -2048553069551273094L;
+
+		public DiskInfoWorker() {
+			  setDaemon(true);
+		  }
+ 		 
  	      public void run() {
-
+ 	    	 setName("DiskSpaceChecker");
  	          while (!shutdown) {
  	              Volume activeVolume = getActiveVolume();
                   try {
@@ -333,25 +491,13 @@ public class Volumes  {
                   } catch (Exception e) {
                       logger.error("failed to retrieve disk space {"+activeVolume+"}",e);
                   }
- 	             try { Thread.sleep(getDiskSpaceCheckWait()*1000); } catch(Exception e) {}
+ 	             try { Thread.sleep(getDiskSpaceCheckWait()*1000); } catch(Exception e) { shutdown = true; }
  	          }
  	          
  	      }
  	 	}
 
-	 	 protected void finalize() throws Throwable {
-	 	    super.finalize();
-	 	    shutdown = true;
-	 	    diskInfoWorker.interrupt();
-	 	 }
 
-		  protected String convertDatetoString(Date date) {
-		  	  return format.format(date);
-		  }
-
-		  protected Date convertStringtoDate(String str) throws Exception {
-		      return format.parse(str);
-		  }
-
+		
 
 }

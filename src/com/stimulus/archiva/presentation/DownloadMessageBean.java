@@ -16,26 +16,40 @@
 
 
 package com.stimulus.archiva.presentation;
+import java.io.File;
+import java.io.Serializable;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.log4j.Logger;
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionMapping;
 import org.apache.struts.actions.DownloadAction;
-import org.apache.struts.action.*;
-import javax.servlet.http.*;
-import java.io.*;
 
-public class DownloadMessageBean extends DownloadAction {
+import com.stimulus.archiva.domain.Config;
 
-    protected static final Logger logger = Logger.getLogger(DownloadMessageBean.class.getName());
+public class DownloadMessageBean extends DownloadAction implements Serializable {
+
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -778698565924172868L;
+	protected static Logger logger = Logger.getLogger(DownloadMessageBean.class.getName());
     
     protected StreamInfo getStreamInfo(ActionMapping mapping, ActionForm form, 
             						   HttpServletRequest request, 
             						   HttpServletResponse response)
     									throws Exception {
-        String fileName = ((MessageBean)form).getOriginalMessageFileName();
+    	
+    	String fileName = request.getParameter("name");
+    	//String fileName = ((MessageBean)form).getOriginalMessageFileName();
         logger.debug("download original email {fileName='"+fileName+"'}");
         response.setHeader("Content-disposition", 
                            "attachment; filename=" + fileName.replace(' ','_'));
         String contentType = "message/rfc822";
-        String filePath = ((MessageBean)form).getOriginalMessageFilePath();
+        //String filePath = ((MessageBean)form).getOriginalMessageFilePath();
+        String filePath = Config.getViewPath() + File.separatorChar + fileName;
         File file          = new File(filePath);
         response.setContentLength((int)file.length());
         return new FileStreamInfo(contentType, file);

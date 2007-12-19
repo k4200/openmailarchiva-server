@@ -16,16 +16,23 @@
 
 
 package com.stimulus.archiva.presentation;
+import java.io.File;
+import java.io.Serializable;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.log4j.Logger;
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionMapping;
 import org.apache.struts.actions.DownloadAction;
-import org.apache.struts.action.*;
-import javax.servlet.http.*;
-import java.io.*;
+
+import com.stimulus.archiva.domain.Config;
 
 
-public class DownloadBean extends DownloadAction implements Serializable{
+public class DownloadBean extends DownloadAction implements Serializable {
 
-    protected static final Logger logger = Logger.getLogger(DownloadBean.class.getName());
+    protected static Logger logger = Logger.getLogger(DownloadBean.class.getName());
     private static final long serialVersionUID = -7626204841615451485L;
     
     protected StreamInfo getStreamInfo(ActionMapping mapping, ActionForm form, 
@@ -34,8 +41,11 @@ public class DownloadBean extends DownloadAction implements Serializable{
     									throws Exception {
 
 
-        String fileName = ((MessageBean)form).getAttachment();
-        File file = new File(((MessageBean)form).getAttachmentFilePath());
+    	String fileName = request.getParameter("attachment");
+    	//String fileName = ((MessageBean)form).getAttachment();
+    	 //File file = new File(((MessageBean)form).getAttachmentFilePath());
+    	String filePath = Config.getViewPath() + File.separatorChar + fileName;
+        File file = new File(filePath);
         logger.debug("download attachment {fileName='"+file.getPath()+"'");
         response.setHeader("Content-disposition", 
                            "attachment; filename=" + fileName.replace(' ','_'));

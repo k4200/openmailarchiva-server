@@ -14,9 +14,20 @@
          <url-pattern>/advancedsearchform.do</url-pattern>
          <url-pattern>/advancedsearch.do</url-pattern>
          <url-pattern>/searchpage.do</url-pattern>
-         <url-pattern>/viewmail.do</url-pattern>
+         <url-pattern>/view.do</url-pattern>
+         <url-pattern>/viewmail</url-pattern>
+         <url-pattern>/print.do</url-pattern>
+         <url-pattern>/send.do</url-pattern>
+         <url-pattern>/sendmsg.do</url-pattern>
+         <url-pattern>/searchsort.do</url-pattern>
+         <url-pattern>/calendar.do</url-pattern>
+         <url-pattern>/downloadattachment.do</url-pattern>
+         <url-pattern>/downloadmessage.do</url-pattern>
+         <url-pattern>/saveresults.do</url-pattern>
+         <url-pattern>/export.do</url-pattern>
          <url-pattern>/viewattachment.do</url-pattern>
          <url-pattern>/signoff.do</url-pattern>
+         <url-pattern>/signon.do</url-pattern>
       </web-resource-collection>
       <auth-constraint>
           <role-name>user</role-name>
@@ -32,7 +43,14 @@
          <url-pattern>/configure.do</url-pattern>
          <url-pattern>/indexstatus.do</url-pattern>
          <url-pattern>/lookuprolecriterion.do</url-pattern>
+         <url-pattern>/lookuprolecriterionform.do</url-pattern>
+         <url-pattern>/lookuprolecriterionldapform.do</url-pattern>
          <url-pattern>/testlogin.do</url-pattern>
+         <url-pattern>/testloginform.do</url-pattern>
+         <url-pattern>/recover.do</url-pattern>
+         <url-pattern>/quarantine.do</url-pattern>
+         <url-pattern>/viewauditlog.do</url-pattern>
+         <url-pattern>/viewdebuglog.do</url-pattern>
       </web-resource-collection>
       <auth-constraint>
           <role-name>administrator</role-name>
@@ -45,7 +63,7 @@
       <form-login-config>
          <form-login-page>/signonform.do</form-login-page>
          <form-error-page>/signonform.do</form-error-page>
-         <form-default-page>/search.do</form-default-page>
+         <form-default-page>/searchform.do</form-default-page>
       </form-login-config>
    </login-config>
    

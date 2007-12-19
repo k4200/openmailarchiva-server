@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!DOCTYPE struts-config PUBLIC
-          "-//Apache Software Foundation//DTD Struts Configuration 1.1//EN"
-          "http://jakarta.apache.org/struts/dtds/struts-config_1_1.dtd">
+          "-//Apache Software Foundation//DTD Struts Configuration 1.3//EN"
+          "http://struts.apache.org/dtds/struts-config_1_3.dtd">
 
 <struts-config>
 
@@ -11,7 +11,8 @@
     <form-bean name="searchBean" type="com.stimulus.archiva.presentation.SearchBean"/>
     <form-bean name="messageBean" type="com.stimulus.archiva.presentation.MessageBean"/>
     <form-bean name="configBean" type="com.stimulus.archiva.presentation.ConfigBean"/>
-
+	<form-bean name="searchResultBean" type="com.stimulus.archiva.presentation.SearchResultBean"/>
+	<form-bean name="multiMessageBean" type="com.stimulus.archiva.presentation.MultiMessageBean"/>
   </form-beans>
 
   <global-exceptions>
@@ -28,16 +29,35 @@
 
     <!-- SEARCH ACTIONS -->
     
-   
-    <action path="/search" type="com.stimulus.struts.BeanAction"
-      name="searchBean" scope="session"
-      validate="false">
+ 
+     <action path="/searchform" type="com.stimulus.struts.BeanAction"
+      name="searchBean" scope="session" validate="false">
       <forward name="success" path="/search/search.jsp"/>
-      <forward name="reload" path="/search/searchform.jsp"/>
+      <forward name="reload" path="/search/search.jsp"/>
+      <forward name="export" path="/export.do"/>
+      <forward name="saveresults" path="/saveresults.do"/>
+      <forward name="print" path="/print.do"/>
+      <forward name="view" path="/view.do"/>
     </action>
-   
-    <action path="/searchpage" type="com.stimulus.struts.BeanAction"
-      name="searchBean" scope="session" parameter="*"
+ 
+    <action path="/search" type="com.stimulus.struts.BeanAction"
+      name="searchBean" scope="session" validate="false">
+      <forward name="success" path="/search/search.jsp"/>
+      <forward name="reload" path="/search/search.jsp"/>
+      <forward name="export" path="/export.do"/>
+      <forward name="saveresults" path="/saveresults.do"/>
+      <forward name="print" path="/print.do"/>
+      <forward name="view" path="/view.do"/>
+    </action>
+    
+    <action path="/view" type="com.stimulus.struts.BeanAction"
+     name="multiMessageBean" scope="session" validate="false">
+      <forward name="success" path="/message/viewmessages.jsp"/>
+    </action>
+    
+  
+    <action path="/searchsort" type="com.stimulus.struts.BeanAction"
+      name="searchBean" scope="session" 
       validate="false" >
       <forward name="success" path="/search/search.jsp"/>
     </action>
@@ -56,6 +76,17 @@
       <forward name="reload" path="/configuration/configurationform.jsp"/>
     </action>
     
+     <action path="/recover" type="com.stimulus.struts.BeanAction"
+	      name="configBean" scope="session" 
+	      validate="false" >
+	      <forward name="success" path="/configuration/recover.jsp"/>
+     </action>
+     
+      <action path="/quarantine" type="com.stimulus.struts.BeanAction"
+	      name="configBean" scope="session" validate="false" >
+	 	<forward name="success" path="/configuration/quarantine.jsp"/>
+     </action>
+  
     <action path="/indexstatus" type="com.stimulus.struts.BeanAction"
       name="configBean" scope="session" parameter="*"
       validate="false" >
@@ -85,7 +116,7 @@
       validate="false" >
       <forward name="success" path="/configuration/testlogin.jsp"/>
     </action>
-    
+   
      <action path="/calendar" type="com.stimulus.struts.BeanAction"
        name="searchBean" scope="session" parameter="*"
        validate="false" >
@@ -97,7 +128,7 @@
       name="messageBean" scope="session" 
       validate="false" >
       <forward name="success" path="/message/viewmail.jsp"/>
-      <forward name="reload" path="/message/viewmail.jsp"/>
+      <forward name="reload" path="/common/politeerror.jsp"/>
     </action>
     
     <action path="/viewattachment" type="com.stimulus.struts.BeanAction"
@@ -119,6 +150,7 @@
       <forward name="success" path="/message/viewmail.jsp"/>
     </action>
     
+ 
     <!-- ACCOUNT ACTIONS -->
 
    <action path="/signonform" type="com.stimulus.struts.BeanAction"
@@ -140,43 +172,24 @@
       <forward name="success" path="/account/signonform.jsp"/>
     </action>
     
-    <!-- UPLOAD ACTIONS -->
-    
-    <action path="/uploadform" type="com.stimulus.struts.BeanAction"
-      name="messageBean" scope="session" parameter="*"
-      validate="false">
-      <forward name="success" path="/testdata/uploadform.jsp"/>
+    <action path="/viewauditlog" type="com.stimulus.struts.BeanAction"
+      name="configBean" scope="session" parameter="*"
+      validate="false" >
+      <forward name="success" path="/configuration/viewauditlog.jsp"/>
     </action>
 
-    <action path="/upload" type="com.stimulus.struts.BeanAction"
-      name="messageBean" scope="session"
-      validate="false">
-      <forward name="success" path="/search/searchform.jsp"/>
+    <action path="/viewdebuglog" type="com.stimulus.struts.BeanAction"
+      name="configBean" scope="session" parameter="*"
+      validate="false" >
+      <forward name="success" path="/configuration/viewdebuglog.jsp"/>
     </action>
     
-    <!-- STRUTS LAYOUT -->
-    <action path="/sort"
-	type="fr.improve.struts.taglib.layout.sort.SortAction"
-	scope="request"
-	validate="false">
-	</action>
     
-	<action path="/treeview"
-		type="fr.improve.struts.taglib.layout.treeview.TreeviewAction"
-		scope="request"
-		validate="false">
-	</action>
-
-
   </action-mappings>
 
   <message-resources parameter="properties.application"/>
-  <message-resources key="org.apache.struts.action.MESSAGE_de"
-	parameter="properties.application_de" />
-  
 
-  <plug-in className="com.stimulus.archiva.plugin.Startup">	
-	</plug-in>
+  <plug-in className="com.stimulus.archiva.plugin.Startup"></plug-in>
 	
-	
+
 </struts-config>

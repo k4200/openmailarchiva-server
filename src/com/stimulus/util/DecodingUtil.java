@@ -16,13 +16,19 @@
 
 package com.stimulus.util;
 
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 
 import javax.mail.internet.MimeUtility;
 import javax.mail.internet.ParseException;
 
-public class DecodingUtil
+public class DecodingUtil implements Serializable
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2691151350003599890L;
+
 	public static String decodeWord(String strWord)
 	{
 		if (strWord==null)

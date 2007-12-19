@@ -15,12 +15,19 @@
  */
 
 package com.stimulus.archiva.search;
+import java.io.Serializable;
 
+import com.stimulus.archiva.exception.MessageSearchException;
 import com.stimulus.archiva.domain.Search;
 
-public class SearchFactory {
+public class SearchFactory  implements Serializable {
 	
-	public static final Search getFactory(Search.Type searchType) {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8318199726045277443L;
+
+	public static final Search getFactory(Search.Type searchType) throws MessageSearchException {
          switch (searchType) {
            case STANDARD: return new StandardSearch();
          } 

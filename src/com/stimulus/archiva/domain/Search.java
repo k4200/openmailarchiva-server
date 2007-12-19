@@ -15,80 +15,72 @@
  */
 
 package com.stimulus.archiva.domain;
-import java.text.DateFormat;
-import java.util.*;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import com.stimulus.archiva.domain.fields.EmailFieldValue;
 import com.stimulus.archiva.exception.MessageSearchException;
-import com.stimulus.archiva.service.MessageService;
-import com.stimulus.util.DecodingUtil;
 
-public abstract class Search 
+public abstract class Search implements java.io.Serializable 
 {
 	private static final long serialVersionUID = -6424054985456683316L;
-	protected static Logger logger = Logger.getLogger(Search.class.getName());
+	protected static Logger logger = Logger.getLogger(Search.class);
 	public enum Type { STANDARD }; // searchresults.type_
 	public enum Attachment { EITHER, ATTACH, NOATTACH }; // searchresults.attachment_
 	public enum Priority { ANY, HIGHEST, HIGH, NORMAL, LOW, LOWEST }; // searchresults.priority_
 	public enum Flag { ANY, DELETED, SEEN, ANSWERED, FLAGGED, RECENT, DRAFT }; //searchresults.flag_
-	protected static final List FIELD_LIST;
-	protected static final List FIELD_LABEL_LIST;
+	public enum DateType { SENTDATE,ARCHIVEDATE  }; 
 	
-		static {
-		  List<String> fieldList = new LinkedList<String>();
-		    fieldList.add("all");
-		    fieldList.add("to");
-		    fieldList.add("from");
-		    fieldList.add("subject");
-		    fieldList.add("cc");
-		    fieldList.add("bcc");
-		    fieldList.add("body");
-		    fieldList.add("attachments");
-		    FIELD_LIST = Collections.unmodifiableList(fieldList);
-		
-		    List<String> fieldLabelList = new LinkedList<String>();
-		    fieldLabelList.add("field_label_all");
-		    fieldLabelList.add("field_label_to");
-		    fieldLabelList.add("field_label_from");
-		    fieldLabelList.add("field_label_subject");
-		    fieldLabelList.add("field_label_cc");
-		    fieldLabelList.add("field_label_bcc");
-		    fieldLabelList.add("field_label_body");
-		    fieldLabelList.add("field_label_attachments");
-		    FIELD_LABEL_LIST = Collections.unmodifiableList(fieldLabelList);
-		}  
-		    
 	protected String			searchQuery	  = "";
-	protected ArrayList<Result> results	  = new ArrayList<Result>();
+	protected ArrayList<Result> results	  	  = new ArrayList<Result>();
 	protected FetchMessage	    fetchMessage  = null;
-	protected String			userName	  = null;
-	protected String			userRole	  = null;
     protected int               maxResults    = 0;
     protected Type				searchType	  = Type.STANDARD;			
 	protected String            language      = "en"; 
 	protected Attachment  		attach  	  = Attachment.EITHER;
 	protected Priority          priority	  = Priority.ANY;
 	protected Flag				flag		  = Flag.ANY;
-	protected Date				sentAfter	  = null;
-	protected Date				sentBefore	  = null;
-	protected String			sortField	  = "sentdate";
+	protected Date				after	  	  = null;
+	protected Date				before	  	  = null;
+	protected String			sortField	  = "archivedate";
 	protected boolean			sortOrder	  = true;
-	protected List<String>      emailAddresses = new ArrayList<String>();
+	protected Principal 		principal  	  = null;
+	protected DateType			dateType 	   = DateType.SENTDATE;
 	
 	public Search()
 	{
+		Calendar c1 = Calendar.getInstance(); 
+		c1.add(Calendar.DATE,-60);
+		c1.set(c1.get(Calendar.YEAR),c1.get(Calendar.MONTH),c1.get(Calendar.DAY_OF_MONTH),1,0,0);
+		after = c1.getTime();
+		c1.add(Calendar.DATE,61);
+		c1.set(c1.get(Calendar.YEAR),c1.get(Calendar.MONTH),c1.get(Calendar.DAY_OF_MONTH),23,59,59);
+		before = c1.getTime();
 	}
 	
 	// abstract methods
 	
 	public abstract void searchMessage() throws MessageSearchException;
-	
+
 	//	 allow for lazy retrieval of message contents
 
 	public static abstract class FetchMessage
 	{
 		public abstract void fetchMessage(Result result);
+	}
+	
+	public void setPrincipal(Principal principal) {
+		this.principal = principal;
+	}
+	
+	public Principal getPrincipal() {
+		return principal;
 	}
 	
     public void setType(Type searchType) {
@@ -99,24 +91,37 @@ public abstract class Search
         return this.searchType;
     }
     
-	public void setSentAfter(Date sentAfter)
+	public void setAfter(Date sentAfter)
 	{
-		this.sentAfter = sentAfter;
+		this.after = sentAfter;
 	}
 
-	public Date getSentAfter()
+	public Date getAfter()
 	{
-		return sentAfter;
+		return after;
 	}
 
-	public void setSentBefore(Date sentBefore)
+	public void setBefore(Date sentBefore)
 	{
-		this.sentBefore = sentBefore;
+		this.before = sentBefore;
 	}
 	
-	public Date getSentBefore()
+	public Date getBefore()
 	{
-       return sentBefore;
+       return before;
+	}
+	
+	public void setDateType(DateType dateType) {
+		this.dateType = dateType;
+		if (dateType==DateType.ARCHIVEDATE && sortField.equals("sentdate"))
+			sortField = "archivedate";
+		
+		if (dateType==DateType.SENTDATE && sortField.equals("archivedate"))
+			sortField = "sentdate";
+	}
+	
+	public DateType getDateType() {
+		return dateType;
 	}
     
     public void setLanguage(String language) {
@@ -167,6 +172,8 @@ public abstract class Search
 
 	public String getSortField()
 	{
+		
+				
 		return sortField;
 	}
 
@@ -183,44 +190,6 @@ public abstract class Search
 	public void setSortOrder(boolean sortOrder)
 	{
 		this.sortOrder = sortOrder;
-	}
-
-	public void setUserName(String userName)
-	{
-		this.userName = userName;
-	}
-
-	public String getUserName()
-	{
-		return userName;
-	}
-
-	public void setUserRole(String userRole)
-	{
-		this.userRole = userRole;
-	}
-
-	public String getUserRole()
-	{
-		return userRole;
-	}
-	
-	public void setEmailAddresses(List<String> emailAddresses) {
-		this.emailAddresses = emailAddresses;
-	}
-	
-	public List<String> getEmailAddresses() {
-		return emailAddresses;
-	}
-	
-	public void addMessage(EmailID emailId, float score, String subject, String toAddresses, String fromAddress, Date sentDate, int size, boolean hasAttachment, int priority)
-	{
-		results.add(new Result(emailId, score, subject, toAddresses, fromAddress, sentDate, size,hasAttachment,priority));
-	}
-
-	public void addMessage(EmailID emailId, float score)
-	{
-		results.add(new Result(emailId, score));
 	}
 
 	public Iterator getResults()
@@ -248,139 +217,18 @@ public abstract class Search
 		this.fetchMessage = fetchMessage;
 	}
 
-	public class Result
+	public abstract class Result
 	{
-		EmailID	emailId;
-		String	toAddresses;
-		String	fromAddress;
-		Date	sentDate;
-		int		size;
-		String	subject;
-		float	score;
-        boolean hasAttachment = false;
-		boolean	fetchedMessage	= false;
-        int priority = 3; // normal
+	
+    
+		public Result() {}
 
-		public Result(EmailID emailId, float score)
-		{
-			//logger.debug("adding search result {emailid='"+emailId.getUniqueID()+"'}");
-			this.emailId = emailId;
-			this.score = score;
+		
+		public abstract EmailFieldValue getFieldValue(String key);
 
-		}
+		public abstract EmailID getEmailId();
 
-		public Result(EmailID emailId, float score, String subject, String toAddresses, String fromAddress, Date sentDate, int size, boolean hasAttachment, int priority)
-		{
-			this.emailId = emailId;
-			this.toAddresses = toAddresses;
-			this.fromAddress = fromAddress;
-			this.sentDate = sentDate;
-			this.size = size;
-			this.subject = subject;
-			this.score = score;
-			this.hasAttachment = hasAttachment;
-            this.priority = priority;
-		}
-
-		public EmailID getEmailId()
-		{
-			return emailId;
-		}
-
-		public String getSubject()
-		{
-			fetchMessage();
-			return DecodingUtil.decodeWord(subject);
-		}
-
-		public void setSubject(String subject)
-		{
-			this.subject = subject;
-		}
-
-		public void setToAddresses(String toAddresses)
-		{
-			this.toAddresses = toAddresses;
-		}
-
-		public void setFromAddress(String fromAddress)
-		{
-			this.fromAddress = fromAddress;
-		}
-
-		public void setSize(int size)
-		{
-			this.size = size;
-		}
-        
-        public void setHasAttachment(boolean hasAttachment) {
-            this.hasAttachment = hasAttachment;
-        }
-        
-        public boolean getHasAttachment() {
-        	fetchMessage();
-            return hasAttachment;
-        }
-        
-        public void setPriority(int priority) {
-            this.priority = priority;
-        }
-
-        public int getPriority() {
-        	fetchMessage();
-            return priority;
-        }
-        
-		public void setSentDate(Date sentDate)
-		{
-			this.sentDate = sentDate;
-		}
-
-		public String getToAddresses()
-		{
-			fetchMessage();
-			// String address = "";
-			if (toAddresses == null) return "";
-			return DecodingUtil.decodeWord(toAddresses);
-		}
-
-		public String getFromAddress()
-		{
-			fetchMessage();
-
-			if (fromAddress != null)
-			{
-				return DecodingUtil.decodeWord(fromAddress);
-			} else return "";
-		}
-
-		public Date getSentDate()
-		{
-			fetchMessage();
-			return sentDate;
-		}
-
-		public int getSize()
-		{
-			fetchMessage();
-			return size;
-		}
-
-		public Float getScore()
-		{
-			return score;
-
-		}
-
-		private void fetchMessage()
-		{
-			if (fetchMessage == null) return;
-			if (!fetchedMessage)
-			{
-				fetchMessage.fetchMessage(this);
-				fetchedMessage = true;
-			}
-		}
+		
 	}
 	 
 }

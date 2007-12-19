@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="url:MAILARCHIVA" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="url:MAILARCHIVA" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="url:MAILARCHIVA" xmlns="http://www.w3.org/2001/XMLSchema">
+      <s:element name="getServerVersion">
+        <s:complexType/>
+      </s:element>
+      <s:element name="getServerVersionResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element name="getServerVersionReturn" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="storeMessage">
+        <s:complexType>
+          <s:sequence>
+            <s:element name="in0" type="s:base64Binary"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="storeMessageResponse">
+        <s:complexType/>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="storeMessageRequest">
+    <wsdl:part name="parameters" element="tns:storeMessage">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getServerVersionRequest">
+    <wsdl:part name="parameters" element="tns:getServerVersion">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getServerVersionResponse">
+    <wsdl:part name="parameters" element="tns:getServerVersionResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="storeMessageResponse">
+    <wsdl:part name="parameters" element="tns:storeMessageResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="MailArchiva">
+    <wsdl:operation name="getServerVersion">
+      <wsdl:input name="getServerVersionRequest" message="tns:getServerVersionRequest">
+    </wsdl:input>
+      <wsdl:output name="getServerVersionResponse" message="tns:getServerVersionResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="storeMessage">
+      <wsdl:input name="storeMessageRequest" message="tns:storeMessageRequest">
+    </wsdl:input>
+      <wsdl:output name="storeMessageResponse" message="tns:storeMessageResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="MailArchivaSoapBinding" type="tns:MailArchiva">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="getServerVersion">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="getServerVersionRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getServerVersionResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="storeMessage">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="storeMessageRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="storeMessageResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="MailArchivaService">
+    <wsdl:port name="MailArchiva" binding="tns:MailArchivaSoapBinding">
+      <soap:address location="http://d-hoernchen:8090/mailarchiva/services/MailArchiva"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

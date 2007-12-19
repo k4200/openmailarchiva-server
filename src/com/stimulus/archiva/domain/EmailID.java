@@ -14,32 +14,44 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 package com.stimulus.archiva.domain;
-
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.apache.log4j.Logger;
 
-public class EmailID {
+import com.stimulus.util.SynchronizedDateFormat;
 
+public class EmailID implements Serializable {
+
+	private static String hexits = "0123456789abcdef";
 	private static final long serialVersionUID = 3048326535L;
-	protected static Logger logger = Logger.getLogger(EmailID.class.getName());
+	protected static Logger logger = Logger.getLogger(EmailID.class);
     protected String uniqueId = null;
     protected Volume volume = null;
-
+    private static SynchronizedDateFormat format = new SynchronizedDateFormat("yyyyMMddHHmmssSS");
+    
     public EmailID() {}
 
-    public EmailID(Volume volume) {
-        uniqueId = generateUniqueID();
+    protected EmailID(Volume volume, Email email) {
+        uniqueId = generateUniqueID(email);
         this.volume = volume;
     }
-    public EmailID(String uniqueId, Volume volume) {
+    
+    protected EmailID(Volume volume, String uniqueId) {
         this.uniqueId = uniqueId;
         this.volume = volume;
     }
+    
 
-    public EmailID(String uniqueId) {
+    public static EmailID getEmailID(Volume volume,String uniqueID) {
+    	return new EmailID(volume,uniqueID);
+    }
+    
+    public static EmailID getEmailID(Volume volume, Email email) {
+    	return new EmailID(volume,email);
+    }
+    
+    protected EmailID(String uniqueId) {
         this.uniqueId = uniqueId;
     }
 
@@ -55,26 +67,14 @@ public class EmailID {
     public Volume getVolume() {
     	return volume;
     }
-
-
+    
     public void setVolume(Volume volume) {
     	this.volume = volume;
     }
 
-
-    public static synchronized String generateUniqueID()
+    public static synchronized String generateUniqueID(Email email)
     {
-    	logger.debug("generateUniqueID()");
-	    try
-	  	{
-	    		Date sentDate = new Date();
-	  	  	SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSS");
-	  	  	return format.format(sentDate);
-	  	} catch (Exception e)
-	  	{
-	  		logger.error("failed to generate a uniqueid for a message");
-	  		return null;
-	  	}
+     return format.format(new Date());
     }
 
     public String toString() {

@@ -16,32 +16,92 @@
 package com.stimulus.util;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-/**
- * @author jamie
- *
- * TODO To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Style - Code Templates
- */
-
-
-public class TempFiles {
+public class TempFiles implements Serializable {
     
-    protected ArrayList<File> fileDeleteList = new ArrayList<File>();
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 4872238025782129277L;
+	protected ArrayList<TempFile> fileDeleteList = new ArrayList<TempFile>();
+    public static final int DELETE_WAIT = 30; // minutes
+    protected boolean exit = false;
+    protected Thread deleteHelper;
+    protected transient Object lock = new Object();
     
-    public void markForDeletion(File file) {
-	     fileDeleteList.add(file);
+    public TempFiles() {
+    	deleteHelper = new DeleteHelper();
+    }
+    
+    public void startDaemon() {
+    	deleteHelper.start();
+    }
+    
+	 public void markForDeletion(File file) {
+		 synchronized(lock) {
+		     fileDeleteList.add(new TempFile(file));
+			 file.deleteOnExit(); // just in case
+		 }
 	 }
 	 
 	 protected void finalize() throws Throwable {
-	     Iterator it = fileDeleteList.iterator();
-	     while (it.hasNext()) {
-	         File f = (File)it.next();
-	         try { f.delete(); } catch(Exception e) {}
-	     }
-	     fileDeleteList.clear();
+		 synchronized(lock) {
+			 exit = true;
+			 for (TempFile temp : fileDeleteList) {
+		         try { temp.getFile().delete(); } catch(Exception e) {}
+		     }
+		     fileDeleteList.clear();
+		 }
 	     super.finalize();
 	 }
+	 
+	 public class TempFile implements Serializable{
+		 
+		private static final long serialVersionUID = 1024913070784419025L;
+		File file;
+		 long created;
+		 
+		 public TempFile(File file) {
+			 this.file = file;
+			 created = System.currentTimeMillis();
+		 }
+		 
+		 public File getFile() { return file; } 
+		 
+		 public boolean getOld() {
+			 long now = System.currentTimeMillis()-created;
+			 float elapsedmins = now/(60*1000F);
+			 return elapsedmins > DELETE_WAIT;
+		 }
+	 }
+	 
+	 public class DeleteHelper extends Thread implements Serializable{ 
+		private static final long serialVersionUID = -6971822512796791665L;
+
+			public DeleteHelper() {
+		    	setDaemon(true);
+		    }
+		    
+	        public void run() {
+	        	
+	        	setName("deleteHelper");
+	        	while (!exit) {
+	        	  synchronized(lock) {
+	        		  for (Iterator it = fileDeleteList.iterator (); it.hasNext (); ) {
+	        			  	TempFile temp = (TempFile)it.next();
+	        			  	if (temp.getOld()) {
+	        			  		it.remove();
+	        			  		
+		        				try { temp.getFile().delete(); } catch (Exception e) {}
+		        			}
+	        		  }
+	        	  }
+        		  try { sleep(60000); } catch (Exception e) { exit=true; }
+	        	}
+	        }
+	 }
+
 }

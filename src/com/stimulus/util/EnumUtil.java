@@ -16,16 +16,23 @@
 
 package com.stimulus.util;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 
-public class EnumUtil {
+public class EnumUtil implements Serializable {
 
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5691455601372019921L;
+
 	public static List<String> enumToList(Enum[] enums, String prefix) {
 	    	List<String> list = new LinkedList<String>();
 	    	for (int i=0;i<enums.length;i++)
-	    		list.add(prefix+enums[i].toString().toLowerCase());
+	    		list.add(prefix+enums[i].toString().toLowerCase(Locale.ENGLISH));
 	    	return list;
 	}
 	

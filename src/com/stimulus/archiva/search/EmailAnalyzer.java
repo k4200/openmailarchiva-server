@@ -21,14 +21,37 @@ import org.apache.lucene.analysis.*;
 import java.io.*;
 import org.apache.lucene.analysis.standard.*;
 
-public class EmailAnalyzer extends Analyzer {
+public class EmailAnalyzer extends Analyzer implements Serializable {
       
-       /*
-       * Create a token stream for this analyzer.
-       */
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7339657154591749126L;
+	private int position = 0;
+	
+	public class LowercaseDelimiterAnalyzer extends Analyzer {
+		  private final char fDelim;
+
+		  public LowercaseDelimiterAnalyzer(char delim) {
+		    fDelim = delim;
+		  }
+
+		  public TokenStream tokenStream(String fieldName, Reader reader) {
+
+		    TokenStream result = new CharTokenizer(reader) {
+
+		      protected boolean isTokenChar(char c) {
+		        return c != fDelim;
+		      }
+		    };
+		    result = new LowerCaseFilter(result);
+		    return result;
+		  }
+		}
+	
       public final TokenStream tokenStream(String fieldName,final Reader reader)
       {
-          TokenStream result = new StandardTokenizer(reader);
+          TokenStream result = new LowercaseDelimiterAnalyzer(',').tokenStream(fieldName, reader);
           result = new EmailFilter(result);
           return result;
      }

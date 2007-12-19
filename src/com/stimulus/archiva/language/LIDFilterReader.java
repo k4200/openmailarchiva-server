@@ -19,11 +19,15 @@ package com.stimulus.archiva.language;
 import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.Serializable;
 
 
   
-  public class LIDFilterReader extends FilterReader
-  {
+  public class LIDFilterReader extends FilterReader implements Serializable {
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -564285968039628141L;
 
     // Fields.
     // -------------------------------------------------------------------------

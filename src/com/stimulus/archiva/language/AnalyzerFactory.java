@@ -15,18 +15,31 @@
  */
 
 package com.stimulus.archiva.language;
+import java.io.Serializable;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.apache.lucene.analysis.*;
-import com.stimulus.archiva.domain.*;
-import com.stimulus.archiva.search.*;
-import java.util.*;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.PerFieldAnalyzerWrapper;
+import org.apache.lucene.analysis.WhitespaceAnalyzer;
 
-public class AnalyzerFactory {
+import com.stimulus.archiva.domain.Config;
+import com.stimulus.archiva.search.ArchivaAnalyzer;
+import com.stimulus.archiva.search.EmailAnalyzer;
+import com.stimulus.archiva.search.FileNameAnalyzer;
 
-    protected static final Logger logger = Logger.getLogger(AnalyzerFactory.class.getName());
+public class AnalyzerFactory implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1078168764623051823L;
+
+	public enum Operation { INDEX, SEARCH };
+	
+    protected static Logger logger = Logger.getLogger(AnalyzerFactory.class.getName());
     
-    public static Analyzer getAnalyzer(String language) {
+    public static Analyzer getAnalyzer(String language, Operation operation) {
         Analyzer analyzer = null;
         logger.debug("getAnalyzer() {language='"+language+"'}");
         String className = null;
@@ -37,8 +50,8 @@ public class AnalyzerFactory {
                 className = (String)analyzers.get(language);
                 logger.debug("successfully obtained class name for search analyzer {language='"+language+"', class='"+className+"'}");
             } else {
-                className = (String)analyzers.get("en");
-                logger.error("email language is unsupported. defaulting to english.  {language='"+language+"', class='"+className+"'}");
+                className = (String)analyzers.get(Config.getConfig().getIndexLanguage());
+                logger.debug("email language is unsupported. using default language.  {language='"+language+"', class='"+className+"'}");
             }
             Class analyzerClass = Class.forName(className);
             if (analyzerClass==null) {
@@ -57,10 +70,22 @@ public class AnalyzerFactory {
             analyzer = new ArchivaAnalyzer();
         } 
         PerFieldAnalyzerWrapper wrapper = new PerFieldAnalyzerWrapper(analyzer);
-        wrapper.addAnalyzer("to", new EmailAnalyzer());
-        wrapper.addAnalyzer("from", new EmailAnalyzer());
-        wrapper.addAnalyzer("cc", new EmailAnalyzer());
-        wrapper.addAnalyzer("bcc", new EmailAnalyzer());
+        
+        if (operation==Operation.INDEX) {
+	        wrapper.addAnalyzer("to", new EmailAnalyzer());
+	        wrapper.addAnalyzer("from", new EmailAnalyzer());
+	        wrapper.addAnalyzer("cc", new EmailAnalyzer());
+	        wrapper.addAnalyzer("bcc", new EmailAnalyzer());
+	        wrapper.addAnalyzer("deliveredto", new EmailAnalyzer());
+	        wrapper.addAnalyzer("attachname", new FileNameAnalyzer());
+        } else {
+        	wrapper.addAnalyzer("to", new WhitespaceAnalyzer());
+ 	        wrapper.addAnalyzer("from", new WhitespaceAnalyzer());
+ 	        wrapper.addAnalyzer("cc", new WhitespaceAnalyzer());
+ 	        wrapper.addAnalyzer("bcc", new WhitespaceAnalyzer());
+ 	        wrapper.addAnalyzer("deliveredto", new WhitespaceAnalyzer());
+ 	        wrapper.addAnalyzer("attachname", new FileNameAnalyzer());
+        }
         return wrapper;
     }
 }

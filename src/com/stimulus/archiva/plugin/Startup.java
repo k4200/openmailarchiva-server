@@ -16,38 +16,60 @@
 
 package com.stimulus.archiva.plugin;
 
+import java.io.Serializable;
+import java.util.Date;
+
+import javax.servlet.ServletException;
+
+import org.apache.log4j.Logger;
 import org.apache.struts.action.ActionServlet;
 import org.apache.struts.action.PlugIn;
 import org.apache.struts.config.ModuleConfig;
-import javax.servlet.ServletException;
-import com.stimulus.archiva.service.*;
-import com.stimulus.archiva.domain.*;
-import java.util.*;
-import org.apache.log4j.Logger;
 
-public class Startup  implements PlugIn {
+import com.stimulus.archiva.domain.Config;
+import com.stimulus.archiva.service.ConfigurationService;
+import com.stimulus.archiva.service.MessageService;
 
-    protected static final Logger logger = Logger.getLogger(Startup.class);
+public class Startup  implements PlugIn, Serializable  {
+
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 6415321408987920651L;
+	protected static Logger logger = Logger.getLogger(Startup.class);
 
     public void destroy() {
 	    logger.info("mailarchiva v"+Config.getApplicationVersion()+" shutdown at "+new Date());
 	}
 
 	public void init(ActionServlet actionServlet, ModuleConfig config) throws ServletException {
-
-	    logger.info("mailarchiva v"+Config.getApplicationVersion()+" started at "+new Date());
+	  
+		  
+	    logger.info("mailarchiva open source edition v"+Config.getApplicationVersion()+" started at "+new Date());
+	    System.setProperty("mail.mime.base64.ignoreerrors", "true");
 	    Config conf = ConfigurationService.getConfig();
 	    String appPath = actionServlet.getServletConfig().getServletContext().getRealPath("/");
 	   	Config.setApplicationPath(appPath);
 	   	Config.clearViewDirectory();
+	   	Config.clearTempDirectory();
 	  
 	   	try {
 	   	    conf.load();
 	   	    conf.getVolumes().startDiskSpaceCheck();
+	   	    String recover = System.getProperty("rearchive");
+		    if (recover!=null && recover.equalsIgnoreCase("yes"))
+		    	MessageService.recoverNoArchiveMessages(null);
+	   	   
 	   	} catch (Exception e) {
-	   	    logger.error("failed to load configuration. cause: ",e);
+	   	    logger.error("failed to execute startup cause: ",e);
 	   	    return;
 	   	}
+	
+	    
+	}
+	
+	public class RecoverInfo {
+		
 	}
 
 }

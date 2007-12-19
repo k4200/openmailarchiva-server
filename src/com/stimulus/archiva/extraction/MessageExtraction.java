@@ -16,25 +16,50 @@
 
 package com.stimulus.archiva.extraction;
 
-import java.io.*;
-
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Serializable;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
+
 import javax.mail.Multipart;
 import javax.mail.Part;
+
 import org.apache.log4j.Logger;
+
 import com.stimulus.archiva.domain.Config;
 import com.stimulus.archiva.domain.Email;
 import com.stimulus.archiva.domain.EmailID;
 import com.stimulus.archiva.exception.MessageExtractionException;
+import com.stimulus.util.Compare;
 import com.stimulus.util.DecodingUtil;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.stimulus.util.TempFiles;
 
-public class MessageExtraction
+public class MessageExtraction implements Serializable
 {
-	protected Vector<String> filesToRemove 					= new Vector<String>();
-	protected static final Logger logger					= Logger.getLogger(MessageExtraction.class.getName());
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5021107690811863057L;
+	protected TempFiles filesToRemove 						= new TempFiles();
+	protected static final Logger logger					= Logger.getLogger(MessageExtraction.class);
 	protected static final String serverEncoding 			= Charset.defaultCharset().name();
 	protected HashMap<String,AttachmentInfo> attachments   	= new HashMap<String,AttachmentInfo>();
 	protected String fileName;
@@ -44,7 +69,6 @@ public class MessageExtraction
 
 	public MessageExtraction(Email message, InputStream originalMessageStream, String baseURL) throws MessageExtractionException {
 		this.baseURL  = baseURL;
-		deleteExtractedMessages();
 		if (originalMessageStream != null) 
 		setFileName(writeOriginalMessage(message.getEmailID(), originalMessageStream));
 		setViewFileName(extractMessage(message));
@@ -66,7 +90,7 @@ public class MessageExtraction
 		ArrayList<String> mimeTypes 		= new ArrayList<String>();
 		String viewFileName;
 		try {
-			dumpPart(message, att, inl, imgs, nonImgs, mimeTypes, message.getSubject());
+			dumpPart((Part)message.getUnderlyingMessage(), att, inl, imgs, nonImgs, mimeTypes, message.getSubject());
 			for (String attachFileName: att.keySet()) {
 				Part p = (Part) att.get(attachFileName);
 				writeAttachment(p, attachFileName);
@@ -84,7 +108,7 @@ public class MessageExtraction
 				return writeTempMessage("<html><head><META http-equiv=Content-Type content=\"text/html; charset="+serverEncoding+"\"></head><body></body></html>",".html");
 			}
 		} catch (Exception ex) {
-			throw new MessageExtractionException(ex.toString(), logger);
+			throw new MessageExtractionException(ex.getMessage(),ex, logger);
 		}
 		logger.debug("message successfully extracted {filename='" + fileName + "' " + message + "}");
 		return viewFileName;
@@ -95,15 +119,17 @@ public class MessageExtraction
 		mimeTypes.add(p.getContentType());
 		if (!p.isMimeType("multipart/*")) {
 			String disp = p.getDisposition();
-			if (disp != null && disp.equalsIgnoreCase(Part.ATTACHMENT)) {
+			String fname = p.getFileName();
+			
+			if ((disp != null && Compare.equalsIgnoreCase(disp, Part.ATTACHMENT)) || fname!=null) {
 				String filename = getFilename(subject,p);
 				attachments.put(filename, p);
-				if (p.isMimeType("image/*")) {
+				/*if (p.isMimeType("image/*")) {
 					String str[] = p.getHeader("Content-ID");
 					if (str != null) images.put(filename,str[0]);
 					else images.put(filename, filename);
 				}
-				return;
+				return;*/
 			}
 		}
 		if (p.isMimeType("text/plain")) {
@@ -195,7 +221,7 @@ public class MessageExtraction
 	private String activateURLs(String input) {
 		if (input.length() == 0) return "";
 		String output = "";
-		String lowerInput = input.toLowerCase();
+		String lowerInput = input.toLowerCase(Locale.ENGLISH);
 		int index = getNextURIPos(lowerInput, 0);
 		int endIndex = 0;
 		while (index > -1) {
@@ -210,7 +236,8 @@ public class MessageExtraction
 					continue;
 				try {
 					java.net.URI testIt = new java.net.URI(slice);
-					if (testIt.toString().equalsIgnoreCase(slice)) {
+					
+					if (Compare.equalsIgnoreCase(testIt.toString(), slice)) {
 						lastGood = input.substring(index, endIndex);
 						break;
 					}
@@ -228,11 +255,11 @@ public class MessageExtraction
 	}
 
 	private void writeAttachment(Part p, String filename) {
-		String attachFile = Config.getViewPath() + File.separatorChar + filename;
+		File attachFile = new File(Config.getViewPath() + File.separatorChar + filename);
 		OutputStream os = null;
 		InputStream is = null;
 		try {
-            logger.debug("writing attachment {filename='" + attachFile + "'}");
+            logger.debug("writing attachment {filename='" + attachFile.getAbsolutePath() + "'}");
             os = new BufferedOutputStream(new FileOutputStream(attachFile));
             is = p.getInputStream();
             BufferedInputStream bis = new BufferedInputStream(is);
@@ -240,7 +267,7 @@ public class MessageExtraction
             while ((c = bis.read()) != -1)
                 os.write(c);
             os.close();
-            filesToRemove.addElement(attachFile);
+            filesToRemove.markForDeletion(attachFile);
 		} catch (Exception ex) {
 			logger.error("failed to write attachment {filename='" + attachFile + "'}", ex);
 			try {
@@ -253,21 +280,15 @@ public class MessageExtraction
 
 	private String writeTempMessage(String toWrite, String ext)
 	{
-		String fileName = "temp" + ext;
-		String end = fileName;
-		String attachFile = Config.getViewPath() + File.separatorChar + end;
-		int attachmentNo = 0;
+
 		try {
-			while (new File(attachFile).exists()) {
-				end = (++attachmentNo) + fileName;
-				attachFile = Config.getViewPath() + File.separatorChar + end;
-			}
+			File attachFile = File.createTempFile("temp", ext, new File(Config.getViewPath()));
 			logger.debug("writing temporary message {fileName='" + attachFile + "'}");
-            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(Config.getViewPath()  + File.separatorChar + end),"UTF8"));
+            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(attachFile),"UTF8"));
 			bw.write(toWrite);
 			bw.close();
-			filesToRemove.addElement(fileName);
-			return end;
+			filesToRemove.markForDeletion(attachFile);
+			return attachFile.getName();
 		} catch (IOException ex) {
 			logger.error("failed to write temporary message {fileName='" + fileName + "'}", ex);
 		}
@@ -277,22 +298,22 @@ public class MessageExtraction
 	
 	private String writeOriginalMessage(EmailID emailId, InputStream originalMessageStream)
 	{
-		String fileName = Config.getViewPath() + File.separatorChar + emailId.getUniqueID() + ".eml";
-		logger.debug("writeOriginalMessage() {fileName='" + fileName + "'}");
+		File file = new File(Config.getViewPath() + File.separatorChar + emailId.getUniqueID() + ".eml");
+		logger.debug("writeOriginalMessage() {fileName='" + file.getAbsolutePath() + "'}");
 		OutputStream os = null;
 
 		try {
-            os = new BufferedOutputStream(new FileOutputStream(fileName));
+            os = new BufferedOutputStream(new FileOutputStream(file));
             BufferedInputStream bis = new BufferedInputStream(originalMessageStream);
             int c;
             while ((c = bis.read()) != -1)
                 os.write(c);
             os.close();
             bis.close();
-            filesToRemove.addElement(fileName);
+            filesToRemove.markForDeletion(file);
 			return emailId.getUniqueID() + ".eml";
 		} catch (Exception ex) {
-			logger.error("failed to write original message, {fileName='" + fileName + "'}", ex);
+			logger.error("failed to write original message, {fileName='" + file.getAbsolutePath() + "'}", ex);
 			try {
 				if (os != null) os.close();
 				if (originalMessageStream != null) originalMessageStream.close();
@@ -322,7 +343,7 @@ public class MessageExtraction
 		String str = (String) inl.get("text/html");
 		boolean alternative = false;
 		for (int i = 0; i < mimeTypes.size(); i++) {
-			if (((String) mimeTypes.get(i)).toLowerCase().indexOf("multipart/alternative") > -1) {
+			if (((String) mimeTypes.get(i)).toLowerCase(Locale.ENGLISH).indexOf("multipart/alternative") > -1) {
 				alternative = true;
 				break;
 			}
@@ -331,7 +352,7 @@ public class MessageExtraction
 			String plain = activateURLs((String) inl.get("text/plain")).replaceAll("\r", "").replaceAll("\n",
 					"<br>" + System.getProperty("line.separator")) + "<br><br>" + System.getProperty("line.separator") + "<hr><br>";
 			int bestStart = 0;
-			int next = str.toLowerCase().indexOf("<body");
+			int next = str.toLowerCase(Locale.ENGLISH).indexOf("<body");
 			if (next > 0) next = str.indexOf(">", next) + 1;
 			if (next > 0 && next < str.length()) bestStart = next;
 			if (bestStart > 0) 
@@ -379,13 +400,13 @@ public class MessageExtraction
 		}
 		String output = "";
 		int bestStart = 0;
-		int next = str.toLowerCase().indexOf("</body>");
+		int next = str.toLowerCase(Locale.ENGLISH).indexOf("</body>");
 		if (next > 0 && next < str.length()) bestStart = next;
 		if (bestStart > 0) output = str.substring(0, bestStart) + buff.toString() + str.substring(bestStart);
 		else output = str + buff.toString();
 		
 		if (output.indexOf("charset=") < 0) {
-			next = output.toLowerCase().indexOf("</head>");
+			next = output.toLowerCase(Locale.ENGLISH).indexOf("</head>");
 			if (next > 0)
 				output = output.substring(0, next) + "<META http-equiv=Content-Type content=\"text/html; charset="+serverEncoding+"\">"+ output.substring(next);
 		} else 
@@ -435,7 +456,9 @@ public class MessageExtraction
 	}
 	
 	public String getFileSize() {
-		return new File(getFilePath()).length() / 1024 + "k";
+		double size = new File(getFilePath()).length() / 1024.0;
+		DecimalFormat df = new DecimalFormat("0.##");
+		return df.format(size)+"k";
 	}
 
 	public String getFileName() {
@@ -467,60 +490,52 @@ public class MessageExtraction
 		return getBaseExtractionURL() + "/" + getViewFileName();
 	}
 		
-	public void deleteExtractedMessages()
-	{
-		for (int i = 0; i < filesToRemove.size(); i++) {
-			try {
-				new File((String) filesToRemove.elementAt(i)).delete();
-			} catch (Exception ex)
-			{
-				logger.warn(ex);
-			}
-		}
-	}
-
-	protected void finalize() {
-		deleteExtractedMessages();
-	}
 	
-		public class AttachmentInfo
-		{
-			protected String	name;
-			protected String	contentType;
 
-			public AttachmentInfo(String name, String contentType) {
-				this.name = name;
-				this.contentType = contentType;
-			}
+	public class AttachmentInfo implements Serializable
+	{
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 6020964285330272323L;
+		protected String	name;
+		protected String	contentType;
 
-			public String getName() {
-				return name;
-			}
-
-			public String getContentType() {
-				return contentType;
-			}
-			
-			public boolean getIsEmail() {
-				return contentType.equalsIgnoreCase("message/rfc822");
-			}
-			
-			public String getURL() {
-				return getBaseExtractionURL() + "/" + name;
-			}
-
-			public String getFilePath() {
-				return Config.getViewPath() + File.separatorChar + name;
-			}
-			
-			public String getFileSize() {
-				return new File(getFilePath()).length() / 1024 + "k";
-			}
-			
-			public InputStream getInputStream() throws FileNotFoundException {
-				return new FileInputStream(getFilePath());
-			}
+		public AttachmentInfo(String name, String contentType) {
+			this.name = name;
+			this.contentType = contentType;
 		}
+
+		public String getName() {
+			return name;
+		}
+
+		public String getContentType() {
+			return contentType;
+		}
+		
+		public boolean getIsEmail() {
+			return contentType.toLowerCase(Locale.ENGLISH).contains("message/rfc822");
+		}
+		
+		public String getURL() {
+			return getBaseExtractionURL() + "/" + name;
+		}
+
+		public String getFilePath() {
+			return Config.getViewPath() + File.separatorChar + name;
+		}
+		
+		public String getFileSize() {
+			double size = new File(getFilePath()).length() / 1024.0;
+			  DecimalFormat df = new DecimalFormat("0.##");
+			  return df.format(size)+"k";
+		}
+		
+		public InputStream getInputStream() throws FileNotFoundException {
+			return new FileInputStream(getFilePath());
+		}
+	}
 
 
 }

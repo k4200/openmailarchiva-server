@@ -15,16 +15,30 @@
  */
 
 package com.stimulus.archiva.extraction;
-import com.stimulus.archiva.exception.ExtractionException;
-import java.io.*;
-import javax.swing.text.rtf.RTFEditorKit;
-import org.apache.log4j.Logger;
-import javax.swing.text.DefaultStyledDocument;
-import com.stimulus.util.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Serializable;
 
-public class RTFExtractor implements TextExtractor
+import javax.swing.text.DefaultStyledDocument;
+import javax.swing.text.rtf.RTFEditorKit;
+
+import org.apache.log4j.Logger;
+
+import com.stimulus.archiva.exception.ExtractionException;
+import com.stimulus.util.TempFiles;
+
+public class RTFExtractor implements TextExtractor,Serializable
 {
-	protected static final Logger logger = Logger.getLogger(Extractor.class.getName());
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4548973247294566348L;
+	protected static Logger logger = Logger.getLogger(Extractor.class.getName());
 
 	public RTFExtractor() {}
 

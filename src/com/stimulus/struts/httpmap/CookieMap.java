@@ -4,6 +4,8 @@ import com.stimulus.struts.httpmap.BaseHttpMap;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+
+import java.io.Serializable;
 import java.util.Enumeration;
 
 /**
@@ -13,7 +15,7 @@ import java.util.Enumeration;
  *
  * @author Clinton Begin
  */
-public class CookieMap extends BaseHttpMap {
+public class CookieMap extends BaseHttpMap implements Serializable {
 
   private Cookie[] cookies;
 

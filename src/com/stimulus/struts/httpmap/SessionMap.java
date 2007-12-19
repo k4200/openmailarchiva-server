@@ -4,6 +4,8 @@ import com.stimulus.struts.httpmap.BaseHttpMap;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+
+import java.io.Serializable;
 import java.util.Enumeration;
 
 /**
@@ -13,7 +15,7 @@ import java.util.Enumeration;
  *
  * @author Clinton Begin
  */
-public class SessionMap extends BaseHttpMap {
+public class SessionMap extends BaseHttpMap implements Serializable {
 
   private HttpSession session;
 

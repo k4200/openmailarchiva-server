@@ -16,48 +16,70 @@
 
 package com.stimulus.archiva.security.realm;
 
-import java.util.regex.*;
 import java.io.File;
 import java.io.IOException;
-import java.security.*;
-import java.util.*;
+import java.io.Serializable;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import javax.security.auth.callback.*;
-import javax.security.auth.login.*;
-import com.stimulus.archiva.service.*;
 import javax.security.auth.Subject;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.login.LoginContext;
+
 import org.apache.log4j.Logger;
 import org.securityfilter.realm.SimpleSecurityRealmBase;
-import javax.naming.directory.*;
-import javax.naming.*;
-import com.stimulus.archiva.domain.*;
-import com.stimulus.archiva.exception.*;
-import com.stimulus.archiva.authentication.*;
+
+import com.stimulus.archiva.authentication.ADIdentity;
+import com.stimulus.archiva.authentication.BasicIdentity;
+import com.stimulus.archiva.authentication.LDAPIdentity;
+import com.stimulus.archiva.domain.Config;
 import com.stimulus.archiva.domain.Identity;
+import com.stimulus.archiva.exception.ArchivaException;
+import com.stimulus.archiva.service.ConfigurationService;
+import com.stimulus.util.Compare;
 
+public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
 
-public class ADRealm extends SimpleSecurityRealmBase {
-
-   private String exampleProperty;
-   protected static final Logger logger = Logger.getLogger(ADRealm.class.getName());
-   protected static final Logger audit = Logger.getLogger("com.stimulus.archiva.audit");
-   protected static final String confName = "ADLogin";
-   protected String lastLDAPError = "";
+   /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1735467638548884618L;
+	private String exampleProperty;
+	protected static Logger logger = Logger.getLogger(ADRealm.class.getName());
+	protected static final Logger audit = Logger.getLogger("com.stimulus.archiva.audit");
+	protected static final String confName = "ADLogin";
+	protected String lastLDAPError = "";
 
    public Principal authenticate(String username, String password) {
 	   logger.debug("authenticate. {username='"+username+"'}");
-	   Config.AuthMethod authMethod = ConfigurationService.getConfig().getAuthMethod();
-       try {
-	       if (authMethod == Config.AuthMethod.BASIC) {
-	           logger.debug("authenticate: basic authentication enabled");
-	           return authBasic(ConfigurationService.getConfig(),username,password);
-	       } else if (authMethod == Config.AuthMethod.ACTIVEDIRECTORY) {
-	    	   logger.debug("authenticate: active directory authentication enabled");
-	    	   return authActiveDirectory(ConfigurationService.getConfig(),username,password);
-	       }   
-       } catch (ArchivaException ae) {
+	   Config config = ConfigurationService.getConfig();
+	   try {
+		   return authenticate(config, username, password);
+	   }  catch (ArchivaException ae) {
            logger.warn("failed login attempt. "+ae.getMessage()+" {username='"+username+"'}");
        }
+	   return null;
+   }
+   
+   public Principal authenticate(Config config, String username, String password) throws ArchivaException {
+	   Config.AuthMethod authMethod = config.getAuthMethod();
+       if (authMethod == Config.AuthMethod.BASIC) {
+           logger.debug("authenticate: basic authentication enabled");
+           return authBasic(config,username,password);
+       } else if (authMethod == Config.AuthMethod.ACTIVEDIRECTORY) {
+    	   logger.debug("authenticate: active directory authentication enabled");
+    	   return authActiveDirectory(config,username,password);
+      }
        return null;
    }
    
@@ -92,46 +114,48 @@ public class ADRealm extends SimpleSecurityRealmBase {
        if (role==0) 
            throw new ArchivaException("failed to authenticate user as no role could be assigned {username='"+username+"',role='"+roleStr+"'}",logger);  	
         else {
-        	 logger.debug("authenticated user is assigned a role {uname='"+username+"',role='"+roleStr+"'}");
+        	 logger.debug("auth user is assigned a role {uname='"+username+"',role='"+roleStr+"'}");
         	 List<String> emailAddresses = new ArrayList<String>();
         	 emailAddresses.add(username);
-        	 return new MailArchivaPrincipal(username,config.getADIdentity().getRoleFromID(role),emailAddresses);
+        	 return new MailArchivaPrincipal(username,config.getADIdentity().getRoleFromID(role),emailAddresses,null);
         }
    }
 
    public Principal authActiveDirectory(Config config, String username, String password) throws ArchivaException {
-       logger.debug("authenticating user to web console {username='"+username+"'}");
+       logger.debug("authenticating user to web console using active directory {username='"+username+"'}");
        // if there are no role maps defined default to ADMIN access
-       if (config.getADIdentity().getRoleMaps().size()==0) {
+       ADIdentity identity = config.getADIdentity();
+       if (identity.getRoleMaps().size()==0) {
     	   logger.info("SECURITY WARNING!! there are no role mappings defined for AD authentication. anonymous user is granted admin rights.");
-    	   return new MailArchivaPrincipal(username,"administrator",null);
+    	   return new MailArchivaPrincipal(username,"administrator",null,null);
        }
-       ArrayList<AttributeValue> attributeValues = getLDAPAttributes(config, username, password);
-       int userRole = getRole(config,attributeValues);
+       ArrayList<AttributeValue> attributeValues = getADAttributes(identity, username, password);
+       int userRole = getRole(identity,attributeValues);
        if (userRole==0) 
           throw new ArchivaException("failed to authenticate user as no role could be assigned {username='"+username+"'}",logger);  	
        else {
-    	   List<String> emailAddresses = getADEmailAddresses(config,attributeValues);
-    	   return new MailArchivaPrincipal(username,config.getADIdentity().getRoleFromID(userRole),emailAddresses);
+    	   List<String> emailAddresses = getEmailAddresses(identity,attributeValues);
+    	   return new MailArchivaPrincipal(username,identity.getRoleFromID(userRole),emailAddresses);
        }
    }
+   
  
-   public List<String> getADEmailAddresses(Config config, ArrayList<AttributeValue> attributeValues) {
+   public List<String> getEmailAddresses(LDAPIdentity identity, ArrayList<AttributeValue> attributeValues) {
 	   List<String> emailAddresses = new ArrayList<String>();
-	   Map<String,String> emailMappings = config.getADIdentity().getEmailMappings();
+	   Map<String,String> emailMappings = identity.getEmailMappings();
 	   for (String emailMappingKey: emailMappings.keySet()) {
-		   logger.debug("getADEmailAddresses(): analyzing email mapping entry {key='"+emailMappingKey+"'");   
+		   logger.debug("getEmailAddresses(): analyzing email mapping entry {key='"+emailMappingKey+"'}");   
 		   for (AttributeValue attributeValue: attributeValues) {
-			   if (attributeValue.getAttribute().equalsIgnoreCase(emailMappingKey)) {
+			   if (Compare.equalsIgnoreCase(attributeValue.getAttribute(), emailMappingKey)) {
 				   String patternStr = emailMappings.get(emailMappingKey);
-				    Pattern pattern = Pattern.compile(patternStr.toLowerCase());
-				    String attrValue = attributeValue.getValue().toLowerCase();
+				    Pattern pattern = Pattern.compile(patternStr.toLowerCase(Locale.ENGLISH));
+				    String attrValue = attributeValue.getValue().toLowerCase(Locale.ENGLISH);
 				    logger.debug(attrValue);
 				    Matcher matcher = pattern.matcher(attrValue);
 				    if (matcher.matches()) {
 				    	String username = matcher.group(1);
 				    	String domain = matcher.group(2);
-				    	logger.debug("getADEmailAddresses(): found matching email address {email='"+username+"@"+domain+"'}");
+				    	logger.debug("getEmailAddresses(): found matching email address {email='"+username+"@"+domain+"'}");
 				    	emailAddresses.add(username+"@"+domain);
 				    }
 			   }		
@@ -140,19 +164,20 @@ public class ADRealm extends SimpleSecurityRealmBase {
 	    return emailAddresses;
 	}
 	  
+ 
    
-   public ArrayList<AttributeValue> getLDAPAttributes(Config config, String username, String password) throws ArchivaException {
+   public ArrayList<AttributeValue> getADAttributes(ADIdentity identity, String username, String password) throws ArchivaException {
        String domain 			= null;
        String uname 			= null;
        LoginContext serverLC 	= null;
        BeanCallbackHandler beanCallbackHandler = null;
-       String kdcAddress        =  config.getKDCAddress();
+       String kdcAddress        =  identity.getKDCAddress();
        int at = username.lastIndexOf('@');
        if (at<=0 || at>=username.length()-1) {
            throw new ArchivaException("invalid login name. must be username@domain",logger);
        }
-       uname = username.substring(0,at).toLowerCase();
-       domain = username.substring(at+1).toUpperCase();
+       uname = username.substring(0,at).toLowerCase(Locale.ENGLISH);
+       domain = username.substring(at+1).toUpperCase(Locale.ENGLISH);
        String confFile = Config.getConfigurationPath()+ File.separatorChar + "login.conf";
        beanCallbackHandler = new BeanCallbackHandler(uname, password);
        System.setProperty("java.security.krb5.realm", domain);
@@ -168,7 +193,7 @@ public class ADRealm extends SimpleSecurityRealmBase {
            throw new ArchivaException("failed to login using kerberos server. "+e.getMessage()+" {realm='"+domain+"',kdcAddress='"+kdcAddress+"'}",e,logger);
        }
        try {
-   	       return (ArrayList<AttributeValue>)Subject.doAs(serverLC.getSubject(), new LDAPAction(config,uname, domain));
+   	       return (ArrayList<AttributeValue>)Subject.doAs(serverLC.getSubject(), new ADAction(identity,uname, domain));
        } catch (Exception e) {
     	   throw new ArchivaException("failed to bind to ldap server {uname='"+uname+"',domain='"+domain+"'}",e,logger);
        }
@@ -189,7 +214,7 @@ public class ADRealm extends SimpleSecurityRealmBase {
        MailArchivaPrincipal cp = (MailArchivaPrincipal)principal;
        String userRole = ((MailArchivaPrincipal)principal).getRole();
        logger.debug("isUserInRole {principalname='"+cp.getName()+"' principalrole='"+cp.getRole()+"' rolename='"+rolename+"'}");
-       return (rolename.compareToIgnoreCase(userRole)==0);
+       return Compare.equalsIgnoreCase(rolename, userRole);
    }
 
    public class BeanCallbackHandler implements CallbackHandler {
@@ -230,31 +255,16 @@ public class ADRealm extends SimpleSecurityRealmBase {
 
    }//BeanCallbackHandler
 
-   private static String convertDomainToDN(String domain) {
+  
 
-	    String[] result = domain.split("\\.");
-
-	    if (result == null || result.length<1)
-	        return domain;
-
-	    String dn = "";
-	    for (int i=0;i<result.length;i++)
-	        dn += "DC="+result[i]+",";
-	    if (dn.lastIndexOf(',')!=-1)
-	        dn = dn.substring(0,dn.length()-1);
-
-	    return dn;
-	}
-
-
-   public int getRole(Config config,ArrayList<AttributeValue> attributeValues) throws ArchivaException {
+   public int getRole(Identity identity,ArrayList<AttributeValue> attributeValues) throws ArchivaException {
        int role =0;
-       for (Identity.RoleMap rm: config.getADIdentity().getRoleMaps()) {
-    	   ADIdentity.ADRoleMap adrm = (ADIdentity.ADRoleMap)rm;
+       for (Identity.RoleMap rm: identity.getRoleMaps()) {
+    	   LDAPIdentity.LDAPRoleMap adrm = (LDAPIdentity.LDAPRoleMap)rm;
     	   for (AttributeValue attributeValue: attributeValues) {
-    		   if (attributeValue.getAttribute().equalsIgnoreCase(adrm.getAttribute())) {
-    			   String value = attributeValue.getValue().toLowerCase();
-    			   if (value.matches(adrm.getRegEx().toLowerCase())) {
+    		   if (Compare.equalsIgnoreCase(attributeValue.getAttribute(), adrm.getAttribute())) {
+    			   String value = attributeValue.getValue().toLowerCase(Locale.ENGLISH);
+    			   if (value.matches(adrm.getRegEx().toLowerCase(Locale.ENGLISH))) {
                        logger.debug("found matching user role for authenticated user {attribute='"+adrm.getAttribute()+"', value='"+value+"', regex='"+adrm.getRegEx()+"'}");
                        if (role < rm.getRoleID()) {
                            role = rm.getRoleID();
@@ -264,7 +274,7 @@ public class ADRealm extends SimpleSecurityRealmBase {
     		   }
     	   }   
        }   
-       String roleStr = config.getADIdentity().getRoleFromID(role);
+       String roleStr = identity.getRoleFromID(role);
        if (role==0)
            logger.debug("failed to assign a user role for authenticated user. will assume default role");
        else
@@ -288,94 +298,5 @@ public class ADRealm extends SimpleSecurityRealmBase {
    }
 	 
 	
-   static class LDAPAction implements java.security.PrivilegedAction {
-	private String uname;
-	private String domain;
-	private Config config;
-
-	public LDAPAction(Config config, String uname, String domain) {
-	    this.config = config;
-	    this.uname = uname;
-	    this.domain = domain;
-	}
-
-	public Object run()  {
-	   	return getLDAPAttributeValuePairs(config, uname, domain);
-	}
-
-
-
-	// returns users role if successful, otherwise, null
-
-    private ArrayList<AttributeValue> getLDAPAttributeValuePairs(Config config, String uname, String domain)  {
-
-        	String filter = "(&(sAMAccountName=" + uname + ")(objectClass=user))";
-        	ArrayList<AttributeValue> attributeValues = new ArrayList<AttributeValue>();
-        	
-        	Hashtable<String,String> env = new Hashtable<String,String>(11);
-    		String ldapAddress =  config.getLDAPAddress();
-    	    if (!ldapAddress.toLowerCase().startsWith("ldap://"))
-    	        ldapAddress = "ldap://" + ldapAddress;
-    		logger.debug("retrieving attributes from LDAP using Kereberos token {ldapAddress='"+ldapAddress+"', domain='"+convertDomainToDN(domain)+"', filter='"+filter+"'");
-
-    	    env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-    	   	// Must use fully qualified hostname
-    	   	env.put(Context.PROVIDER_URL, ldapAddress);
-    	   	// Request the use of the "GSSAPI" SASL mechanism
-    	   	// Authenticate by using already established Kerberos credentials
-    	   	env.put(Context.SECURITY_AUTHENTICATION, "GSSAPI");
-
-    	   	try {
-
-	    	   	 /* Create initial context */
-	    	   	 DirContext ctx = new InitialDirContext(env);
-	    		 //Create the search controls
-	    	   	  /* specify search constraints to search subtree */
-	    	   	 SearchControls constraints = new SearchControls();
-	    	   	 constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
-	    	   	String[] attributearraytype = new String[ADIdentity.ATTRIBUTES.size()];
-	    	   	 //constraints.setReturningAttributes((String[])ADIdentity.ATTRIBUTES.toArray(attributearraytype));
-	    	   	 // look for user with sAMAccountName set to the username
-	    	 
-	    		NamingEnumeration results = null;
-	    		
-	    	   	logger.debug("search for ldap attributes {domain='"+convertDomainToDN(domain)+"',filter='"+filter+"'}");
-	    	   	//NamingEnumeration results2 = null;
-	    	   	try {
-	    	   		results =ctx.search(convertDomainToDN(domain),filter, constraints);
-	    	   	} catch (javax.naming.PartialResultException pre) {}
-	    	  
-	    	   	 while (results != null && results.hasMore()) {
-
-	                    SearchResult si = (SearchResult)results.next();
-	                    /* print its name */
-	                    logger.debug("retrieving LDAP attributes {name='"+si.getName()+"'}");
-
-	                    Attributes attrs = si.getAttributes();
-	                    if (attrs == null) {
-	                        logger.debug("no attributes found");
-	                    } else {
-	                        /* print each attribute */
-	                        for (NamingEnumeration ae = attrs.getAll(); ae.hasMoreElements();) {
-	                            Attribute attr = (Attribute)ae.next();
-	                            String attrId = attr.getID();
-	                            /* print each value */
-	                            for (Enumeration vals = attr.getAll();vals.hasMoreElements();) {
-	                                String value = (String)vals.nextElement().toString();
-	                                logger.debug("LDAP attribute: "+ attrId + " = " + value);
-	                                attributeValues.add(new AttributeValue(attrId,value));
-	                            }
-
-	                        }
-	                    }
-	    	   	 }
-	    	   	ctx.close();
-    	   	} catch (javax.naming.PartialResultException pre) {
-    	   	} catch (Exception e) {
-    	   	   logger.error("error occured while retrieving LDAP attributes during user login. Cause:",e);
-    	   	}
-			return attributeValues;
-     }
-   }
-  
+	
 }

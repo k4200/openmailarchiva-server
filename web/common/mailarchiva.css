@@ -1,7 +1,7 @@
 .logo {
 	border-top: 1px solid #000000;
 	border-bottom: 1px solid #000000;
-	background-color: #5A678F;
+	background-color: #6F768D;
 	
 }
 
@@ -9,9 +9,13 @@
 	border-top: 1px solid #000000;
 	border-bottom: 1px solid #000000;
 	background-color: #B7BFD9;
-	
 }
 
+.sectionheader1 {
+
+	border-bottom: 1px solid #000000;
+	background-color: #DDE3ED;
+}
 .sectionheader2 {
 	border-top: 1px solid #000000;
 	border-bottom: 1px solid #000000;
@@ -73,6 +77,10 @@
 
 .section3 {
 	background-color: #EEF1F9;	
+}
+
+.smallbutton {
+ font-size: 8pt; 
 }
 
 a.columnheadertext:link { text-decoration: none; color: black; }

@@ -14,16 +14,19 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 package com.stimulus.archiva.domain;
-import com.stimulus.archiva.exception.ConfigurationException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
 import org.apache.log4j.Logger;
 
-import java.io.Serializable;
-import java.util.*;
+import com.stimulus.archiva.exception.ConfigurationException;
 
- public class Domains  {
+ public class Domains implements Serializable  {
 
 	 private static final long serialVersionUID = 78168850033322406L;
-	 protected static Logger logger = Logger.getLogger(Domains.class.getName());
+	 protected static Logger logger = Logger.getLogger(Domains.class);
      protected ArrayList<Domain> domains = new ArrayList<Domain>();
 
      public List<Domain> getDomains() {
@@ -39,7 +42,7 @@ import java.util.*;
      }
 
      public void addDomain(String domain) throws ConfigurationException {
-         domains.add(new Domain(domain.toLowerCase().trim()));
+         domains.add(new Domain(domain.toLowerCase(Locale.ENGLISH).trim()));
      }
      
      public void addDomain() throws ConfigurationException {

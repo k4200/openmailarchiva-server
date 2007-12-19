@@ -15,12 +15,13 @@
  */
 package com.stimulus.struts;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.StringWriter;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-//import org.apache.commons.logging.Log;
-//import org.apache.commons.logging.LogFactory;
+
 import org.apache.log4j.Logger;
 import org.apache.struts.Globals;
 import org.apache.struts.action.ActionErrors;
@@ -48,13 +49,17 @@ import org.apache.struts.config.ExceptionConfig;
 * @version $Revision: 1.2 $ $Date: 2007/03/13 23:20:45 $	
 */
 
-public final class ActionExceptionHandler extends ExceptionHandler {
+public final class ActionExceptionHandler extends ExceptionHandler implements Serializable {
 
-    protected static final Logger logger = Logger.getLogger(ActionExceptionHandler.class);
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -4219810091670377408L;
+	protected static Logger logger = Logger.getLogger(ActionExceptionHandler.class);
 //~ Instance fields ========================================================
 
 
-//private Log log = LogFactory.getLog(ActionExceptionHandler.class);
+//private Log log = Logger.getLogger(ActionExceptionHandler.class);
 
 
 //~ Methods ================================================================
@@ -77,18 +82,17 @@ public final class ActionExceptionHandler extends ExceptionHandler {
  *      )
  */
 
-public ActionForward execute(Exception ex, ExceptionConfig ae,
-
-                             ActionMapping mapping,
-
-                             ActionForm formInstance,
-
-                             HttpServletRequest request,
-
-                             HttpServletResponse response)
-
-throws ServletException {
-
+public ActionForward execute(Exception ex, ExceptionConfig ae,ActionMapping mapping,
+							 ActionForm formInstance,HttpServletRequest request,
+                             HttpServletResponse response) throws ServletException {
+	
+	if (ex instanceof org.apache.struts.chain.commands.InvalidPathException) {
+		  ActionForward forward = new ActionForward();
+		  forward.setRedirect(true);
+		  forward.setPath("/");
+		  return forward;
+		
+	}
     // if there's already errors in the request, don't process
     ActionErrors errors = (ActionErrors) request.getAttribute(Globals.ERROR_KEY);
     if (errors != null) {

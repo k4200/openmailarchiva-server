@@ -17,19 +17,33 @@
 
 package com.stimulus.archiva.extraction;
 
-import com.stimulus.archiva.exception.ExtractionException;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Serializable;
+
 import org.apache.log4j.Logger;
-import org.apache.poi.poifs.eventfilesystem.POIFSReaderEvent;
-import org.apache.poi.poifs.filesystem.DocumentInputStream;
 import org.apache.poi.poifs.eventfilesystem.POIFSReader;
+import org.apache.poi.poifs.eventfilesystem.POIFSReaderEvent;
 import org.apache.poi.poifs.eventfilesystem.POIFSReaderListener;
+import org.apache.poi.poifs.filesystem.DocumentInputStream;
 import org.apache.poi.util.LittleEndian;
-import com.stimulus.util.*;
 
-public class PowerpointExtractor implements TextExtractor,POIFSReaderListener {
+import com.stimulus.archiva.exception.ExtractionException;
+import com.stimulus.util.Compare;
+import com.stimulus.util.TempFiles;
 
-	protected static final Logger logger = Logger.getLogger(Extractor.class.getName());
+public class PowerpointExtractor implements TextExtractor,POIFSReaderListener,Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6003013329110133862L;
+	protected static Logger logger = Logger.getLogger(Extractor.class.getName());
 	private OutputStream output = null;
 	
 	public PowerpointExtractor()
@@ -64,9 +78,9 @@ public class PowerpointExtractor implements TextExtractor,POIFSReaderListener {
 
 	public void processPOIFSReaderEvent(POIFSReaderEvent event) {
 	    try{
-	        if(!event.getName().equalsIgnoreCase("PowerPoint Document"))
-	            return;
-
+	    	if(!Compare.equalsIgnoreCase(event.getName(), "PowerPoint Document"))
+	    		 return;
+	        
 	        DocumentInputStream input = event.getStream();
 
 	        byte[] buffer = new byte[input.available()];
@@ -81,7 +95,7 @@ public class PowerpointExtractor implements TextExtractor,POIFSReaderListener {
 	            }
 	        }
 	    } catch (Exception ex) {
-	        logger.error(ex.getMessage());
+	        logger.debug(ex.getMessage());
 	    }
 	}
 

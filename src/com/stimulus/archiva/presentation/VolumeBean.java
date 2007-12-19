@@ -16,21 +16,26 @@
 
 package com.stimulus.archiva.presentation;
 
-import com.stimulus.archiva.domain.*;
-import com.stimulus.archiva.service.*;
+import java.io.Serializable;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+
+import com.stimulus.archiva.domain.Volume;
+import com.stimulus.archiva.domain.Volumes;
 import com.stimulus.archiva.domain.Volume.Status;
 import com.stimulus.archiva.exception.ConfigurationException;
-import com.stimulus.util.EnumUtil;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import org.apache.log4j.Logger;
+import com.stimulus.archiva.service.MessageService;
 import com.stimulus.struts.BaseBean;
-import java.text.*;
+import com.stimulus.util.EnumUtil;
 
-public class VolumeBean extends BaseBean {
+public class VolumeBean extends BaseBean implements Serializable {
 
 	 private static final long serialVersionUID = -166626751279723226L;
-	 protected static Logger logger = Logger.getLogger(VolumeBean.class.getName());
+	 protected static Logger logger =  Logger.getLogger(VolumeBean.class.getName());
 	 protected static final SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 	 
 	 protected Volume v;
@@ -64,11 +69,12 @@ public class VolumeBean extends BaseBean {
 	  }
 
 	  public String getCreated() {
-	  	 return format.format(v.getCreated());
+		  return format.format(v.getCreated());
 	  }
 		 
 	  public long getMaxSize() { return v.getMaxSize() ; }
 	  public String getIndexPath() { return v.getIndexPath(); }
+	  
 	  public void setIndexPath(String indexPath) { v.setIndexPath(indexPath); }
 	  public String getPath() { return v.getPath(); }
 	  public void setPath(String path) { v.setPath(path);}
@@ -132,7 +138,7 @@ public class VolumeBean extends BaseBean {
 	  }
 	  
 	  public String getTotalMessageCount() {
-		  DecimalFormat formatter = new DecimalFormat("#,###,###,###");
+		  DecimalFormat formatter = new DecimalFormat("#,###,###,###.##");
 		  
 		  long totalMessageCount = 0;
 		  try { 

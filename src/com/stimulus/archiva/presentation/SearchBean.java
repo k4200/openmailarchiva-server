@@ -16,35 +16,49 @@
 
 package com.stimulus.archiva.presentation;
 
-import com.stimulus.archiva.domain.*;
-import com.stimulus.archiva.service.*;
-import com.stimulus.archiva.search.*;
-import com.stimulus.archiva.search.StandardSearch.Criteria;
-import com.stimulus.struts.*;
-import com.stimulus.util.EnumUtil;
-import java.util.*;
-import java.text.*;
-import org.apache.log4j.Logger;
-import com.stimulus.archiva.exception.*;
-import com.stimulus.archiva.security.realm.MailArchivaPrincipal;
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
-public class SearchBean extends BaseBean {
+import org.apache.log4j.Logger;
+
+import com.stimulus.archiva.domain.Config;
+import com.stimulus.archiva.domain.Search;
+import com.stimulus.archiva.domain.fields.EmailField;
+import com.stimulus.archiva.search.SearchFactory;
+import com.stimulus.archiva.search.StandardSearch;
+import com.stimulus.archiva.service.ConfigurationService;
+import com.stimulus.archiva.service.SearchService;
+import com.stimulus.struts.BaseBean;
+import com.stimulus.util.EnumUtil;
+
+
+public class SearchBean extends BaseBean implements Serializable {
   	
   private static final long serialVersionUID = -5738112871526292950L;
   protected Search search;
   protected int page = 1; 
   protected int pageSize = 20;
   protected double searchTime;
-  
+
+ 
   protected static final int NO_DISPLAY_PAGES = 10;
   
   /* advanced search attributes */
 
   protected static final List METHOD_LIST;
   protected static final List METHOD_LABEL_LIST;
-  protected static final List FIELD_LIST;
-  protected static final List FIELD_LABEL_LIST;
+
   protected static final List OPERATOR_LIST;
   protected static final List OPERATOR_LABEL_LIST;
   protected static final List PAGE_SIZE_LIST;
@@ -69,27 +83,7 @@ public class SearchBean extends BaseBean {
     methodLabelList.add("methode_label_none");
     METHOD_LABEL_LIST = Collections.unmodifiableList(methodLabelList);
     
-    List<String> fieldList = new LinkedList<String>();
-    fieldList.add("all");
-    fieldList.add("to");
-    fieldList.add("from");
-    fieldList.add("subject");
-    fieldList.add("cc");
-    fieldList.add("bcc");
-    fieldList.add("body");
-    fieldList.add("attachments");
-    FIELD_LIST = Collections.unmodifiableList(fieldList);
-    
-    List<String> fieldLabelList = new LinkedList<String>();
-    fieldLabelList.add("field_label_all");
-    fieldLabelList.add("field_label_to");
-    fieldLabelList.add("field_label_from");
-    fieldLabelList.add("field_label_subject");
-    fieldLabelList.add("field_label_cc");
-    fieldLabelList.add("field_label_bcc");
-    fieldLabelList.add("field_label_body");
-    fieldLabelList.add("field_label_attachments");
-    FIELD_LABEL_LIST = Collections.unmodifiableList(fieldLabelList);
+ 
     
     List<String> operatorList = new LinkedList<String>();
     operatorList.add("AND");
@@ -137,8 +131,8 @@ public class SearchBean extends BaseBean {
     maxResultsList.add("500");
     maxResultsList.add("1000");
     maxResultsList.add("5000");
-    maxResultsList.add("50000");
     maxResultsList.add("10000");
+    maxResultsList.add("50000");
     maxResultsList.add("100000");
     maxResultsList.add("0");
     MAX_RESULTS_LIST = Collections.unmodifiableList(maxResultsList);
@@ -147,31 +141,37 @@ public class SearchBean extends BaseBean {
   
   protected static final String recvDateFieldName = "sentdate";
   // for advanced search
-  protected static Logger logger = Logger.getLogger(SearchBean.class.getName());
+  protected static Logger logger =  Logger.getLogger(SearchBean.class.getName());
   protected static final Logger audit = Logger.getLogger("com.stimulus.archiva.audit");
 
-  
+  protected boolean notSearched = true;
   
   /* Constructors */
 
   public SearchBean()  {
-	try {
-		resetSearch();
-	} catch (Exception e) {
-		logger.debug("failed to create search object");
-	}
-    page=1;
-    pageSize=20;
-    
+
   }
   
-  public String resetSearch() throws MessageException {
-	    logger.debug("resetSearch()");
-	    search = (StandardSearch)SearchFactory.getFactory(Search.Type.STANDARD);
+  public void reset() {
+	  if (search==null) {
+		  try { searchform(); } catch (Exception e) { logger.debug("exception occurred",e); }
+	  }
+  }
+  
+  public String searchform() throws Exception {
+	  	search = (StandardSearch)SearchFactory.getFactory(Search.Type.STANDARD);
 	    String language = getLocale().getLanguage();
 	    logger.debug("browser language detected {language='"+language+"'}");
 	    search.setLanguage(language);
 	    search.setMaxResults(ConfigurationService.getConfig().getMaxSearchResults());
+	    notSearched = true;
+	    page=1;
+	    pageSize=20;
+	    return "success";
+  }
+  public String resetsearch() throws Exception {
+	    logger.debug("resetSearch()");
+	    searchform();
 	    return searchMessages();
   }
   
@@ -186,11 +186,43 @@ public class SearchBean extends BaseBean {
   }
   
   public List getFields() {
-  	return FIELD_LIST; 
+	
+	  ArrayList<String> fieldList = new ArrayList<String>();
+	  Iterator i = EmailField.getAvailableFields().iterateValues();
+	  while (i.hasNext()) {
+		  EmailField ef = (EmailField)i.next();
+		  // we dont allow end-users to search using bcc
+		  if (ef.getName().equals("bcc") && getMailArchivaPrincipal().getRole().equals("user"))
+			  continue;
+		  if (ef.getName().equals("deliveredto") && getMailArchivaPrincipal().getRole().equals("user"))
+			  continue;
+		  
+		  if (ef.getAllowSearch()==EmailField.AllowSearch.SEARCH)
+			  fieldList.add(ef.getName());
+	  }
+	  fieldList.add("all");
+	  Collections.sort(fieldList, String.CASE_INSENSITIVE_ORDER);
+	  return fieldList;
   }
   
   public List getFieldLabels() {
-  	return translateList(FIELD_LABEL_LIST); 
+	  ArrayList<String> fieldLabelList = new ArrayList<String>();
+	  Iterator i = EmailField.getAvailableFields().iterateValues();
+	  while (i.hasNext()) {
+		  EmailField ef = (EmailField)i.next();
+		  
+		  // we dont allow end-users to search using bcc
+		  if (ef.getName().equals("bcc") && getMailArchivaPrincipal().getRole().equals("user"))
+			  continue;
+		  if (ef.getName().equals("deliveredto") && getMailArchivaPrincipal().getRole().equals("user"))
+			  continue;
+		  
+		  if (ef.getAllowSearch()==EmailField.AllowSearch.SEARCH)
+			  fieldLabelList.add(ef.getResourceKey().toLowerCase());
+	  }
+	  fieldLabelList.add("field_label_all");
+	  Collections.sort(fieldLabelList, String.CASE_INSENSITIVE_ORDER);
+  	  return translateList(fieldLabelList,true); 
   }
   
   public List getOperators() {
@@ -204,7 +236,7 @@ public class SearchBean extends BaseBean {
   /* order by */
   
   public void setOrderBy(String sortField) {
-      if (sortField.compareTo(search.getSortField())==0)
+      if (sortField.equalsIgnoreCase(search.getSortField()))
           search.setSortOrder(!search.getSortOrder());
       search.setSortField(sortField);
   }
@@ -329,6 +361,33 @@ public class SearchBean extends BaseBean {
   public List getPriorityLabels() {
 	  return translateList(EnumUtil.enumToList(Search.Priority.values(),"searchresults.priority_"));
   }
+  
+  public void setDateType(String dateType) {
+	  Search.DateType dateTypeResult = Search.DateType.SENTDATE;
+	  try {
+		  dateTypeResult = Search.DateType.valueOf(dateType.trim().toUpperCase());
+	  } catch (IllegalArgumentException iae) {
+		  logger.error("failed to apply priority field to search. priority field is set to an illegal value {priority='"+dateTypeResult+"'}");
+  		  logger.info("searching messages associated with any priority");
+	  }
+	  search.setDateType(dateTypeResult);
+  }
+  
+  public String getDateType() {
+	  return search.getDateType().toString().toLowerCase();
+  }
+  
+  public List getDateTypes() { 
+	  return EnumUtil.enumToList( Search.DateType.values());
+  }
+  
+  public List getDateTypeLabels() { 
+	  return translateList(EnumUtil.enumToList(Search.DateType.values(),"searchresults.datetype_"));
+  }
+  
+  protected Search getSearch() {
+	  return search;
+  }
 
   /* attachment */
   
@@ -403,12 +462,18 @@ public class SearchBean extends BaseBean {
   	return previousPage;
   }
   
+  public int getFirstPage() {
+	  return 1;
+  }
+  
+  public int getLastPage() {
+	  return getNoPages();
+  }
   public int getNextPage() { // doesn't alter current page, merely increments for UI purposes 
     int nextPage = 0;
   	if (page+1>getNoPages())  nextPage = 1; else nextPage = page+1;
 	logger.debug("getNextPage() {ret='"+nextPage+"'}");
 	return nextPage;
-  	
   }
   public int getFirstHitIndex() {
   	int firstHitIndex = page*pageSize - pageSize;
@@ -497,99 +562,99 @@ public class SearchBean extends BaseBean {
     return st;
   }
  
-  public String getSentAfter() {
+  public String getAfter() {
 	
-  	if (search.getSentAfter()==null)
+  	if (search.getAfter()==null)
   	{
-  		logger.debug("getSentAfter() {sentafter='null'}");
+  		logger.debug("getAfter() {sentafter='null'}");
   		return "";
   	}
   	DateFormat format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, getLocale());
-  	String ra = format.format(search.getSentAfter());
-  	logger.debug("getSentAfter() {sentafter='"+ra+"'}");
+  	String ra = format.format(search.getAfter());
+  	logger.debug("getAfter() {sentafter='"+ra+"'}");
   	return ra;
   	}
 	
-  public String getSentBefore() {
-  	if (search.getSentBefore()==null)
+  public String getBefore() {
+  	if (search.getBefore()==null)
   	{
-  		logger.debug("getSentBefore() {sentbefore='null'}");
+  		logger.debug("getBefore() {sentbefore='null'}");
   		return "";
   	}
   	DateFormat format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, getLocale());
-  	String rb = format.format(search.getSentBefore());
-  	logger.debug("getSentBefore() {sentbefore='"+rb+"'}");
+  	String rb = format.format(search.getBefore());
+  	logger.debug("getBefore() {sentbefore='"+rb+"'}");
 	return rb;
   }
 	
-  public void setSentAfter(String sentAfter) { 
-  	logger.debug("setSentAfter() {sentafter='"+sentAfter+"'}");
+  public void setAfter(String after) { 
+  	logger.debug("setAfter() {sentafter='"+after+"'}");
 
   	// see if a time was specified
   	DateFormat format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, getLocale());
   	 format.setLenient(false);
   	 try 
 	 {
-  	 	if (sentAfter.length()>0)
-  	 		search.setSentAfter(format.parse(sentAfter));
+  	 	if (after.length()>0)
+  	 		search.setAfter(format.parse(after));
   	 	else
-  	 		search.setSentAfter(null);
+  	 		search.setAfter(null);
   	 	return;
   	 } catch(ParseException pe) {
-        logger.debug("failed to parse date {sentafter='" + sentAfter+"'}");    	            		
+        logger.debug("failed to parse date {sentafter='" + after+"'}");    	            		
      }
   	 // ok could not parse datetime, so now parse date only
   	 DateFormat format2 = DateFormat.getDateInstance(DateFormat.SHORT, getLocale());
  	format2.setLenient(false);
  	 try 
 	 {
- 	 	if (sentAfter.length()>0) {
- 	 		Date date = format2.parse(sentAfter);
+ 	 	if (after.length()>0) {
+ 	 		Date date = format2.parse(after);
  	 		Calendar cal = Calendar.getInstance();
  	 		cal.setTime(date);
- 	 		cal.set(Calendar.HOUR_OF_DAY,0);
+ 	 		cal.set(Calendar.HOUR_OF_DAY,1);
  	 		cal.set(Calendar.MINUTE,0);
  	 		cal.set(Calendar.SECOND,0);
- 	 		search.setSentAfter(cal.getTime());
+ 	 		search.setAfter(cal.getTime());
  	 		return;
- 	 	} else search.setSentAfter(null);
+ 	 	} else search.setAfter(null);
  	 } catch(ParseException pe) {
-       logger.debug("failed to parse date {sentafter='" + sentAfter+"'}");    	            		
+       logger.debug("failed to parse date {sentafter='" + after+"'}");    	            		
     }
   }
    
-  public void setSentBefore(String sentBefore) { 
-  	logger.debug("setSentBefore() {sentBefore='"+sentBefore+"'}");
+  public void setBefore(String before) { 
+  	logger.debug("setBefore() {before='"+before+"'}");
 	// see if a time was specified
   	DateFormat format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, getLocale());
   	 format.setLenient(false);
   	 try 
 	 {
-  	 	if (sentBefore.length()>0)
-  	 		search.setSentBefore(format.parse(sentBefore));
-  	 	else search.setSentBefore(null);
+  	 	if (before.length()>0)
+  	 		search.setBefore(format.parse(before));
+  	 	else search.setBefore(null);
   	 	return;
   	 		
   	 } catch(ParseException pe) {
-        logger.debug("failed to parse date {sentafter='" + sentBefore+"'}");    	            		
+        logger.debug("failed to parse date {sentafter='" + before+"'}");    	            		
      }
   	 // ok could not parse datetime, so now parse date only
   	 DateFormat format2 = DateFormat.getDateInstance(DateFormat.SHORT, getLocale());
  	 format2.setLenient(false);
  	 try 
 	 {
- 	 	if (sentBefore.length()>0) {
- 	 		Date date = format2.parse(sentBefore);
+ 	 	if (before.length()>0) {
+ 	 		Date date = format2.parse(before);
  	 		Calendar cal = Calendar.getInstance();
  	 		cal.setTime(date);
  	 		cal.set(Calendar.HOUR_OF_DAY,23);
  	 		cal.set(Calendar.MINUTE,59);
  	 		cal.set(Calendar.SECOND,59);
- 	 		search.setSentBefore(cal.getTime());
+ 	 		search.setBefore(cal.getTime());
  	 		return;
- 	 	} else search.setSentBefore(null);
+ 	 	} else search.setBefore(null);
  	 } catch(ParseException pe) {
-       logger.debug("failed to parse date {sentbefore='" + sentBefore+"'}");    	            		
+       logger.debug("failed to parse date {sentbefore='" + before+"'}");    	            		
     }
   }
   
@@ -612,10 +677,22 @@ public class SearchBean extends BaseBean {
 	  return ((SimpleDateFormat)sdf).toLocalizedPattern();
   }
   
-  public String search() throws MessageException
+
+  public String searchsort() {
+	  searchMessages();
+	  return "success";
+  }
+  
+  public String search() throws Exception
   {
+	  if (search==null)
+		  searchform();
     SubmitButton button = getSubmitButton();
   	logger.debug("search() {action='"+button.action+"', value='"+button.value+"'}");
+  	
+  	if (button.action==null)
+  		return "success";
+  	
   	if (button.action!=null && button.action.equals("newcriteria")) {
   		((StandardSearch)search).newCriteria();
   		return "success";
@@ -623,50 +700,54 @@ public class SearchBean extends BaseBean {
   		((StandardSearch)search).deleteCriteria(Integer.parseInt(button.value));
   		return "success";
   	} else if (button.action!=null && button.action.equals("reset")) {
-		return resetSearch();
-  	}
+		return resetsearch();
+  	} 
+  	
+  	
   	return searchMessages();
   }
   
   protected String searchMessages() {
 	  try {
-	  	    String userName = "anonymous";
-	  	    String userRole ;
-	  	    String remoteHost;
-	  	    List<String> emailAddresses;
-	  	  
-	  		String searchQuery = search.getSearchQuery();
+		  	notSearched = false;
+	  	    String searchQuery = search.getSearchQuery();
 	  		logger.debug("search() {searchquery='"+searchQuery+"'}");
 		  	search.clearResults();
 		  	long s = (new Date()).getTime();
-		  	remoteHost = ActionContext.getActionContext().getRequest().getRemoteHost();
-		  	MailArchivaPrincipal cp = (MailArchivaPrincipal)ActionContext.getActionContext().getRequest().getUserPrincipal();
-		  	if (cp!=null) {
-		  	    userName = cp.getName();
-		  	    userRole = cp.getRole();
-		  	    emailAddresses = cp.getEmailAddresses();
-		  	    search.setUserName(userName);
-			  	search.setUserRole(userRole);
-			  	search.setEmailAddresses(emailAddresses);
-			  	audit.info("search email {query="+searchQuery.trim()+", remotehost="+remoteHost+", uname="+userName+"}");
-			    SearchService.searchMessage(search);
-			  	long e = (new Date()).getTime();
-			  	searchTime = e - s ;
-			  	setPage(1);
-		  	} else {
-		  		audit.info("WARNING: attempted search by unknown user. access is denied.");
-		  	}
+		  	search.setPrincipal(getMailArchivaPrincipal());
+		  	SearchService.searchMessage(search);
+		  	long e = (new Date()).getTime();
+		  	searchTime = e - s ;
+		  	setPage(1);
+		  	
 	  	} catch (Exception e) {
 	  		e.printStackTrace();
 	  	}
 	  	return "success";
   }
+  
+  
+  
+
 
   public List<SearchResultBean> getSearchResults() {
-      return SearchResultBean.getSearchResultBeans(search.getResultsList());
+      return SearchResultBean.getSearchResultBeans(search.getResultsList(),getLocale());
   }
- 
-  				 
+  
+  public List<EmailField> getAvailableFields() {
+		 ArrayList<EmailField>  list = new ArrayList<EmailField>();
+		 Iterator i = EmailField.getAvailableFields().iterateValues();
+		 while (i.hasNext()) {
+			 EmailField ef = (EmailField)i.next();
+			 if (ef.getShowResults() || ef.getShowConditional())
+				 list.add(ef);			 
+		 }
+		 return list;
+	 }
+	
+	public boolean getNotSearched() { return notSearched; }
+
 }
-  	
+ 
+ 
   

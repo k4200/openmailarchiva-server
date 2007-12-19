@@ -17,14 +17,23 @@
 
 package com.stimulus.archiva.extraction;
 
-import com.stimulus.archiva.exception.ExtractionException;
-import java.io.*;
-import org.apache.log4j.Logger;
-import com.stimulus.util.*;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Serializable;
 
-public class PlainTextExtractor implements TextExtractor
+import org.apache.log4j.Logger;
+
+import com.stimulus.archiva.exception.ExtractionException;
+import com.stimulus.util.TempFiles;
+
+public class PlainTextExtractor implements TextExtractor, Serializable
 {
-	protected static final Logger logger = Logger.getLogger(Extractor.class.getName());
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3133399038029781732L;
+	protected static Logger logger = Logger.getLogger(Extractor.class);
 
 	public PlainTextExtractor()
 	{

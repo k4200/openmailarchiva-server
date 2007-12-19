@@ -16,11 +16,18 @@
 
 package com.stimulus.archiva.exception;
 
+import java.io.Serializable;
+
 import org.apache.log4j.Logger;
 
-public class MessageStoreException extends ArchivaException {
+public class MessageStoreException extends ArchivaException implements Serializable {
   
-  public MessageStoreException(String message,Logger logger) {
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -2712946727161558121L;
+
+public MessageStoreException(String message,Logger logger) {
     super(message, logger);
   }
 

@@ -16,11 +16,16 @@
 
 package com.stimulus.util;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 
-public class BlockingQueue {
+public class BlockingQueue implements Serializable {
     
-    private LinkedList<Object> _queue = new LinkedList<Object>();
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -5002769471984531317L;
+	private LinkedList<Object> _queue = new LinkedList<Object>();
    
     public BlockingQueue() {
         

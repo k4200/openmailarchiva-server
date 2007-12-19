@@ -16,53 +16,79 @@
 
 package com.stimulus.archiva.search;
 
-import java.text.ParsePosition;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.queryParser.*;
-import org.apache.lucene.search.*;
-import org.apache.lucene.analysis.standard.*;
+import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.Hits;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ParallelMultiSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryWrapperFilter;
+import org.apache.lucene.search.Searchable;
+import org.apache.lucene.search.Searcher;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
+
 import com.stimulus.archiva.domain.Config;
 import com.stimulus.archiva.domain.EmailID;
 import com.stimulus.archiva.domain.Search;
 import com.stimulus.archiva.domain.Volume;
+import com.stimulus.archiva.domain.fields.EmailField;
+import com.stimulus.archiva.domain.fields.EmailFieldValue;
 import com.stimulus.archiva.exception.MessageSearchException;
 import com.stimulus.archiva.language.AnalyzerFactory;
+import com.stimulus.archiva.security.realm.MailArchivaPrincipal;
+import com.stimulus.util.Compare;
+import com.stimulus.util.DateUtil;
 
 public class StandardSearch extends Search {
 
-	 protected ArrayList<Criteria> criteria   = new ArrayList<StandardSearch.Criteria>();
+	 /**
+	 * 
+	 */
+	private static final long serialVersionUID = -4471820570355127398L;
+	protected ArrayList<Criteria> criteria   = new ArrayList<StandardSearch.Criteria>();
 	 protected String			compiledQuery = ""; 
-	 protected static final Logger logger = Logger.getLogger(StandardSearch.class.getName());
+	 protected static Logger logger = Logger.getLogger(StandardSearch.class.getName());
 	 protected SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
-
+	 protected Searcher searchers = null;
 	public StandardSearch() {
 	    newCriteria();
 	}
 	public void searchMessage() throws MessageSearchException {
 		logger.debug("standard search executed {query='"+getSearchQuery()+"'}");
-		Searcher searchers;
-		Analyzer analyzer = AnalyzerFactory.getAnalyzer(getLanguage());
+		
+		Analyzer analyzer = AnalyzerFactory.getAnalyzer(getLanguage(),AnalyzerFactory.Operation.SEARCH);
 		compileSearchQuery();
 		Query query = getQuery(analyzer); 
         Sort sort = getSortPreference();
-		Filter queryFilter = getFilter(new StandardAnalyzer());
+		Filter queryFilter = getFilter(new FilterAnalyzer());
 		try { 
+			/*if (searchers!=null) {
+				 try {
+						searchers.close();
+				 } catch (IOException io) {
+					logger.error("failed to close search indexes (opened for read)",io);
+				 }
+			}*/
 			searchers = getVolumeSearchers();
-			Hits hits = search(searchers, query, queryFilter, sort);
-			compileSearchResults(searchers, hits); 
+			if (searchers!=null) {
+				Hits hits = search(query, queryFilter, sort);
+				compileSearchResults(hits); 
+			}
 		} catch (MessageSearchException mse) {
 			logger.debug("standard search: no volumes available for searching");
 		}
@@ -100,10 +126,11 @@ public class StandardSearch extends Search {
 			    logger.debug("standard search: parsing filter query {query='"+filterstr+"'}"); 
 			    if (filterstr.length()==0)
 			    	return null;
-			    QueryParser filterQueryParser = new QueryParser("to",analyzer);
+			    QueryParser filterQueryParser = new QueryParser("to",new FilterAnalyzer());
 			    Query query = filterQueryParser.parse(filterstr);
 			    queryFilter = new QueryWrapperFilter(query);
 			    logger.debug("successfully parsed filter query {query='"+filterstr+"'}");
+			    logger.debug("queryfilter"+query.toString());
 			} catch (Exception pe)
 			{
 				throw new MessageSearchException("failed to parse search query {searchquery='"+getSearchQuery()+"'}",pe,logger);
@@ -123,7 +150,7 @@ public class StandardSearch extends Search {
           // we need untokenized field
 		  boolean sortOrder = getSortOrder();
 		  if (sortField.equals("size") || sortField.equals("priority"))  
-			  sort = new Sort(new SortField[]{new SortField(sortField,SortField.INT,sortOrder)});
+			  sort = new Sort(new SortField[]{new SortField(sortField,SortField.FLOAT,sortOrder)});
 		  else if (sortField.equals("attach"))
 			  sort = new Sort(new SortField[]{new SortField(sortField,SortField.INT,!sortOrder)});
 		  else if (sortField.equals("score"))  
@@ -131,6 +158,8 @@ public class StandardSearch extends Search {
 		  else if (sortField.equals("subject") || sortField.equals("to") || sortField.equals("from"))
 			  sort = new Sort(new SortField[]{new SortField(sortField+"s",SortField.STRING,sortOrder)});
 		  else if (sortField.equals("sentdate"))
+			  sort = new Sort(new SortField[]{new SortField(sortField,SortField.STRING,sortOrder)});
+		  else if (sortField.equals("archivedate"))
 			  sort = new Sort(new SortField[]{new SortField(sortField,SortField.STRING,sortOrder)});
 		  else return null;
 		  return sort;  	  
@@ -140,9 +169,12 @@ public class StandardSearch extends Search {
 	  /* date search filter */
     
 	  protected String getDateFilter() {	
-		  Date sentAfter = defaultDate(getSentAfter(),new Date(0));
-		  Date sentBefore = defaultDate(getSentBefore(), new Date());
-		  return "sentdate:[d"+format.format(sentAfter) + " TO d" + format.format(sentBefore)+"]";	
+		  Date sentAfter = defaultDate(getAfter(),new Date(0));
+		  Date sentBefore = defaultDate(getBefore(), new Date());
+		  if (getDateType()==DateType.SENTDATE)
+			  return "sentdate:[d"+DateUtil.convertDatetoString(sentAfter) + " TO d" + DateUtil.convertDatetoString(sentBefore)+"]";	
+		  else // ARCHIVEDATE
+			  return "archivedate:[d"+DateUtil.convertDatetoString(sentAfter) + " TO d" + DateUtil.convertDatetoString(sentBefore)+"]";	
 	  }
 	  
 	  protected Date defaultDate(Date date, Date defaultDate) {
@@ -169,7 +201,7 @@ public class StandardSearch extends Search {
 	  protected String getFlagFilter() {		
 	  		Flag flag = getFlag();
 	  		if (flag!=Flag.ANY) {
-	  			return "flag:"+flag.toString().toLowerCase();
+	  			return "flag:"+flag.toString().toLowerCase(Locale.ENGLISH);
 	  		}
 	  		return "";
 	  }
@@ -186,12 +218,14 @@ public class StandardSearch extends Search {
 	  /* user role filter */
 	  
 	  protected String getUserRoleFilter() {
-		  List<String> emailAddresses = getEmailAddresses();
+		  List<String> emailAddresses = ((MailArchivaPrincipal)getPrincipal()).getEmailAddresses();
 		  if (emailAddresses !=null && emailAddresses.size()>0) {
-			  if (getUserRole().equalsIgnoreCase("user")) {
+			  
+			  if (Compare.equalsIgnoreCase(((MailArchivaPrincipal)getPrincipal()).getRole(), "user")) {
 				  String filterstr = "(";
 				  for (String email : emailAddresses) {
-			  			filterstr += " to:\""+email+"\" from:\""+email+"\" cc:\""+email+"\" bcc:\""+email+"\"";
+					    email = email.replaceAll("\"", "\\\\\"");
+					    filterstr += " to:\""+email+"\" deliveredto:\""+email+"\" from:\""+email+"\" cc:\""+email+"\" bcc:\""+email+"\"";
 				  }
 				  return filterstr+")";
 			  } 
@@ -201,25 +235,28 @@ public class StandardSearch extends Search {
 
 	  protected Searcher getVolumeSearchers() throws MessageSearchException {
 		  	boolean searcherPresent = false;
-		  	Date sentAfter = defaultDate(getSentAfter(),new Date(0));
-			Date sentBefore = defaultDate(getSentBefore(), new Date());
+		  	Date after = defaultDate(getAfter(),new Date(0));
+			Date before = defaultDate(getBefore(), new Date());
+			DateType dateType = getDateType();
 		    List volumes = Config.getConfig().getVolumes().getVolumes();
-			LinkedList<Searcher> searchers = new LinkedList<Searcher>();
+			LinkedList<Searchable> searchers = new LinkedList<Searchable>();
 			Iterator vl = volumes.iterator();
 			while (vl.hasNext()) {
 			    Volume volume = (Volume)vl.next();
-			    if (volume.getModified()!=null && sentAfter.compareTo(volume.getModified())>0) {
-			    	logger.debug("standard search: not using volume {modified='"+volume.getModified()+"', sentAfter='"+sentAfter+"',"+volume);
+			    if (volume.getModified()!=null && dateType==DateType.ARCHIVEDATE && after.compareTo(volume.getModified())>0) {
+			    	logger.debug("standard search: not using volume {modified='"+volume.getModified()+"', ater='"+after+"',"+volume);
 			    	continue;
 			    }
-			    if (volume.getCreated()!=null && sentBefore.compareTo(volume.getCreated())<0) {
-			    	logger.debug("standard search: not using volume {created='"+volume.getCreated()+"', sentBefore='"+sentBefore+"',"+volume);    
+			    if (volume.getCreated()!=null && dateType==DateType.ARCHIVEDATE && before.compareTo(volume.getCreated())<0) {
+			    	logger.debug("standard search: not using volume {created='"+volume.getCreated()+"', before='"+before+"',"+volume);    
 			    	continue;
 			    }
 			    try {
 			        if (volume.getStatus()==Volume.Status.ACTIVE || volume.getStatus()==Volume.Status.CLOSED) {
-			            Searcher volsearcher = new IndexSearcher(volume.getIndexPath());
-			            searchers.add(volsearcher);
+			           
+			            	Searcher volsearcher = new IndexSearcher(volume.getIndexPath());
+			            	searchers.add(volsearcher);
+			           
 			            searcherPresent = true; 
 			        }
 			    } catch (IOException io) {
@@ -228,7 +265,7 @@ public class StandardSearch extends Search {
 			}
 			
 			if (!searcherPresent)
-				throw new MessageSearchException("no volumes are ready to search",logger);
+				return null;
 
 			Searcher[] searcherarraytype = new Searcher[searchers.size()];
 			Searcher[] allsearchers = (Searcher[])(searchers.toArray(searcherarraytype));
@@ -242,7 +279,7 @@ public class StandardSearch extends Search {
 			return searcher;
 	  }
 	  
-	  protected Hits search(Searcher searchers, Query query, Filter queryFilter, Sort sort) throws MessageSearchException  {
+	  protected Hits search(Query query, Filter queryFilter, Sort sort) throws MessageSearchException  {
 		  Hits hits;
 		  try {
 			   hits = searchers.search(query,queryFilter,sort);
@@ -255,7 +292,7 @@ public class StandardSearch extends Search {
 		 return hits;
 	  }
 	  
-	  protected void compileSearchResults(Searcher searchers, Hits hits) throws MessageSearchException {
+	  protected void compileSearchResults(Hits hits) throws MessageSearchException {
 		  String messageUidDebugOutput = "search results {";
           int maxSearchResults = getMaxResults();
           
@@ -269,12 +306,8 @@ public class StandardSearch extends Search {
           logger.debug("max search results {maxSearchResults='"+maxSearchResults+"', noRecords='"+norecords+"'}");
 			for (int start = 0; start < norecords; start++)
 			{
-			    Document doc = null;
 				try {
-
-					doc = hits.doc(start);
-					float score = hits.score(start);
-					addMessage(doc,score);
+					addMessage(hits,start);
 					/*if (logger.isDebugEnabled())
 						messageUidDebugOutput+=doc.get("uid")+",";*/
 				} catch (IOException io)
@@ -288,52 +321,14 @@ public class StandardSearch extends Search {
 				 messageUidDebugOutput += "'}"; 
 				 logger.debug(messageUidDebugOutput);
 			 }*/
-             	
-			 try {
-					searchers.close();
-			 } catch (IOException io) {
-				throw new MessageSearchException("failed to close search indexes (opened for read)",io,logger);
-			 }
 	  }
 	  
-	  protected void addMessage(Document doc,float score) {
-		  String uid 	  = doc.get("uid");
-		  if (uid==null)  {
-			  logger.warn("found message with null ID during construction of search results");
-			  return;
-		  }
+	  
+	  protected void addMessage(Hits hits, int position) throws IOException {
+		  results.add(new LuceneResult(hits,position));
 		  
-		  String ver = doc.get("ver"); 
-		  
-		  // new index format (email fields are stored in the index)
-		  if (ver!=null && ver.equals("2")) {
-			 
-			  String subject  = doc.get("subjects");
-			  String to 	  = doc.get("tos");
-			  String from 	  = doc.get("froms");
-			  String size     = doc.get("size");
-			  String priority = doc.get("priority");
-			  String attach   = doc.get("attach");
-			 
-			  subject = (subject!=null) ? subject : "";
-			  to 	  = (to!=null) ? to : "";
-			  from 	  = (from!=null) ? from : "";
-			  
-			  int sz 	   = (size!=null) ? Integer.parseInt(doc.get("size")) : 0;
-			  int pri 	   = (priority!=null) ? Integer.parseInt(doc.get("priority")) : 3;
-			  boolean att  = (attach!=null) ? Integer.parseInt(doc.get("attach"))==1 : false;
-			  
-			  SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
-			  String sentDate = doc.get("sentdate");
-			  Date sent = (sentDate!=null) ? format.parse(sentDate, new ParsePosition(1)) : new Date(0);
-			  addMessage(new EmailID(uid), score, subject,to,from, sent, sz, att, pri);
-		  } else {
-			
-			  // legacy index (all fields are taken from the email directly as opposed to the lucene index
-			  addMessage(new EmailID(uid), score);
-			  setFetchMessage(new LegacyFetchMessage());
-		  }
 	  }
+	
 	  
 
 		protected void compileSearchQuery()
@@ -347,7 +342,7 @@ public class StandardSearch extends Search {
 	  	  		if (constructedQuery.length()>0) {
 	  	  		    if (!start)
 	  	  		    	searchQuery += c.getOperator();
-	  	  			if (criteria.size()>1)
+	  	  			if (criteria.size()>1) 
 	  	  			    searchQuery += " (" + constructedQuery + ") ";
 	  	  			else 
 	  	  			  searchQuery += constructedQuery;
@@ -410,54 +405,214 @@ public class StandardSearch extends Search {
 	    		public void setField(String field) { this.field = field; }
 
 	    		public String allFields(String token) {
-	    		    String constructedQuery = "(";
-	    		    for (int i=1;i<FIELD_LIST.size();i++) {
-	    		        String field = (String)FIELD_LIST.get(i);
-	    		        constructedQuery += field + ":" + token+" ";
+	    		    StringBuffer constructedQuery = new StringBuffer();
+	    		    constructedQuery.append("(");
+	    		    Iterator i = EmailField.getAvailableFields().values().iterator();
+	    		    while (i.hasNext()) {
+	    		    	EmailField ef = (EmailField)i.next();
+	    		    	String field = ef.getName();
+	    		    	
+	    		    	// do not allow bcc and deliveredto fields
+	    		    	
+	    		    	if (Compare.equalsIgnoreCase(((MailArchivaPrincipal)getPrincipal()).getRole(), "user")) {
+	    		    		if (Compare.equalsIgnoreCase(field, "bcc"))
+	    		    				continue;
+	    		    		if (Compare.equalsIgnoreCase(field, "deliveredto"))
+	    		    				continue;
+	    		    	}
+	    		    	constructedQuery.append(field);
+	    		    	constructedQuery.append(":");
+	    		    	constructedQuery.append(token);
+	    		    	constructedQuery.append(" ");
 	    		    }
-	    		    constructedQuery = constructedQuery.trim() + ") ";
-	    		    return constructedQuery;
+	    		    return constructedQuery.toString().trim() + ") ";
 	    		}
 	    		
 	    		public String getConstructedQuery() {
-	    		    String constructedQuery = "";
-	    		    if (method.compareToIgnoreCase("all")==0) {
+	    		    StringBuffer constructedQuery = new StringBuffer();
+	    		    if (Compare.equalsIgnoreCase(method, "all")) {
 	    		    	boolean start = true;
 	    		    	StringTokenizer allWordsTokenizer = new StringTokenizer(query);
 	    		    	while (allWordsTokenizer.hasMoreTokens()) {
-	    		    		if (!start) constructedQuery += "AND ";
-	  		  		    if (field.compareTo("all")==0)
-	  		  	   			constructedQuery += allFields(allWordsTokenizer.nextToken())+" ";     
-	  		  	   		else
-	  		  	   			constructedQuery += field+":"+allWordsTokenizer.nextToken()+" ";
-	  		  	   		start=false;
-	  		  		}
-	    			} else if (method.compareToIgnoreCase("exact")==0) {
-	    			 	if (field.compareTo("all")==0)
-	    					constructedQuery += allFields("\"" + query + "\"") + " ";
-	    				else
-	    					constructedQuery += field+":\"" + query + "\"" + " ";
-	    		 	} else if (method.compareToIgnoreCase("any")==0) {
+	    		    		if (!start) constructedQuery.append("AND ");
+		  		  		    if (Compare.equalsIgnoreCase(field, "all")) {
+		  		  		    	constructedQuery.append(allFields(allWordsTokenizer.nextToken()));
+		  		  		    	constructedQuery.append(" ");    
+		  		  		    } else {
+		  		  	   			constructedQuery.append(field);
+		  		  	   			constructedQuery.append(":");
+		  		  	   			constructedQuery.append(allWordsTokenizer.nextToken());
+		  		  	   			constructedQuery.append(" ");
+		  		  		    }
+		  		  	   		start=false;
+	  		  			}
+	    			} else if (Compare.equalsIgnoreCase(method, "exact")) {
+	    				
+	    			 	if (Compare.equalsIgnoreCase(field, "all")) {
+	    					constructedQuery.append(allFields("\"" + query + "\" "));
+	    			 	} else {
+	    					constructedQuery.append(field);
+	    					constructedQuery.append(":\"");
+	    					constructedQuery.append(query);
+	    					constructedQuery.append("\" ");
+	    			 	}
+	    		 	} else if (Compare.equalsIgnoreCase(method, "any")) {
 	    		 		StringTokenizer anyWordsTokenizer = new StringTokenizer(query);
 	    		 		while (anyWordsTokenizer.hasMoreTokens()) {
-	  		  	   		if (field.compareTo("all")==0)
-	  		  	   			constructedQuery += allFields(anyWordsTokenizer.nextToken()+" ");     
-	  		  	   		else
-	  		  	   			constructedQuery += field+":"+anyWordsTokenizer.nextToken()+" ";
-	  		  		}
-	    		 	} else if (method.compareToIgnoreCase("none")==0) {
+		  		  	   		if (Compare.equalsIgnoreCase(field, "all")) {
+		  		  	   			constructedQuery.append(allFields(anyWordsTokenizer.nextToken()));
+		  		  	   			constructedQuery.append(" "); 
+		  		  	   		} else {
+		  		  	   			constructedQuery.append(field);
+		  		  	   			constructedQuery.append(":");
+		  		  	   			constructedQuery.append(anyWordsTokenizer.nextToken());
+		  		  	   			constructedQuery.append(" ");
+		  		  	   		}
+		  		  	   	}
+	  		  	   
+	    		 	} else if (Compare.equalsIgnoreCase(method, "none")) {
 	    		 		StringTokenizer noWordsTokenizer = new StringTokenizer(query);
 	    		 		while (noWordsTokenizer.hasMoreTokens()) {
-	    		 		if (field.compareTo("all")==0)
-	    		 			constructedQuery += "-" + allFields(noWordsTokenizer.nextToken()+" ");
-	    		 		else
-	    		 			constructedQuery += "-" + field+":"+noWordsTokenizer.nextToken()+" ";
-	    		 		}
-	    		 	}	
-	    		 	return constructedQuery.trim();
-	    		 }
-	    		   		
+		    		 		if (Compare.equalsIgnoreCase(field, "all")) {
+		    		 			constructedQuery.append("-");
+		    		 			constructedQuery.append(allFields(noWordsTokenizer.nextToken()));
+		    		 			constructedQuery.append(" ");
+		    		 		} else {
+		    		 			constructedQuery.append("-");
+		    		 			constructedQuery.append(field);
+		    		 			constructedQuery.append(":");
+		    		 			constructedQuery.append(noWordsTokenizer.nextToken());
+		    		 			constructedQuery.append(" ");
+		    		 		}
+	    		 		}	
+	    		 	}
+	    		    return constructedQuery.toString().trim();
+	    		}
 	    }
 
+	    protected void finalize() throws Throwable {
+	    	/*
+		    try {
+				searchers.close();
+		 } catch (IOException io) {
+			logger.error("failed to close search indexes (opened for read)",io);
+		 }*/
+	   }
+	    
+	    private static double round(double val, int places)
+		{
+			long factor = (long) Math.pow(10, places);
+			val = val * factor;
+			long tmp = Math.round(val);
+			return (double) tmp / factor;
+		}
+
+		private static float round(float val, int places)
+		{
+			return (float) round((double) val, places);
+		}
+		  
+	 /*
+	  *   protected void addMessage(Document doc,float score) {
+		  
+		  String uid 	  = doc.get("uid");
+		  if (uid==null)  {
+			  logger.warn("found message with null ID during construction of search results");
+			  return;
+		  }
+		  
+		  Volume volume = null;
+		  try { 
+			  volume = Config.getConfig().getVolumes().getVolume(uid);
+		  } catch (Exception ce) {
+			  logger.error("failed to set the volume associated with emailid");
+		  }
+		  
+		  String ver = doc.get("ver"); 
+		  EmailID emailID = new EmailID(uid,volume);
+		  results.add(new LuceneResult(emailID, score, doc)); 
+	  }
+	  */
 		
+	    public class LuceneResult extends Search.Result implements Serializable{
+
+	    	/**
+			 * 
+			 */
+			private static final long serialVersionUID = 338211546039332906L;
+			Document doc = null;
+	    	Hits hits 	 = null;
+	    	int position = -1;
+	    	
+	    	public LuceneResult(){
+	    		super();
+	    	}
+	    	
+	    	public LuceneResult(Hits hits, int position) {
+	    		super();
+	    		this.hits = hits;
+	    		this.position = position;
+	    	}
+	    			
+	    	public EmailID getEmailId() {
+	    		Document doc = getDocument();
+	    		String uid 	  = doc.get("uid");
+	    		String name   = doc.get("vol");
+	  		  	
+	    		if (uid==null)  {
+	  			  logger.warn("found message with null ID during construction of search results");
+	  			  return null;
+	  		  	}
+	    		Volume volume = null;
+	    		  try { 
+	    			 if (name==null) // legacy
+	    				 volume = Config.getConfig().getVolumes().getLegacyVolume(uid);
+	    			 else
+	    				 volume = Config.getConfig().getVolumes().getNewVolume(name);
+		  		  } catch (Exception ce) {
+		  			  logger.error("failed to set the volume associated with emailid");
+		  		  }
+		  		  return EmailID.getEmailID(volume,uid);
+		  		
+	    	}
+	    	protected Document getDocument() {
+	    		try {
+		    		if (doc==null)
+		    			doc = hits.doc(position);
+		    		return doc;
+	    		} catch (Exception e) {
+	    			logger.error("failed to retrieve document from lucene hits object",e);
+	    			return null;
+	    		}
+	    	}
+	    	
+	    	public EmailFieldValue getFieldValue(String key) {
+	    		Document doc = getDocument();
+	    		float score = 0;
+	    		try {
+	    			score = hits.score(position);
+	    		} catch (IOException ioe) {
+	    			logger.error("failed to retrieve score from hits object",ioe);
+	    		}
+	    		String value = "";
+	    		EmailField field = EmailField.get(key);
+	    		if (field!=null) {
+	    			if (Compare.equalsIgnoreCase(key, "score"))
+		    			return new EmailFieldValue(field,Float.toString(round(score * 100, 2)) + "%");
+	    			EmailField.SearchMethod searchMethod = field.getSearchMethod();
+					  if (searchMethod==EmailField.SearchMethod.STORED) {
+						  value = doc.get(field.getIndexKey());
+					  } else if (searchMethod==EmailField.SearchMethod.TOKENIZED_AND_STORED) {
+						  value = doc.get(field.getIndexKey()+"s");
+					  }
+					  return new EmailFieldValue(field,value);
+	    		} 
+	    		logger.error("failed to retrieve email field {key='"+key+"'}");
+	    		return null;
+	    	}
+	    	
+	    	
+	    }
+
+
 }

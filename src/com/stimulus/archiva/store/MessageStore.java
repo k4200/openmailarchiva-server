@@ -1,4 +1,3 @@
-
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -22,31 +21,61 @@
 */ 
 
 package com.stimulus.archiva.store;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
 import java.nio.channels.FileChannel;
-import com.stimulus.archiva.domain.*;
-import com.stimulus.archiva.exception.MessageStoreException;
-import com.stimulus.archiva.exception.ProcessException;
-import java.io.*;
+import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.KeySpec;
+import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import javax.mail.MessagingException;
-import org.apache.log4j.Logger;
-import java.util.*;
-import javax.crypto.*;
-import javax.crypto.spec.*;
-import java.security.spec.*;
 
-public class MessageStore
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+
+import org.apache.log4j.Logger;
+
+import com.stimulus.archiva.domain.Config;
+import com.stimulus.archiva.domain.Email;
+import com.stimulus.archiva.domain.EmailID;
+import com.stimulus.archiva.domain.Volume;
+import com.stimulus.archiva.exception.MessageStoreException;
+import com.stimulus.archiva.exception.ProcessException;
+import com.stimulus.util.DateUtil;
+import com.stimulus.util.TempFiles;
+
+public class MessageStore implements Serializable
 {
 
-	 protected static final Logger logger = Logger.getLogger(MessageStore.class.getName());
+	 private static final long serialVersionUID = -2610982280435598267L;
+	 protected static Logger logger = Logger.getLogger(MessageStore.class.getName());
 	 protected static final String messageFileExtension = ".mrc";
+	 protected static final String attachmentFileExtension = ".att";
 	 protected static final int FILE_SIZE = 0;
 	 protected static final int FILE_COUNT = 1;
      protected SecretKey key;
      protected AlgorithmParameterSpec paramSpec;
+     private static String hexits = "0123456789abcdef";
+     protected static TempFiles tempfiles = Config.getTempFiles();
 
+	 static enum Action { STRIP, COMBINE };
 
 	 public MessageStore() throws MessageStoreException {
 	     initKeys();
@@ -78,63 +107,89 @@ public class MessageStore
          }
 	 }
 
-	 /** 
-	   * Retrieve the file name of a message given an EmailID
-	   * @param emailID The email ID
-	   * @return the message file name
-	   */  
+	
+	 protected File getFileFromHashValue(Volume volume, String hash, String extension) { 
+		 String filename = volume.getPath() + File.separatorChar +  hash.substring(0, 3) + 
+		 		File.separator + hash.substring(3, 6) + File.separator + hash + extension;
+		 logger.debug("getMessageFileName() { return='"+filename+"'");
+		 return new File(filename);
+	 }
 	 
-    protected String getMessageFileName(EmailID emailID) throws MessageStoreException
+	 protected File getLegacyFileFromHashValue(Volume volume, String hash, int directoryLength, String extension) { // legacy
+		 String filename = volume.getPath() + File.separatorChar + hash.substring(0, directoryLength) + 
+		 		File.separator + hash + extension;
+		 logger.debug("getMessageFileName() { return='"+filename+"'");
+		 return new File(filename);
+	 }
+	 
+    public File getExistingFile(Volume volume, String hash, String extension) throws MessageStoreException
     {
-        if (emailID==null || emailID.getVolume()==null || emailID.getUniqueID()==null)
-            throw new MessageStoreException("assertion failure: null emailID, volume or uniqueId",logger);
-
-        String filename = emailID.getVolume().getPath() + File.separatorChar + emailID.getUniqueID().substring(0, 8) + File.separatorChar + emailID.getUniqueID() + messageFileExtension;
-        logger.debug("getMessageFileName() {return='" + filename + "'}");
-        return filename;
+        File file = getFileFromHashValue(volume,hash,extension);
+        if (!file.exists()) {
+        	file = getLegacyFileFromHashValue(volume,hash,3,extension);
+        	if (!file.exists()) {
+            	file = getLegacyFileFromHashValue(volume,hash,6,extension);
+            	if (!file.exists()) {
+            		file = getLegacyFileFromHashValue(volume,hash,4,extension);
+            	}
+            }
+        }
+        logger.debug("getMessageFileName() {return='" + file.getAbsolutePath() + "'}");
+        return file;
     }
     
+    public File getNewFile(Volume volume, String hash, String extension) throws MessageStoreException {
+    	createMessageStoreDir(volume);
+        createDirectories(volume,hash);
+    	File file =  getFileFromHashValue(volume, hash,extension);
+    	logger.debug("getFile() {return='"+file.getAbsolutePath()+"'}");
+    	return file;
+    }
+
     /** 
-      * Retrieve the file location of a message that could not be stored due to error
+      * Retrieve the file location of a message that could not be indexed
 	  * @param emailID The email ID
 	  * @return The file location message not processed
 	  */  
     
-    protected String getIndexErrorFileName(EmailID emailID) throws MessageStoreException {
+    protected File getNoIndexFile(EmailID emailID) throws MessageStoreException {
         if (emailID==null || emailID.getUniqueID()==null)
             throw new MessageStoreException("assertion failure: null emailID or uniqueId",logger);
-        String filename = Config.getApplicationPath() + File.separatorChar + "notindexed" + File.separatorChar + emailID.getUniqueID().substring(0, 8) + File.separatorChar + emailID.getUniqueID() + messageFileExtension;
-        logger.debug("getIndexErrorFileName() {return='" + filename + "'}");
-        return filename;
-    }
-    /** 
-	   * Retrieve the directory wherein a message is stored 
-	   * @param emailID The email ID
-	   * @return The directory
-	   */  
-  
-    protected String getMessageFileDirectory(EmailID emailID) throws MessageStoreException
-    {
-        if (emailID==null || emailID.getVolume()==null || emailID.getUniqueID()==null)
-            throw new MessageStoreException("assertion failure: null emailID, volume or uniqueId",logger);
-
-        String dirname = emailID.getVolume().getPath() + File.separatorChar + emailID.getUniqueID().substring(0, 8);
-        logger.debug("getMessageFileDirectory() {return='" + dirname + "'}");
-        return dirname;
+        String filename = Config.getNoIndexPath() + File.separatorChar + emailID.getUniqueID() + messageFileExtension;
+        logger.debug("getNoIndexFileName() {return='" + filename + "'}");
+        return new File(filename);
     }
     
+  
+  protected File getNoArchiveFile(Email email) throws MessageStoreException {
+	   logger.debug("getNoArchiveFileName() ()");
+	   String filename;
+	    try
+	  	{
+	    	filename = DateUtil.convertDatetoString(new Date());
+	  	} catch (Exception e)
+	  	{
+	  		logger.error("failed to generate a uniqueid for a message");
+	  		return null;
+	  	}
+      logger.debug("getNoArchiveFileName() {return='" + filename + "'}");
+      return new File(Config.getNoArchivePath()  + File.separatorChar + EmailID.generateUniqueID(email)+ ".mrc");
+  }
+   
+   
+   
     /** 
 	   * Create the directory where a volume is stored 
 	   * @param volume The volume
 	   * @return The directory
 	   */  
 
-    public String createMessageStoreDir(Volume volume) throws MessageStoreException {
+    public static String createMessageStoreDir(Volume volume) throws MessageStoreException {
 
        if (volume==null)
            throw new MessageStoreException("assertion failure: null volume",logger);
 
-       logger.debug("createMessageDir() {" + volume + "}");
+       logger.debug("createMessageStoreDir() {" + volume + "}");
 
        File storeDir = new File(volume.getPath());
        if(!storeDir.exists())
@@ -153,30 +208,36 @@ public class MessageStore
 	   * @param emailID The email ID
 	   * @return The message directory
 	   */  
-
-    protected String createMessageDir(EmailID emailID) throws MessageStoreException
-    {
-        if (emailID==null)
-            throw new MessageStoreException("assertion failure: null emailID",logger);
-
-    	String messageDir = getMessageFileDirectory(emailID);
-        logger.debug("createMessageDir() {messageDir='" + messageDir + "'}");
-        File todayDir = new File(messageDir);
-        if(!todayDir.exists())
-        {
-            logger.info("message sub-directory does not exist {messageDir='" + messageDir + "'}");
-            boolean makedir = todayDir.mkdir();
-            if(makedir)
-                logger.info("created message sub-directory {messageDir='" + messageDir + "'}");
-            else
-                throw new MessageStoreException("failed to create message sub=directory {messageDir='" + messageDir + "'}",logger);
-        } else
-        {
-            logger.debug("message directory exists {messageDir='" + messageDir + "'}");
-        }
-        return messageDir;
+    
+    private void createDir(String directory) throws MessageStoreException  {
+    	 logger.debug("createDir() {messageDir='" + directory + "'}");
+         File todayDir = new File(directory);
+         if(!todayDir.exists())
+         {
+             logger.debug("message sub-directory does not exist {dir='" + directory + "'}");
+             boolean makedir = todayDir.mkdir();
+             if(makedir)
+                 logger.debug("created message sub-directory {dir='" + directory + "'}");
+             else
+                 throw new MessageStoreException("failed to create directory {dir='" + directory + "'}",logger);
+         } else
+         {
+             logger.debug("directory exists {dir='" + directory + "'}");
+         }
     }
 
+    protected String createDirectories(Volume volume, String hashValue) throws MessageStoreException
+    {
+    	String messageDirLevel1 = volume.getPath() + File.separatorChar + hashValue.substring(0, 3);
+    	createDir(messageDirLevel1);
+    	String messageDirLevel2 = messageDirLevel1 + File.separatorChar + hashValue.substring(3, 6);
+    	createDir(messageDirLevel2);
+    	logger.debug("createDirectories() {messageDir='" + messageDirLevel2 + "'}");
+        return messageDirLevel2;
+    }
+
+    
+   
     /** 
 	   * Insert a new message in the store
 	   * @param emailID The email ID
@@ -185,8 +246,9 @@ public class MessageStore
 	   * @param encrypt Should encrypt message
 	   */  
     
-    public void insertMessage(EmailID emailId, InputStream in, boolean compress, boolean encrypt) throws MessageStoreException
+    public boolean insertMessage(EmailID emailId, Email email) throws MessageStoreException
     {
+    
         Config config = Config.getConfig();
         
        if (emailId==null || emailId.getVolume()==null || emailId.getUniqueID()==null)
@@ -195,40 +257,30 @@ public class MessageStore
        if(emailId.getUniqueID() == null)
             throw new MessageStoreException("insert message was found to have a null message id.", logger);
 
-       logger.debug("insertMessage {"+emailId + ",compress='" + compress + "',encrypt='"+encrypt+"'}");
+       logger.debug("insertMessage {"+emailId + "}");
        
        if (!config.isDefaultPassPhraseModified())
            throw new MessageStoreException("failed to archive message. encryption password is not set. {"+emailId+"}",logger);
 
-       OutputStream out = null;
-       createMessageStoreDir(emailId.getVolume());
-       createMessageDir(emailId);
-       String messageFileName = getMessageFileName(emailId);
-        try
-        {
-
-            out = getRawMessageOutputStream(messageFileName,compress,encrypt);
-            byte[] buf = new byte[1024];
-            int numRead = 0;
-            while ((numRead = in.read(buf)) >= 0) {
-                out.write(buf, 0, numRead);
-            }
-        } catch(IOException e)
-        {
-           throw new MessageStoreException("failed to store message to file {file='" + messageFileName + "'}", e, logger);
-        } finally {
-        	  try
-	            {
-
-	            	if (in !=null)
-	            		in.close();
-	                if (out !=null) {
-	                	out.flush();
-	                    out.close();
-	                }
-	            }
-	            catch(IOException ioe) { }
-        }
+       File messageFile = getNewFile(emailId.getVolume(),emailId.getUniqueID(),messageFileExtension);
+       
+       
+       if (messageFile.exists()) {
+    	   logger.debug("no need to archive. message already exists in the store. {"+emailId+"}");
+    	   return false;
+       }
+       try {
+    	   email.setHeader("X-MailArchiva-Archive-Date", DateUtil.convertDatetoString(new Date()));
+       } catch (MessagingException me) {
+    	   logger.error("failed to set archive date");
+       }
+       
+       try {
+    	   writeEmail(email, messageFile);
+       } catch (Exception e) {
+    	   throw new MessageStoreException("failed to write message to store {"+emailId+"}",e,logger);
+       }
+       return true;
     }
 
     /** 
@@ -248,6 +300,8 @@ public class MessageStore
         return uid;
     }
     
+  
+    
     /** 
 	   * Retrieve a message from the store
 	   * @param emailID The email ID
@@ -257,64 +311,29 @@ public class MessageStore
 	   * @return An email message
 	   */  
     
-    public Email retrieveMessage(EmailID emailID, boolean decompress, boolean decrypt, boolean headersOnly) throws MessageStoreException {
+    public Email retrieveMessage(EmailID emailID) throws MessageStoreException {
 
         if (emailID==null || emailID.getVolume()==null || emailID.getUniqueID()==null)
             throw new MessageStoreException("assertion failure: null emailID, volume or uniqueId",logger);
 
-        logger.debug("retrieveMessage() {"+emailID+",retrieveHeadersOnly='" + headersOnly + "', decompress='" + decompress + "',decrypt='"+decrypt+"'}");
-       
-        String messageFileName = getMessageFileName(emailID);
-        InputStream is = null;
-        try {
-
-            is = getRawMessageInputStream(emailID, decompress, decrypt);
-        }   catch(FileNotFoundException fnfe)
-        {
-            throw new MessageStoreException("message file not found {filename='" + messageFileName + "'}", fnfe, logger);
-        } catch(IOException io)
-        {
-            try
-            {
-                if (is!=null)
-                    is.close();
-            }
-            catch(Exception e) { }
-            throw new MessageStoreException("failed to retrieve message {filename='" + messageFileName + "'}", io, logger);
-        }
-
+        logger.debug("retrieveMessage() {"+emailID+"'}");
+     
+     
         Email message = null;
         try {
-            message = new Email(is, headersOnly, emailID);
-        } catch(MessagingException me)
-        {
-            try
-            {
-                is.close();
-            }
-            catch(Exception e) { }
-            throw new MessageStoreException("failed to decode message {filename='" + messageFileName + "'}", me, logger);
-        } finally
-        {
-            if(is != null)
-                try
-                {
-                    is.close();
-                }
-                catch(IOException ioe)
-                {
-                    throw new MessageStoreException("error closing message {file '" + messageFileName + "'}", ioe, logger);
-                }
+        	
+   			  File messageFile = getExistingFile(emailID.getVolume(),emailID.getUniqueID(),messageFileExtension);
+   			  logger.debug("returning input stream {filename='" + messageFile + "'}");
+   		     
+	   		  message = new Email(emailID,getRawMessageInputStream(messageFile, true, true));
+        
+             saveEmailChanges(message);
 
-        }
-
-        try
-        {
-            logger.debug("retrieved message {filename='" + messageFileName + "'," + message+"}");
-        }
-        catch(Exception e)
-        {
-            throw new MessageStoreException("retrieved message does not appear to be well formed.", e, logger);
+            logger.debug("retrieved message {"+message+"}");
+        } catch (java.io.FileNotFoundException fnfe) {
+        	throw new MessageStoreException("The message is currently not accessible on the storage device.",fnfe,logger);
+        } catch(Exception e) {
+            throw new MessageStoreException("Retrieved message does not appear to be well formed.", e, logger);
         }
         return message;
 
@@ -327,24 +346,153 @@ public class MessageStore
     public void copyEmailToNoIndexQueue(EmailID emailID) throws MessageStoreException {
         if (emailID==null || emailID.getVolume()==null || emailID.getUniqueID()==null)
             throw new MessageStoreException("assertion failure: null emailID, volume or uniqueId",logger);
-
         logger.debug("copyEmailToNoIndexQueue() {"+emailID+"'");
+        copyEmail(getExistingFile(emailID.getVolume(),emailID.getUniqueID(),messageFileExtension),getNoIndexFile(emailID));   
+    }
+    
+    public void copyEmailToQuarantine(File sourceFile) throws MessageStoreException {
+    	logger.debug("copyEmailToQuarantine() {sourceFile='"+sourceFile+"'");
+   
+    	String destFile = Config.getQuarantinePath() + File.separatorChar + sourceFile.getName();
+        copyEmail(sourceFile,new File(destFile));   
+    }
+    
+    public void copyEmail(File source, File dest) throws MessageStoreException {
+       
+        logger.debug("copyEmail()");
         FileChannel in = null, out = null;
-        String messageFileName = getMessageFileName(emailID);
-        String indexErrorFileName = getIndexErrorFileName(emailID);
-        try {          
-             in = new FileInputStream(messageFileName).getChannel();
-             out = new FileOutputStream(indexErrorFileName).getChannel();
+
+        try {   
+        	
+             in = new FileInputStream(source).getChannel();
+             out = new FileOutputStream(dest).getChannel();
              in.transferTo( 0, in.size(), out);
             
         } catch (Exception e) {
-            throw new MessageStoreException("failed to copy suspect message to noindex queue {src='"+messageFileName+"=',dest='"+indexErrorFileName+"'",logger);
+            throw new MessageStoreException("failed to copy email {src='"+source+"=',dest='"+dest+"'",logger);
         } finally {
              if (in != null) try { in.close(); } catch (Exception e) {};
              if (out != null) try { out.close(); } catch (Exception e) {};
         }
     }
     
+
+    public void copyEmailToNoArchiveQueue(Email email) throws MessageStoreException {
+    	logger.debug("copyEmailToNoArchiveQueue() {"+email+"}");
+    	if (email==null) {
+            logger.error("assertion failure: email is null");
+            return;
+    	}
+    	File noArchiveFile = getNoArchiveFile(email);
+    	logger.warn("copying email to no archive queue {dest='"+noArchiveFile.getAbsolutePath()+"'}");
+    	
+    	try {
+     	   writeEmail(email, noArchiveFile);
+        } catch (Exception e) {
+     	   throw new MessageStoreException("failed to write message to store {"+email+"}",logger);
+        }
+       
+    }
+   
+    public int getNoWaitingMessagesInNoArchiveQueue() {
+    	return new File(Config.getNoArchivePath()).listFiles().length;
+    }
+    
+    public void restoreEmailsFromNoArchiveQueue(RecoverEmail recover) {
+    	recover.start();
+    	int total = 0;
+    	int success = 0;
+    	int failed = 0;
+    	String notarchiveddir = Config.getNoArchivePath();
+        logger.debug("checking for failed messages that require rearchiving {notarchiveddirectory='"+notarchiveddir+"'}");
+        File noarchiveDir = new File(notarchiveddir);
+        if (!noarchiveDir.exists()) return;
+        if (noarchiveDir.isDirectory()) {
+              String[] children = noarchiveDir.list();
+              if (children.length>0)
+              	logger.warn("there are messages that require rearchival {notarchiveddirectory='"+notarchiveddir+"'}");
+              total = children.length;
+              for (int i=0; i<total; i++) {
+                  String filepath = notarchiveddir+File.separatorChar+children[i];
+                  logger.debug("attempting to recover file {path='" + filepath +"'}");	                
+                  Email message = null;
+                  try {
+                	  InputStream is = getRawMessageInputStream(new File(filepath), true, true);
+  			  	      if (recover.recover(is,children[i])) {
+  			  	    	success++;
+  			  	    	is.close();
+  	  	            	logger.info("message has been rearchived {"+message+", filepath='" + filepath +"'}");
+		  	  	         try {
+		  		              File delFile = new File(filepath);
+		  			  	      boolean deleted;
+		  			  	      delFile.deleteOnExit();
+		  			  	      deleted = delFile.delete();
+		  			  	      if (!deleted)
+		  			  	    	  delFile.renameTo(File.createTempFile("oldrecovery", "tmp"));   
+		  	              } catch (IOException io) {
+		  	            	  logger.error("failed to delete email {filepath='"+filepath+"'");
+		  	              }
+  			  	      } else {
+  			  	    	failed++;
+  			  	    	is.close();
+  			  	    	logger.error("failed to rearchive message. it will be copied to archiveerror queue.");
+  			  	      }
+  			  	      
+                  } catch (Exception io) {
+      	  	        logger.error("failed to recover message. {filename='"+filepath+"'}",io);	  	      
+      	  	      }  
+              }
+        }	
+        recover.end(failed,success,total);
+    }
+    
+    public int getNoQuarantinedEmails() {
+    	return new File(Config.getQuarantinePath()).listFiles().length;
+    }
+    
+    public void quarantineEmails() {
+    	String notarchiveddir = Config.getNoArchivePath();
+    	logger.debug("quarantineEmails {noarchivedpath='"+notarchiveddir+"'}");
+    	File noarchiveDir = new File(notarchiveddir);
+        if (!noarchiveDir.exists()) return;
+        if (noarchiveDir.isDirectory()) {
+              String[] children = noarchiveDir.list();
+              if (children.length>0)
+              	logger.warn("there are messages that require rearchival {notarchiveddirectory='"+notarchiveddir+"'}");
+              for (int i=0; i<children.length; i++) {
+                  String filepath = notarchiveddir+File.separatorChar+children[i];
+                  logger.debug("attempting to quarantine file {path='" + filepath +"'}");	 
+	              try {
+	            	  copyEmailToQuarantine(new File(filepath)); 
+	              } catch (Exception e) {
+	            	  logger.error("failed to quarantine email (filepath='"+filepath+"'}",e);
+	            	  continue;
+	              }
+	              try {
+		              File delFile = new File(filepath);
+			  	      boolean deleted;
+			  	      delFile.deleteOnExit();
+			  	      deleted = delFile.delete();
+			  	      if (!deleted)
+			  	    	  delFile.renameTo(File.createTempFile("oldrecovery", "tmp"));   
+	              } catch (IOException io) {
+	            	  logger.error("failed to delete email {filepath='"+filepath+"'");
+	              }
+              }
+        }
+    }
+    
+    public interface RecoverEmail {
+    	
+    	public void start();
+    	
+    	public boolean recover(InputStream is, String filename);
+    	
+    	public void end(int failed, int success, int total);
+    }
+    
+  
+  
     /** 
 	   * Get a raw input stream for a message
 	   * @param emailID The email ID
@@ -352,12 +500,11 @@ public class MessageStore
 	   * @param decrypt Should decrypt message
 	   * @return An inputstream containing the message
 	   */  
-   public InputStream getRawMessageInputStream(EmailID emailID, boolean decompress, boolean decrypt)  throws IOException,MessageStoreException {
-       if (emailID==null)
-           throw new MessageStoreException("assertion failure: null emailID",logger);
+   public InputStream getRawMessageInputStream(File messageFile, boolean decompress, boolean decrypt)  throws IOException,MessageStoreException {
+       if (messageFile==null )
+           throw new MessageStoreException("assertion failure: null messageFileName",logger);
 
-       String messageFileName = getMessageFileName(emailID);
-       InputStream is = new BufferedInputStream(new FileInputStream(messageFileName));
+       InputStream is = new BufferedInputStream(new FileInputStream(messageFile));
        Cipher dcipher = null;
        if(decrypt) {
            try {
@@ -376,6 +523,15 @@ public class MessageStore
         return is;
     }
    
+   public InputStream getMessageInputStream(EmailID emailID, boolean decompress, boolean decryption) throws IOException, MessageStoreException {
+	   
+	   Email email = retrieveMessage(emailID); 
+	   File file = File.createTempFile("raw", ".tmp");
+	   tempfiles.markForDeletion(file);
+	   writeEmail(email, file);
+	   return getRawMessageInputStream(file, true, true);
+   }
+   
    /** 
 	   * Get a raw output stream for a message
 	   * @param messageFileName The file name of the message
@@ -384,19 +540,19 @@ public class MessageStore
 	   * @return An outputstream directed to the message
 	   */  
    
-   public OutputStream getRawMessageOutputStream(String messageFileName,boolean compress, boolean encrypt) throws IOException,MessageStoreException {
-       if (messageFileName==null)
+   public OutputStream getRawMessageOutputStream(File messageFile,boolean compress, boolean encrypt) throws IOException,MessageStoreException {
+       if (messageFile==null)
            throw new MessageStoreException("assertion failure: null messageFileName",logger);
 
-       OutputStream os = new BufferedOutputStream(new FileOutputStream(messageFileName));
+       OutputStream os = new BufferedOutputStream(new FileOutputStream(messageFile));
        Cipher ecipher = null; 
        if (encrypt) {
            try {
                ecipher = Cipher.getInstance(key.getAlgorithm());
                ecipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
            } catch (Exception e) {
-                logger.warn("Please ensure you have the Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files installed.");
-                logger.warn("Visit http://java.sun.com2/javase/downloads/index.jsp to download them.");
+                logger.fatal("Please ensure you have the Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files installed.");
+                logger.fatal("Visit http://java.sun.com2/javase/downloads/index.jsp to download them.");
                 throw new MessageStoreException("failed to initalize cipher. Cause:",e,logger);
            }
            os = new CipherOutputStream(os,ecipher);
@@ -421,11 +577,13 @@ public class MessageStore
         Iterator v = process.volumes.iterator();
         process.totalSize = 0;
         process.totalFileCount = 0;
-        FileFilter filter = new MessageStore.MessageFileFilter(new String[] {".",messageFileExtension});
+        FileFilter filter = new MessageStore.MessageFileFilter(new String[] {messageFileExtension});
 
         // calculate total size
         while (v.hasNext()) {
         	Volume volume = (Volume)v.next();
+        	if (volume.getStatus()!=Volume.Status.CLOSED)
+        		continue;
 	  		String storePath = volume.getPath();
 	  		//if(!storePath.endsWith(Character.toString(File.separatorChar)));
         	//	storePath = storePath.substring(storePath.length() - 1);
@@ -452,21 +610,17 @@ public class MessageStore
     private long getFileSizeOrCount(File file, FileFilter filter, int fileOrCount)
     {
         long ret = 0L;
-        if(file.isDirectory())
-        {
+        if(file.isDirectory()) {
             File files[] = file.listFiles(filter);
-            if(files != null)
-            {
-                for(int i = 0; i < files.length; i++)
-                {
+            if(files != null) {
+                for(int i = 0; i < files.length; i++) {
                     long tmpRet = getFileSizeOrCount(files[i], filter, fileOrCount);
                     if(tmpRet != -1)
                         ret += tmpRet;
                 }
 
                 return ret;
-            } else
-            {
+            } else {
                 return -1;
             }
         }
@@ -479,11 +633,9 @@ public class MessageStore
     protected void recurseMessages(File file, FileFilter filter, ProcessMessage process) throws ProcessException
     {
         if(file != null && filter != null)
-            if(file.isDirectory())
-            {
+            if(file.isDirectory()) {
                 File files[] = file.listFiles(filter);
-                if(files != null)
-                {
+                if(files != null) {
                     for(int i = 0; i < files.length; i++)
                         if(files[i].isDirectory())
                             recurseMessages(files[i], filter, process);
@@ -493,27 +645,24 @@ public class MessageStore
                             recurseMessages(files[i], filter, process);
 						}
                 }
-            } else
-            {
-                	//logger.debug("unique file name:"+file.getName());
+            } else {
+                	logger.debug("unique file name:"+file.getName());
                 	Email email = null;
-                	EmailID emailID = new EmailID(getUniqueIdFromFileName(file.getName()), process.workingVolume);
-                	
-                	try
-                	{
-                    	email = retrieveMessage(emailID, process.decompress, process.decrypt, process.headersOnly);
-                    	process.process(process.config, process.workingVolume, email, process.completeSize, process.totalSize, process.completeFileCount, process.totalFileCount);
-                    	  
+                	EmailID emailID = EmailID.getEmailID(process.workingVolume, getUniqueIdFromFileName(file.getName()));
+      
+                	try {
+                    	email = retrieveMessage(emailID);
+                    	process.process(process.config, process.workingVolume, email, process.completeSize, process.totalSize, process.completeFileCount, process.totalFileCount);  
                 	} catch (Exception e) {
                     	logger.error("failed to process message during re-indexing {"+emailID+"}",e);
                     	process.completeFileCount--;
                     	// throw new ProcessException(e.toString(), e, logger);
                     }
-                   
-
+   
             }
     }
 
+   
     public static abstract class ProcessMessage
     {
 		protected Volume workingVolume;
@@ -522,16 +671,15 @@ public class MessageStore
 		protected long totalSize;
 		protected long completeFileCount;
 		protected long totalFileCount;
-		protected boolean headersOnly;
+
 		protected boolean decompress;
 		protected boolean decrypt;
 		protected List volumes;
 
-		public ProcessMessage(Config config, List volumes,boolean decompress,boolean decrypt,boolean headersOnly) {
+		public ProcessMessage(Config config, List volumes,boolean decompress,boolean decrypt) {
 			this.config = config;
 			this.decompress = decompress;
 			this.decrypt = decrypt;
-			this.headersOnly = headersOnly;
 			this.volumes = volumes;
 		}
 
@@ -550,7 +698,7 @@ public class MessageStore
             if(ext == null && file.exists())
                 return true;
             for(int i = 0; i < ext.length; i++)
-                if(file != null && file.exists() && file.getName().indexOf(ext[i]) > 0)
+                if(file != null && file.exists() && file.getName().endsWith(ext[i]))
                     return true;
 
             return false;
@@ -569,5 +717,34 @@ public class MessageStore
     }
 
 
-
+	public void writeEmail(MimeMessage message, File file) throws  MessageStoreException {
+		logger.debug("writeEmail");
+		try {
+			OutputStream fos = getRawMessageOutputStream(file,true, true);
+			message.writeTo(fos);
+			fos.close();
+		} catch (Exception e) {
+			if (file.exists()) {
+				 boolean deleted = file.delete();
+				   if (!deleted) {
+					   try {
+						   file.renameTo(File.createTempFile("ma", "tmp"));
+					   } catch (Exception e3) {}
+			   	   }
+			}
+			throw new MessageStoreException("failed to write email {filename='"+file.getAbsolutePath()+"'",e,logger);
+		}
+	}
+	
+	public void saveEmailChanges(MimeMessage message) throws MessagingException {
+		logger.debug("saveEmailChanges");
+		String[] messageId = message.getHeader("Message-Id");
+		message.saveChanges();
+		if (messageId!=null && messageId.length>0)
+			message.setHeader("Message-Id", messageId[0]);
+	}
+		
+   
+    
 }
+

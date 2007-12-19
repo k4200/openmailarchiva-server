@@ -18,7 +18,7 @@
 <script type="text/javascript">
 
 /***********************************************
-* DD Tab Menu script- © Dynamic Drive DHTML code library (www.dynamicdrive.com)
+* DD Tab Menu script- ï¿½ Dynamic Drive DHTML code library (www.dynamicdrive.com)
 * This notice MUST stay intact for legal use
 * Visit Dynamic Drive at http://www.dynamicdrive.com/ for full source code
 ***********************************************/
@@ -53,11 +53,17 @@ function indexVolume()
 {
 	var answer = confirm ("<bean:message key="config.confirm_delete_index"/>");
 	if (answer)
-	 window.open('indexstatus.do','index','width=400,height=200');
+	  window.open('indexstatus.do','index','width=400,height=200');
 	return answer;
 }
 
+function viewDebugLog() {
+	window.open('viewdebuglog.do','log','width=800,height=600');
+}
 
+function viewAuditLog() {
+	window.open('viewauditlog.do','log','width=800,height=600');
+}
 function testPassword(passwd)
 {
 		var intScore   = 0
@@ -224,6 +230,13 @@ window.onload=do_onload
 }
 window.onunload=savemenustate
 
+
+function recover() 
+{
+	window.open('recover.do','send','width=600,height=400');
+	return true;
+}
+	
 </script>
 </head>
 
@@ -248,7 +261,9 @@ window.onunload=savemenustate
 <li><a href="" onMouseover="expandcontent('domains', this, 2)"><bean:message key="config.domains"/></a></li>
 <li><a href="" onMouseover="expandcontent('volumes', this, 3)"><bean:message key="config.volumes"/></a></li>
 <li><a href="" onMouseover="expandcontent('archiverules', this, 4)"><bean:message key="config.archive_rules"/></a></li>
-<li><a href="" onMouseover="expandcontent('about', this, 5)">About</a></li>
+<li><a href="" onMouseover="expandcontent('agents', this, 5)"><bean:message key="config.agent"/></a></li>
+<li><a href="" onMouseover="expandcontent('logging', this, 6)"><bean:message key="config.log"/></a></li>
+<li><a href="" onMouseover="expandcontent('about', this, 7)"><bean:message key="config.about"/></a></li>
 </ul>
 </td>
   </tr>
@@ -275,7 +290,7 @@ window.onunload=savemenustate
   <tr> 
     <td width="5%" >&nbsp;</td>
     <td width="95%" align="left">
-    	<c:out value="${message}"/></td>
+    	<c:out value="${message}"/>
     </td>
     <td >&nbsp;</td>
   </tr>
@@ -291,8 +306,7 @@ window.onunload=savemenustate
       <td width="10%" align="right" nowrap></td>
       <td width="80%">
           <input type="submit"  name="submit.newvolume" value="<bean:message key="config.new_volume"/>"> 
-          <input type="submit" onClick="return indexAllVolumes()" name="submit.indexallvolumes" value="<bean:message key="config.re_index"/>">
-
+          
         <table width="100%" border="0" cellspacing="2" cellpadding="0">
           <logic:iterate id="volumes" name="configBean" property="volumes" indexId="volumeIndex">
               <tr> 
@@ -343,6 +357,7 @@ window.onunload=savemenustate
                 </td>
                 <td width="6%">&nbsp;</td>
               </tr>
+             
               <tr> 
                 <td width="16%" ></td>
                 <td width="20%" align="right" nowrap><bean:message key="config.volume_index_path"/>: </td>
@@ -371,13 +386,19 @@ window.onunload=savemenustate
                 <td width="58%"><html:text name="volumes" indexed="true" size="6" property="maxSize"/></td>
                 <td width="6%">&nbsp;</td>
               </tr>
-              
+               
               <tr> 
                 <td >&nbsp;</td>
                 <td align="right"><bean:message key="config.volume_actions"/>:</td>
-                <td><c:if test="${volumes.statusID==0}">
+                <td><c:if test="${volumes.statusID==0 || volumes.statusID==1}">
                 <input type="submit" onClick="return indexVolume()" name="submit.indexvolume.${volumeIndex}" value="<bean:message key="config.volume_re_index"/>"> 
                 </c:if>
+                  <c:if test="${volumes.statusID==0}">
+                	 	<input type="submit" name="submit.unmountvolume.${volumeIndex}" value="<bean:message key="config.volume_unmount"/>">
+                  </c:if>
+                   <c:if test="${volumes.statusID==4}">
+                	 	<input type="submit" name="submit.closevolume.${volumeIndex}" value="<bean:message key="config.volume_mount"/>">
+                  </c:if>
                   <c:if test="${volumes.statusID!=1}">
                   	<input type="submit" name="submit.deletevolume.${volumeIndex}" value="<bean:message key="config.volume_delete"/>">
                   </c:if>
@@ -465,105 +486,44 @@ window.onunload=savemenustate
 	            </table>
             </td>
          	<td width="10%">&nbsp;</td>
-      </tr>    
+      </tr>
+	  	 <tr> 
+  			<td width="10%" align="right" nowrap></td>
+        	<td nowrap><hr></td>
+        	<td nowrap>&nbsp;</td>
+      	 </tr>
+     	 <tr> 
+	    	<td colspan="3">&nbsp;</td>
+	  	</tr>
+    
       <tr> 
-  		<td nowrap>&nbsp;</td>
+  		<td width="10%" align="right" nowrap></td>
         <td nowrap><hr></td>
         <td nowrap>&nbsp;</td>
       </tr>
 	  <tr> 
-          <td width="10%" align="right" nowrap></td>
-          <td width="80%">
-              <table width="100%" border="0" cellspacing="2" cellpadding="0">
-              <tr> 
-                <td align="right" width="30%"><bean:message key="config.sec_auth_method"/></td>  
-                <td align="left">
+	      <td width="10%" align="right" nowrap></td>
+	      <td width="80%">
+	          <table width="100%" border="0" cellspacing="2" cellpadding="0">
+	          <tr> 
+	            <td align="right" width="30%"><bean:message key="config.sec_auth_method"/></td>  
+	            <td align="left">
 	                <html:select styleId="authMethod" name="configBean" property="authMethod"  onchange='OnChange(this);'>
 			  				<html:options name="configBean" property="authMethods" labelName="configBean" labelProperty="authMethodLabels"/>
 					</html:select>
-                </td>
-              </tr>
-            </table>
-         </td>
-         <td width="10%">&nbsp;</td>
-      </tr></table>
-      
-      <div style="display: none;" id="activedirectory">
-      <table width="100%" border="0" cellpadding="0" cellspacing="0"> 
-      <tr> 
-          <td width="10%" align="right" nowrap>&nbsp;</td>
-          <td width="80%">
-              <table width="100%" border="0" cellspacing="2" cellpadding="0">
-	              <tr> 
-		                <td align="right" width="30%"><bean:message key="config.sec_kerberos_server"/>:</td>
-		                <td align="left"><html:text name="configBean" property="KDCAddress" size="60"/>&nbsp;<bean:message key="config.sec_fqdn"/></td>
-		          </tr>
-		          <tr> 
-		                <td align="right" width="30%"><bean:message key="config.sec_ldap_server"/>:</td>
-		                <td align="left"><html:text name="configBean" property="LDAPAddress" size="60"/>&nbsp;<bean:message key="config.sec_fqdn"/></td>
-		          </tr>
-              </table>
-         </td>
-          <td>&nbsp;</td>
+	            </td>
+	          </tr>
+	        </table>
+	     </td>
+	     <td width="10%">&nbsp;</td>
       </tr>
-       <tr> 
-          <td width="10%" align="right" nowrap></td>
-          <td width="80%">   	
-                <table width="100%" border="0" cellspacing="2" cellpadding="0">
-                <tr><td align="right" width="30%"><bean:message key="config.sec_role_assign"/></td>
-                <td colspan="2">
-                <input type="submit" name="submit.newadrolemap" value="<bean:message key="config.sec_new_role"/>"> 
-            	<input type="submit" onClick="window.open('testloginform.do','testauth','width=600,height=250')" name="submit.reload" value="<bean:message key="config.sec_test_login"/>">
-            	</td></tr>
-	            <logic:iterate id="adRoleMaps" name="configBean" property="adRoleMaps" indexId="userRoleAssignmentIndex">
-	              <tr> 
-	                <td align="right" nowrap><bean:message key="config.sec_assign"/> ${userRoleAssignmentIndex}:</td>
-	                <td align="right" nowrap><bean:message key="config.sec_role"/>: </td>
-	                <td>
-	                <html:select indexed="true" name="adRoleMaps" property="role">
-		  				<html:options name="configBean" property="roleMapRoles" labelName="configBean" labelProperty="roleMapRoleLabels" />
-				  	</html:select>
-	                </td>
-	              
-	              </tr>
-	              <tr> 
-	                <td >&nbsp;</td>
-	                <td  align="right" nowrap><bean:message key="config.sec_rules_ad_ldap_attr"/>:</td>
-	                <td >
-	                <html:select indexed="true" name="adRoleMaps" property="attribute">
-		  				<html:options name="configBean" property="roleMapAttributes" labelName="configBean" labelProperty="roleMapAttributeLabels" />
-				  	</html:select>
-	                </td>
-	              
-	              </tr>
-	              <tr> 
-	                <td >&nbsp;</td>
-	                <td align="right" nowrap><bean:message key="config.sec_rules_ad_match_crit"/>:</td>
-	                <td><html:text indexed="true" name="adRoleMaps" property="regEx" size="45"/>
-	               <input type="submit" onClick="window.open('lookuprolecriterionform.do','mywindow','width=600,height=250')" name="reload" value="<bean:message key="config.sec_match_crit_lookup"/>">&nbsp;<bean:message key="config.sec_regexpr"/></td>
-	            
-	              </tr>
-	           
-	              <tr> 
-	                <td >&nbsp;</td>
-	                <td align="right"><bean:message key="config.sec_rules_actions"/>:</td>
-	                <td>
-	                  <input type="submit" name="submit.deleteadrolemap.${userRoleAssignmentIndex}" value="<bean:message key="config.sec_delete"/>">
-	                </td>
-	               
-	              </tr></logic:iterate>
-            </table>
-          </td>
-          <td>&nbsp;</td>
-        </tr>
-	 </table>
-	 </div>
-	 
-	 <div id="basic">
-      <!-- Users are now managed directly via the users.conf configuration file.
+      </table>
+ 
+  
+  <div id="basic">
       <table width="100%" border="0" cellpadding="0" cellspacing="0"> 
-         <tr> 
-          <td width="10%" align="right" nowrap></td>
+         <tr>
+         <td width="10%" align="right" nowrap></td> 
           <td width="80%">   
             <table width="100%" border="0" cellspacing="2" cellpadding="0">
             
@@ -578,46 +538,102 @@ window.onunload=savemenustate
 	                <td width="30%" nowrap align="right"><bean:message key="config.sec_assign"/> ${userRoleAssignmentIndex2}:</td>
 	                <td align="right" nowrap><bean:message key="config.sec_role"/>: </td>
 	                <td>
-	                <html:select indexed="true" name="basicRoleMaps" property="role">
-		  				<html:options name="configBean" property="roleMapRoles" labelName="configBean" labelProperty="roleMapRoleLabels" />
-				  	</html:select>
-	                </td>
-	                <td width="5%">&nbsp;</td>
-	              </tr>
-	              <tr> 
-	                <td >&nbsp;</td>
-	                <td align="right" nowrap><bean:message key="config.sec_rules_basic_username"/></td>
-	                <td><html:text indexed="true" name="basicRoleMaps" property="username" size="45"/>
-	                <td align="left"></td>
-	              </tr>
-	              <tr> 
-	                <td >&nbsp;</td>
-	                <td align="right" nowrap><bean:message key="config.sec_rules_method_basic_password"/></td>
-	                <td><html:password indexed="true" name="basicRoleMaps" size="25" redisplay="true" property="loginPassword"/></td>
-	                <td align="left"></td>
-	              </tr>
-	           
-	              <tr> 
-	                <td >&nbsp;</td>
-	                <td align="right"><bean:message key="config.sec_actions"/>:</td>
-	                <td>
-	                  <input type="submit" name="submit.deletebasicrolemap.${userRoleAssignmentIndex2}" value="<bean:message key="config.sec_delete"/>">
-	                </td>
-	                <td>&nbsp;</td>
-	              </tr></logic:iterate>
+	                	<table width="100%" border="0" cellspacing="2" cellpadding="0">
+	                	<tr><td>
+			                <html:select indexed="true" name="basicRoleMaps" property="role">
+				  				<html:options name="configBean" property="roleMapRoles" labelName="configBean" labelProperty="roleMapRoleLabels" />
+						  	</html:select>
+			                </td>
+	                		<td width="5%">&nbsp;</td>
+	             			<td align="right" nowrap><bean:message key="config.sec_rules_basic_username"/></td>
+	                		<td><html:text indexed="true" name="basicRoleMaps" property="username" size="25"/></td>
+	                		<td width="5%">&nbsp;</td>
+	              			<td align="right" nowrap><bean:message key="config.sec_rules_method_basic_password"/></td>
+	                		<td><html:password indexed="true" name="basicRoleMaps" size="25" redisplay="true" property="loginPassword"/></td>
+	             			<td><input type="submit" name="submit.deletebasicrolemap.${userRoleAssignmentIndex2}" value="<bean:message key="config.sec_delete"/>"></td>
+	             		</tr></table>
+	             	</td>
+	             </tr>
+	           </logic:iterate>
             </table>
           </td>
           <td>&nbsp;</td>
         </tr>
-        <tr> 
-	    	<td colspan="3">&nbsp;</td>
-	  	</tr>
 	 </table>
-	 end of redundant basic user management -->
 	 <br/>
-	 </div>
 </div>
 
+<div style="display: none;" id="activedirectory">
+      <table width="100%" border="0" cellpadding="0" cellspacing="0"> 
+	      <tr> 
+	          <td width="10%" align="right" nowrap>&nbsp;</td>
+	          <td width="80%">
+	              <table width="100%" border="0" cellspacing="2" cellpadding="0">
+		              <tr> 
+			                <td align="right" width="30%"><bean:message key="config.sec_kerberos_server"/>:</td>
+			                <td align="left"><html:text name="configBean" property="ADIdentity.KDCAddress" size="60"/>&nbsp;<bean:message key="config.sec_fqdn"/></td>
+			          </tr>
+			          <tr> 
+			                <td align="right" width="30%"><bean:message key="config.sec_ldap_server"/>:</td>
+			                <td align="left"><html:text name="configBean" property="ADIdentity.LDAPAddress" size="60"/>&nbsp;<bean:message key="config.sec_fqdn"/></td>
+			          </tr>
+	              </table>
+	         </td>
+	          <td>&nbsp;</td>
+	      </tr>
+       <tr> 
+          <td width="10%" align="right" nowrap></td>
+          <td width="80%">   	
+                <table width="100%" border="0" cellspacing="2" cellpadding="0">
+	                <tr><td align="right" width="30%"><bean:message key="config.sec_role_assign"/></td>
+		                <td colspan="2">
+		                <input type="submit" name="submit.newadrolemap" value="<bean:message key="config.sec_new_role"/>"> 
+		            	<input type="submit" onClick="window.open('testloginform.do','testauth','width=600,height=250')" name="submit.reload" value="<bean:message key="config.sec_test_login"/>">
+		            	</td>
+		            </tr>
+		            <logic:iterate id="ADRoleMaps" name="configBean" property="ADRoleMaps" indexId="userRoleAssignmentIndex">
+		              <tr> 
+		                <td align="right" nowrap><bean:message key="config.sec_assign"/> ${userRoleAssignmentIndex}:</td>
+		                <td align="right" nowrap><bean:message key="config.sec_role"/>: </td>
+		                <td>
+		                <html:select indexed="true" name="ADRoleMaps" property="role">
+			  				<html:options name="configBean" property="roleMapRoles" labelName="configBean" labelProperty="roleMapRoleLabels" />
+					  	</html:select>
+		                </td>
+		              </tr>
+		              <tr> 
+		                <td >&nbsp;</td>
+		                <td  align="right" nowrap>
+		                	<bean:message key="config.sec_rules_ad_ldap_attr"/>:
+		                </td>
+		                <td>
+			                <html:select indexed="true" name="ADRoleMaps" property="attribute">
+				  				<html:options name="configBean" property="ADRoleMapAttributes" labelName="configBean" labelProperty="ADRoleMapAttributeLabels" />
+						  	</html:select>
+		                </td>
+		              </tr>
+		              <tr> 
+		                <td >&nbsp;</td>
+		                <td align="right" nowrap><bean:message key="config.sec_rules_ad_match_crit"/>:</td>
+		                <td><html:text indexed="true" name="ADRoleMaps" property="regEx" size="45"/>
+		               		<input type="submit" onClick="window.open('lookuprolecriterionform.do','mywindow','width=600,height=250')" name="reload" value="<bean:message key="config.sec_match_crit_lookup"/>">&nbsp;<bean:message key="config.sec_regexpr"/>
+		                </td>
+		              </tr>
+		              <tr> 
+		                <td >&nbsp;</td>
+		                <td align="right"><bean:message key="config.sec_rules_actions"/>:</td>
+		                <td>
+		                  <input type="submit" name="submit.deleteadrolemap.${userRoleAssignmentIndex}" value="<bean:message key="config.sec_delete"/>">
+		                </td>
+		              </tr>
+		             </logic:iterate>
+            	</table>
+          </td>
+          <td>&nbsp;</td>
+        </tr>
+	 </table>
+</div>
+</div>
 <div id="archiverules" class="tabcontent">
   <table width="100%" border="0" cellpadding="0" cellspacing="0">
 	  <tr> 
@@ -633,17 +649,17 @@ window.onunload=savemenustate
 	          <td>
 	            <table width="100%" border="0" cellspacing="2" cellpadding="0">
 	              <tr> 
-	                <td width="4%"><html:checkbox name="configBean"  property="archiveInbound" value="yes"/></td>
+	                <td width="4%"><html:checkbox name="configBean"  property="archiveInbound"/><html:hidden name="configBean" property="archiveInbound" value="false"/></td>
 	                <td width="5%">&nbsp;</td>
 	                <td width="91%"><bean:message key="config.sec_rules_inbound"/></td>
 	              </tr>
 	              <tr> 
-	                <td><html:checkbox name="configBean" property="archiveOutbound" value="yes"/></td>
+	                <td><html:checkbox name="configBean" property="archiveOutbound"/><html:hidden name="configBean" property="archiveOutbound" value="false"/></td>
 	                <td>&nbsp;</td>
 	                <td><bean:message key="config.sec_rules_outbound"/></td>
 	              </tr>
 	              <tr> 
-	                <td><html:checkbox name="configBean" property="archiveInternal" value="yes"/></td>
+	                <td><html:checkbox name="configBean" property="archiveInternal"/><html:hidden name="configBean" property="archiveInternal" value="false"/></td>
 	                <td>&nbsp;</td>
 	                <td><bean:message key="config.sec_rules_internal"/></td>
 	              </tr>
@@ -712,6 +728,64 @@ window.onunload=savemenustate
 </div>
 
 
+
+
+ <div id="agents" class="tabcontent">
+      <table width="100%" border="0" cellpadding="0" cellspacing="0"> 
+       <tr> 
+	    	<td colspan="3">&nbsp;</td>
+	  </tr>
+      <tr> 
+          <td width="10%" align="left" nowrap>&nbsp;</td>
+          <td width="80%" align="left">
+              <table width="100%" border="0" cellspacing="0" cellpadding="3">
+	              <tr> 
+		                <td align="right" width="20%"><bean:message key="config.agent_smtp_listen_port"/>:</td>
+		                <td align="left"  width="20%"><html:text name="configBean" property="agentSMTPPort" size="5"/></td>
+		          		<td align="right" width="70%">&nbsp;</td>
+		          </tr>
+		           <tr> 
+		                <td align="right" width="20%"><bean:message key="config.agent_milter_listen_port"/>:</td>
+		                <td align="left"  width="20%"><html:text name="configBean" property="agentMilterPort" size="5"/></td>
+		          		<td align="right" width="70%">&nbsp;</td>
+		          </tr>
+              </table>
+         </td>
+          <td width="10%">&nbsp;</td>
+      </tr>
+       <tr> 
+          <td width="10%" align="left" nowrap></td>
+          <td width="80%">   	
+                <table width="100%" border="0" cellspacing="0" cellpadding="3">
+                	<tr>
+		                <td align="right" width="20%"><bean:message key="config.agent_allow_incoming_connections"/></td>
+		                <td align="left" width="20%">
+		                <input type="submit" name="submit.newagentipaddress" value="<bean:message key="config.agent_new_ipaddress"/>"> 
+		            	</td>
+		            	<td align="right" width="70%">&nbsp;</td>
+            		</tr>
+	            <logic:iterate id="agentIPAddress" name="configBean" property="agentIPAddresses" indexId="agentIPAddressIndex">
+	              <tr>
+	             	<td align="left">&nbsp;</td> 
+	                <td align="right"><bean:message key="config.agent_ipaddress"/> ${agentIPAddressIndex}</td>
+	                <td align="left"><html:text property="agentIPAddress[${agentIPAddressIndex}]" size="20"/>
+	                &nbsp;<input type="submit" name="submit.deleteagentipaddress.${agentIPAddressIndex}" value="<bean:message key="config.agent_ipaddress_delete"/>">
+	                </td>
+	                 
+	              </tr>
+	            </logic:iterate>
+            </table>
+          </td>
+          <td>&nbsp;</td>
+        </tr>
+        
+       <tr> 
+	    <td colspan="3">&nbsp;</td>
+	  </tr>
+	 </table>
+</div>
+
+
 <div id="about" class="tabcontent">
   <table width="100%" border="0" cellpadding="0" cellspacing="0">
 	  <tr> 
@@ -725,12 +799,11 @@ window.onunload=savemenustate
 	          <td  align="right" valign="top" nowrap></td>
 	          <td>&nbsp;</td>
 	          <td align="center">
-	            <strong>MailArchiva Open Source Edition v1.3</strong><br><br>
-	            Internet: <a href="http://www.mailarchiva.com">www.mailarchiva.com</a><br>
-	            Email: <a href="mailto:info@mailarchiva.com">info@mailarchiva.com</a><br><br>
-	            <b>For Commercial Use:</b><br><br><a href="http://www.mailarchiva.com">MailArchiva Enterprise Edition</a></b><br>
-	          	
-	          						 
+	            <bean:message key="config.application_title"/>&nbsp;v<c:out value="${configBean.version}"/><br><br>
+	            <bean:message key="config.about_copyright"/>&nbsp;<br>
+	            &nbsp;<bean:message key="config.application_internet"/>&nbsp;<a href="http://www.mailarchiva.com">www.mailarchiva.com</a><br>
+	            <bean:message key="config.application_email"/>&nbsp;<a href="mailto:info@mailarchiva.com">info@mailarchiva.com</a><br><br>	          
+	          	&nbsp;<a href="http://www.mailarchiva.com"><bean:message key="config.about_upgrade"/></a><br>
 	          </td>
 	        </tr>
 	     </table>
@@ -743,7 +816,45 @@ window.onunload=savemenustate
    </table>
 </div>
 
-
+<div id="logging" class="tabcontent">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0">
+	  <tr> 
+	    <td colspan="3">&nbsp;</td>
+	  </tr>
+	  <tr> 
+	    <td width="10%" align="right" >&nbsp;</td>
+	    <td width="80%" >
+	       <table width="100%" border="0" cellpadding="0" cellspacing="3">
+	        <tr> 
+	          <td align="right" valign="top" nowrap></td>
+	          <td align="right"><input type="submit" onclick="viewAuditLog('audit');" value="<bean:message key="config.log_audit_view"/>"/></td>
+	          <td align="left"><bean:message key="config.log_audit_view_description"/></td>
+	          <td width="10%">&nbsp;</td>
+ 			</tr>
+ 			<tr><td colspan="4">&nbsp;</td></tr>
+	        <tr>  
+	          <td align="right" valign="top" nowrap></td>
+	          <td align="right"><input type="submit" onclick="viewDebugLog('debug');" value="<bean:message key="config.log_debug_view"/>"/></td>
+	          <td align="left"><bean:message key="config.log_debug_view_description"/></td>
+	          <td width="10%">&nbsp;</td>
+ 			</tr>
+ 			<tr><td colspan="4">&nbsp;</td></tr>
+ 			 <tr>  
+	          <td align="right" valign="top" nowrap></td>  		
+	          <td align="right"><bean:message key="config.log_level_description"/></td>
+	           <td align="left">	
+	          		<html:select name="configBean" property="debugLoggingLevel"> 
+	                      <html:options name="configBean" property="debugLoggingLevels" labelName="configBean" labelProperty="debugLoggingLevelLabels" /> 
+	                </html:select>
+	          </td> 
+	          <td width="10%">&nbsp;</td>   
+ 			</tr>
+ 			              
+   		</table>
+   		</td>
+   		<tr><td colspan="3">&nbsp;</td></tr>
+   	</table>
+</div>
 
 <table class="sectionheader" width="100%" border="0" cellpadding="3" cellspacing="0">
   <tr> 

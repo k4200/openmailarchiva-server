@@ -16,21 +16,24 @@
 
 package com.stimulus.archiva.presentation;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.stimulus.archiva.authentication.ADIdentity.ADRoleMap;
 import com.stimulus.archiva.authentication.BasicIdentity.BasicRoleMap;
-import com.stimulus.archiva.domain.*;
 import com.stimulus.archiva.domain.Identity.RoleMap;
 import com.stimulus.archiva.exception.ConfigurationException;
 import com.stimulus.struts.BaseBean;
 
-public class BasicRoleMapBean extends BaseBean {
+public class BasicRoleMapBean extends BaseBean implements Serializable {
 
-	protected static Logger logger = Logger.getLogger(BasicRoleMapBean.class.getName());
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7268919629559918370L;
+	protected static Logger logger = Logger.getLogger(BasicRoleMapBean.class);
 	protected BasicRoleMap roleMap;
 	
     public BasicRoleMapBean(BasicRoleMap roleMap) {

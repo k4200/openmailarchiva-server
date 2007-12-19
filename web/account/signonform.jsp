@@ -67,7 +67,7 @@ body {
   </tr>
   <tr> 
     <td width="5%"><font size="2">&nbsp;</td>
-    <td width="90%" align="center"><font size="2"><bean:message key="signon.software_title"/><br/>(for commercial use visit <a href="http://www.mailarchiva.com">www.mailarchiva.com</a>)</td>
+    <td width="90%" align="center"><font size="2"><bean:message key="signon.software_title"/><br/></td>
     <td width="5%"><div align="right"></div></td>
   </tr>
 </table>

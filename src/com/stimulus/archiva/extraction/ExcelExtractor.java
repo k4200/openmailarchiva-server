@@ -15,15 +15,31 @@
  */
 
 package com.stimulus.archiva.extraction;
-import com.stimulus.archiva.exception.ExtractionException;
-import java.io.*;
-import org.apache.log4j.Logger;
-import jxl.*;
-import com.stimulus.util.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Serializable;
 
-public class ExcelExtractor implements TextExtractor
+import jxl.Cell;
+import jxl.Sheet;
+import jxl.Workbook;
+
+import org.apache.log4j.Logger;
+
+import com.stimulus.archiva.exception.ExtractionException;
+import com.stimulus.util.TempFiles;
+
+public class ExcelExtractor implements TextExtractor,Serializable
 {
-	protected static final Logger logger = Logger.getLogger(Extractor.class.getName());
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4500591813545392474L;
+	protected static Logger logger = Logger.getLogger(Extractor.class.getName());
 
 	public ExcelExtractor()
 	{
@@ -34,6 +50,7 @@ public class ExcelExtractor implements TextExtractor
 	    File file = null;
 	    PrintWriter out = null;
 	    try {
+
 	      file = File.createTempFile("extract", ".tmp");
 		  tempFiles.markForDeletion(file);
 		  out = new PrintWriter(new BufferedWriter(new FileWriter(file)));

@@ -16,16 +16,18 @@
 
 package com.stimulus.archiva.exception;
 
+import java.io.Serializable;
+
 import org.apache.log4j.Logger;
 
-import com.stimulus.archiva.domain.Email;
-
-
-
-
-public class ChainedException extends Exception {
-  private Throwable cause = null;
-  protected static Logger logger = Logger.getLogger(ChainedException.class.getName());
+public class ChainedException extends Exception implements Serializable {
+	
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 7945849551205785581L;
+	private Throwable cause = null;
+	protected static Logger logger = Logger.getLogger(ChainedException.class);
   
   public ChainedException() {
     super();

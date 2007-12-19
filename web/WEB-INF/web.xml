@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!DOCTYPE web-app
-    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.2//EN"
-    "http://java.sun.com/dtd/web-app_2_3.dtd">
-
-
 <web-app xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd" version="2.4">
 <display-name>SecurityFilter Example Application</display-name>
 
@@ -14,12 +9,10 @@
       <init-param>
          <param-name>config</param-name>
          <param-value>/WEB-INF/securityfilter-config.xml</param-value>
-         <description>Configuration file location (this is the default value)</description>
       </init-param>
       <init-param>
          <param-name>validate</param-name>
          <param-value>true</param-value>
-         <description>Validate config file if set to true</description>
       </init-param>
 <!--
       <init-param>
@@ -76,22 +69,6 @@
     <session-timeout>3000</session-timeout>
   </session-config>
 
-  <taglib>
-    <taglib-uri>bean</taglib-uri>
-    <taglib-location>/WEB-INF/tld/struts-bean.tld</taglib-location>
-  </taglib>
-  
-  <taglib>
-    <taglib-uri>logic</taglib-uri>
-    <taglib-location>/WEB-INF/tld/struts-logic.tld</taglib-location>
-  </taglib>
-  
-   <taglib>
-    <taglib-uri>html</taglib-uri>
-    <taglib-location>/WEB-INF/tld/struts-html.tld</taglib-location>
-  </taglib>
-
-
  <welcome-file-list>
  	<welcome-file>/account/signonform.jsp</welcome-file>
   </welcome-file-list>
@@ -125,87 +102,7 @@
       </description>
     </auth-constraint>
   </security-constraint>
-  
-  <!-- web service definition -->
-  
-     <listener>
-          <listener-class>org.apache.axis.transport.http.AxisHTTPSessionListener</listener-class>
-      </listener>
-      
-    <servlet>
-      <servlet-name>AxisServlet</servlet-name>
-      <display-name>Apache-Axis Servlet</display-name>
-      <servlet-class>
-          org.apache.axis.transport.http.AxisServlet
-      </servlet-class>
-    </servlet>
-  
-    <servlet>
-      <servlet-name>AdminServlet</servlet-name>
-      <display-name>Axis Admin Servlet</display-name>
-      <servlet-class>
-          org.apache.axis.transport.http.AdminServlet
-      </servlet-class>
-      <load-on-startup>100</load-on-startup>
-    </servlet>
-  
-    <servlet>
-      <servlet-name>SOAPMonitorService</servlet-name>
-      <display-name>SOAPMonitorService</display-name>
-      <servlet-class>
-          org.apache.axis.monitor.SOAPMonitorService
-      </servlet-class>
-      <init-param>
-        <param-name>SOAPMonitorPort</param-name>
-        <param-value>5001</param-value>
-      </init-param>
-      <load-on-startup>100</load-on-startup>
-    </servlet>
-  
-    <servlet-mapping>
-      <servlet-name>AxisServlet</servlet-name>
-      <url-pattern>/servlet/AxisServlet</url-pattern>
-    </servlet-mapping>
-  
-    <servlet-mapping>
-      <servlet-name>AxisServlet</servlet-name>
-      <url-pattern>*.jws</url-pattern>
-    </servlet-mapping>
-  
-    <servlet-mapping>
-      <servlet-name>AxisServlet</servlet-name>
-      <url-pattern>/services/*</url-pattern>
-    </servlet-mapping>
-  
-    <servlet-mapping>
-      <servlet-name>SOAPMonitorService</servlet-name>
-      <url-pattern>/SOAPMonitor</url-pattern>
-    </servlet-mapping>
-  
-   <!-- uncomment this if you want the admin servlet -->
-   <!--
-    <servlet-mapping>
-      <servlet-name>AdminServlet</servlet-name>
-      <url-pattern>/servlet/AdminServlet</url-pattern>
-    </servlet-mapping>
-   -->
-  
-      <!-- currently the W3C havent settled on a media type for WSDL;
-      http://www.w3.org/TR/2003/WD-wsdl12-20030303/#ietf-draft
-      for now we go with the basic 'it's XML' response -->
-    <mime-mapping>
-      <extension>wsdl</extension>
-       <mime-type>text/xml</mime-type>
-    </mime-mapping>
-    
-  
-    <mime-mapping>
-      <extension>xsd</extension>
-      <mime-type>text/xml</mime-type>
-  </mime-mapping>
 
-
-    
 </web-app>
 
 

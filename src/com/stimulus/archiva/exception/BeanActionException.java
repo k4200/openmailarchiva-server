@@ -15,15 +15,25 @@
  */
 
 package com.stimulus.archiva.exception;
+import java.io.Serializable;
+
 import org.apache.log4j.Logger;
 
-public class BeanActionException extends ChainedRuntimeException {
+public class BeanActionException extends ChainedRuntimeException implements Serializable {
 
   /**
+	 * 
+	 */
+
+/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+/**
      * 
      */
-    private static final long serialVersionUID = 1L;
-
+    
 public BeanActionException(String message,Logger logger) {
     super(message,logger);
   }
