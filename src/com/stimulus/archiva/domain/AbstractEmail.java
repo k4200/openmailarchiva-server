@@ -6,7 +6,7 @@
  * $Rev$
 */
 
-		/* Copyright (C) 2005-2007 Jamie Angus Band 
+/* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
