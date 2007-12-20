@@ -1,4 +1,12 @@
-/* Copyright (C) 2005-2007 Jamie Angus Band 
+/*
+ * Subversion Infos:
+ * $URL$
+ * $Author$
+ * $Date$
+ * $Rev$
+*/
+
+		/* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
@@ -74,7 +82,7 @@ import java.io.Writer;
  * (or three if the destination stream is also buffered) is pointless, and the unnecessary buffer
  * management hurts performance slightly (about 3%, according to some simple experiments).</p>
  *
- * @version CVS $Revision: 464742 $ $Date: 2006-10-16 16:53:00 -0700 (Mon, 16 Oct 2006) $
+ * @version CVS $Revision$ $Date$
  */
 
 /*

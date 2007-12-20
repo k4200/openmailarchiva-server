@@ -1,4 +1,12 @@
+/*
+ * Subversion Infos:
+ * $URL$
+ * $Author$
+ * $Date$
+ * $Rev$
+*/
 
+		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -46,7 +54,7 @@ import org.apache.struts.config.ExceptionConfig;
 * </p>	
 *	
 * @author <a href="mailto:matt@raibledesigns.com">Matt Raible</a>	
-* @version $Revision: 1.2 $ $Date: 2007/03/13 23:20:45 $	
+* @version $Revision$ $Date$	
 */
 
 public final class ActionExceptionHandler extends ExceptionHandler implements Serializable {

@@ -1,4 +1,12 @@
-package org.apache.lucene.analysis.tr;
+/*
+ * Subversion Infos:
+ * $URL$
+ * $Author$
+ * $Date$
+ * $Rev$
+*/
+
+		package org.apache.lucene.analysis.tr;
 
 
 
