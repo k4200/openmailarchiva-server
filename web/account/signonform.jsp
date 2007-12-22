@@ -66,8 +66,8 @@ body {
      </form> 
   </tr>
   <tr> 
-    <td width="5%"><font size="2">&nbsp;</td>
-    <td width="90%" align="center"><font size="2"><bean:message key="signon.software_title"/><br/></td>
+    <td width="5%"><font size="2">&nbsp;</font></td>
+    <td width="90%" align="center"><font size="2"><bean:message key="signon.software_title"/></font><br/></td>
     <td width="5%"><div align="right"></div></td>
   </tr>
 </table>

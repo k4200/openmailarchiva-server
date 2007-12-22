@@ -1,3 +1,4 @@
+<%@ taglib uri="/WEB-INF/tld/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/tld/struts-bean.tld" prefix="bean" %>
 <table class="logo" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr> 

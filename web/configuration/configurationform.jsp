@@ -471,7 +471,7 @@ function recover()
           	<td width="10%" align="right" nowrap></td>
           	<td width="80%">
           		<table width="100%" border="0" cellspacing="2" cellpadding="0">
-	   
+	   				<tr>
 	            	<td align="right" width="30%"><bean:message key="config.sec_enc_passwd"/>: </td>
 	            	<td valign="top">
 	            	<c:if test="${configBean.defaultPassPhraseModified==false}">
@@ -483,6 +483,7 @@ function recover()
 	            		<div ID="passwordtext"><bean:message key="config.sec_enc_passwd_is_set"/></div>
 	            	</c:if>
 	            	</td>
+	            	</tr>
 	            </table>
             </td>
          	<td width="10%">&nbsp;</td>

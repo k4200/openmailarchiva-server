@@ -26,27 +26,26 @@
   </tr>
 </table>
 <span id="status">
-<table class="section2" width="100%" border="0" cellpadding="0" cellspacing="0" >
-  <tr>
-    <td colspan="3">&nbsp;</td>
-   </tr>
-  <tr> 
-    <td width="5%" height="20">&nbsp;</td>
-    <td width="90%" align="left"><bean:message key="config.index_message"/></td>
-    <td width="5%"></td>
-  </tr>
-  <tr>
-    <td colspan="3">&nbsp;</td>
-   </tr>
-</table>
-<table class="sectionheader" width="100%" border="0" cellpadding="3" cellspacing="0">
-  <tr> 
-    <td >&nbsp;</td>
-    <td align="left"><input type="submit" name="close" onClick="window.close();" value="<bean:message key="common.button.close"/>">
-    </td>
-    <td></td>
-  </tr>
-  </table>
+	<table class="section2" width="100%" border="0" cellpadding="0" cellspacing="0">
+		<tr>
+			<td colspan="3">&nbsp;</td>
+		</tr>
+		<tr> 
+			<td width="5%" height="20">&nbsp;</td>
+			<td width="90%" align="left"><bean:message key="config.index_message"/></td>
+			<td width="5%"></td>
+		</tr>
+		<tr>
+			<td colspan="3">&nbsp;</td>
+		</tr>
+	</table>
+	<table class="sectionheader" width="100%" border="0" cellpadding="3" cellspacing="0">
+		<tr> 
+			<td >&nbsp;</td>
+			<td align="left"><input type="submit" name="close" onClick="window.close();" value="<bean:message key="common.button.close"/>"></td>
+			<td></td>
+		</tr>
+	</table>
 </span>
 
 </body>

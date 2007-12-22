@@ -139,6 +139,9 @@ public class MessageStore implements Serializable
             	file = getLegacyFileFromHashValue(volume,hash,6,extension);
             	if (!file.exists()) {
             		file = getLegacyFileFromHashValue(volume,hash,4,extension);
+                	if (!file.exists()) {
+                		file = getLegacyFileFromHashValue(volume,hash,8,extension);
+                	}
             	}
             }
         }
