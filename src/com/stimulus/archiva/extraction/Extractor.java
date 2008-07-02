@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -25,24 +17,11 @@
 package com.stimulus.archiva.extraction;
 
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
-
-import com.stimulus.archiva.exception.ExtractionException;
+import java.util.*;
+import java.nio.charset.Charset;
 import com.stimulus.util.TempFiles;
+import java.io.*;
 
 public class Extractor implements Serializable
 {
@@ -50,7 +29,7 @@ public class Extractor implements Serializable
 	 * 
 	 */
 	private static final long serialVersionUID = 4914643971232234799L;
-	protected static Logger logger = Logger.getLogger(Extractor.class.getName());
+	protected static final Logger logger = Logger.getLogger(Extractor.class.getName());
 	protected static final Map<String,TextExtractor> handlers;
 	protected ArrayList<String> fileDeleteList = new ArrayList<String>();
 	 static {
@@ -82,23 +61,32 @@ public class Extractor implements Serializable
 		TextExtractor rtf = new RTFExtractor();
 		handlers.put("application/rtf", rtf);
 		handlers.put("rtf", rtf);
-		
-		
-		
-		
-		
+		TextExtractor oo = new OOExtractor();
+		handlers.put("application/vnd.oasis.opendocument.text",oo);
+		handlers.put("application/vnd.oasis.opendocument.spreadsheet",oo);
+		handlers.put("application/vnd.oasis.opendocument.presentation",oo);
+		handlers.put("odt",oo);
+		handlers.put("ods",oo);
+		handlers.put("odp",oo);
 	 }
 
 	 public Extractor() {
 	 }
 
-	 public static Reader getText(InputStream is, String mimetype,TempFiles tempFiles) throws ExtractionException {
+	 public static Reader getText(InputStream is, String mimetype,TempFiles tempFiles, Charset fromCharset) {
 	     TextExtractor extractor;
-	     extractor = (TextExtractor)handlers.get(mimetype.toLowerCase(Locale.ENGLISH));
+	     extractor = handlers.get(mimetype.toLowerCase(Locale.ENGLISH));
 	     if(extractor == null) {
 	     	//throw new ExtractionException("failed to extract text (mimetype not supported) {mimetype='"+mimetype+"'}",logger);
 	      return null;
-	     } else return extractor.getText(is, tempFiles);
+	     } else {
+	    	 try {
+	    		 return extractor.getText(is, tempFiles, fromCharset);
+	    	 } catch (Throwable ee) {
+	    		 logger.debug("failed to extract text from document:"+ee.getMessage(),ee);
+	    		 return new StringReader("");
+	    	 }
+	     }
 	 }
 	 
 	 // helper

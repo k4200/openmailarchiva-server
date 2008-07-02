@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -24,26 +16,21 @@
 
 package com.stimulus.archiva.presentation;
 
-import java.io.Serializable;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.LinkedList;
-import java.util.List;
-
-import org.apache.log4j.Logger;
-
-import com.stimulus.archiva.domain.Volume;
-import com.stimulus.archiva.domain.Volumes;
+import com.stimulus.archiva.domain.*;
 import com.stimulus.archiva.domain.Volume.Status;
 import com.stimulus.archiva.exception.ConfigurationException;
-import com.stimulus.archiva.service.MessageService;
-import com.stimulus.struts.BaseBean;
 import com.stimulus.util.EnumUtil;
+
+import java.io.Serializable;
+import java.util.*;
+import org.apache.log4j.Logger;
+import com.stimulus.struts.BaseBean;
+import java.text.*;
 
 public class VolumeBean extends BaseBean implements Serializable {
 
 	 private static final long serialVersionUID = -166626751279723226L;
-	 protected static Logger logger =  Logger.getLogger(VolumeBean.class.getName());
+	 protected static Logger logger = Logger.getLogger(VolumeBean.class.getName());
 	 protected static final SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 	 
 	 protected Volume v;
@@ -73,11 +60,15 @@ public class VolumeBean extends BaseBean implements Serializable {
 	  }
 
 	  public String getModified() {
-	  	   return format.format(v.getModified());
+		  if (v.getLatestArchived()!=null)
+	  	  	return format.format(v.getLatestArchived());
+		  else return "";
 	  }
 
 	  public String getCreated() {
-		  return format.format(v.getCreated());
+		  if (v.getEarliestArchived()!=null)
+			  return format.format(v.getEarliestArchived());
+		  else return "";
 	  }
 		 
 	  public long getMaxSize() { return v.getMaxSize() ; }
@@ -102,66 +93,38 @@ public class VolumeBean extends BaseBean implements Serializable {
 	  public static List<String> getStatuses() {
 	    	return EnumUtil.enumToList(Volume.Status.values());
 	  }
-	  
-	  protected String formatDiskSpace(long bytes) {
-		  double mb = bytes / 1024.0 / 1024.0;
-		  DecimalFormat formatter = new DecimalFormat("#,###,###.##");
-		  double tb = mb / 1024.0 / 1024.0;
-		  if (tb>=1)
-			  return formatter.format(tb)+"TB";
-		  
-		  double gb = mb / 1024.0;
-		  if (gb>=1)
-			  return formatter.format(gb)+"GB";
-		 
-		  return formatter.format(mb)+"MB";
-		  
-	  }
+	
 	  public String getFreeIndexSpace() { 
-		  if (v.getFreeIndexSpace() == Long.MAX_VALUE / 2) 
+		  if (v.getFreeIndexSpace() == Long.MAX_VALUE ) 
 			  return "";
 		  else
-			  return formatDiskSpace(v.getFreeIndexSpace()); 
+			  return v.formatDiskSpace(v.getFreeIndexSpace()); 
 	  }
 	  
 	  public String getFreeArchiveSpace() { 
-		  if (v.getFreeArchiveSpace() == Long.MAX_VALUE / 2) 
+		  if (v.getFreeArchiveSpace() == Long.MAX_VALUE ) 
 			  return "";
 		  else
-			  return formatDiskSpace(v.getFreeArchiveSpace());  
+			  return v.formatDiskSpace(v.getFreeArchiveSpace());  
 	  }
 	  
 	  public String getUsedIndexSpace() { 
-		  if (v.getUsedIndexSpace() == 0)
+		  if (v.getUsedIndexSpace() == -1)
 			  return "";
 		  else
-			  return formatDiskSpace(v.getUsedIndexSpace());
+			  return v.formatDiskSpace(v.getUsedIndexSpace());
 	  }
 	  
 	  public String getUsedArchiveSpace() { 
-		  if (v.getUsedArchiveSpace() == 0)
+		  if (v.getUsedArchiveSpace() == -1)
 			  return "";
 		  else
-			  return formatDiskSpace(v.getUsedArchiveSpace());
+			  return v.formatDiskSpace(v.getUsedArchiveSpace());
 	  }
 	  
+	
 	  public String getTotalMessageCount() {
-		  DecimalFormat formatter = new DecimalFormat("#,###,###,###.##");
-		  
-		  long totalMessageCount = 0;
-		  try { 
-			  totalMessageCount = MessageService.getMessageIndex().getTotalMessageCount(v);
-		  } catch (Exception e) { return ""; };
-		  
-		  double mil = totalMessageCount / 1000000.0;
-		  if (mil>=1)
-			  return formatter.format(mil)+"M";
-		  
-		  double k = totalMessageCount / 1000.0;
-		  if (k>=1)
-			  return formatter.format(k)+"K";
-		 
-		  return formatter.format(totalMessageCount);
+		 return v.formatTotalMessageCount();
 	  }
 	  
 	

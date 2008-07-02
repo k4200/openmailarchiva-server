@@ -1,11 +1,3 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
-
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -24,8 +16,6 @@
 package com.stimulus.archiva.presentation;
 
 import java.io.Serializable;
-import java.util.Locale;
-
 import com.stimulus.archiva.domain.fields.EmailFieldValue;
 
 public class DisplayPriority extends DisplayField implements Serializable {
@@ -40,6 +30,7 @@ public class DisplayPriority extends DisplayField implements Serializable {
 		super(efv);
 	}
 	
+	@Override
 	public String getDisplay() {
 	  switch(Integer.valueOf(getValue())) {
           case 1: return "highest";

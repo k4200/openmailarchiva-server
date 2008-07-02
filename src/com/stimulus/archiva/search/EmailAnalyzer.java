@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -27,7 +19,6 @@ package com.stimulus.archiva.search;
 import org.apache.lucene.analysis.*;
 
 import java.io.*;
-import org.apache.lucene.analysis.standard.*;
 
 public class EmailAnalyzer extends Analyzer implements Serializable {
       
@@ -44,11 +35,13 @@ public class EmailAnalyzer extends Analyzer implements Serializable {
 		    fDelim = delim;
 		  }
 
-		  public TokenStream tokenStream(String fieldName, Reader reader) {
+		  @Override
+		public TokenStream tokenStream(String fieldName, Reader reader) {
 
 		    TokenStream result = new CharTokenizer(reader) {
 
-		      protected boolean isTokenChar(char c) {
+		      @Override
+			protected boolean isTokenChar(char c) {
 		        return c != fDelim;
 		      }
 		    };
@@ -57,7 +50,8 @@ public class EmailAnalyzer extends Analyzer implements Serializable {
 		  }
 		}
 	
-      public final TokenStream tokenStream(String fieldName,final Reader reader)
+      @Override
+	public final TokenStream tokenStream(String fieldName,final Reader reader)
       {
           TokenStream result = new LowercaseDelimiterAnalyzer(',').tokenStream(fieldName, reader);
           result = new EmailFilter(result);

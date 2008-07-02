@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -24,51 +16,27 @@
 
 package com.stimulus.archiva.extraction;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Serializable;
-import java.nio.charset.Charset;
+import java.io.*;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Locale;
-import java.util.regex.Pattern;
-
+import java.util.*;
 import javax.mail.Multipart;
 import javax.mail.Part;
-
 import org.apache.log4j.Logger;
-
 import com.stimulus.archiva.domain.Config;
 import com.stimulus.archiva.domain.Email;
 import com.stimulus.archiva.domain.EmailID;
 import com.stimulus.archiva.exception.MessageExtractionException;
-import com.stimulus.util.Compare;
 import com.stimulus.util.DecodingUtil;
-import com.stimulus.util.TempFiles;
-
+import java.util.regex.Pattern;
+import com.stimulus.util.*;
 public class MessageExtraction implements Serializable
 {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 5021107690811863057L;
-	protected TempFiles filesToRemove 						= new TempFiles();
-	protected static final Logger logger					= Logger.getLogger(MessageExtraction.class);
-	protected static final String serverEncoding 			= Charset.defaultCharset().name();
+	protected static final Logger logger					= Logger.getLogger(MessageExtraction.class.getName());
+	protected static final String serverEncoding 			= "UTF-8";
 	protected HashMap<String,AttachmentInfo> attachments   	= new HashMap<String,AttachmentInfo>();
 	protected String fileName;
 	protected String baseURL;
@@ -98,7 +66,7 @@ public class MessageExtraction implements Serializable
 		ArrayList<String> mimeTypes 		= new ArrayList<String>();
 		String viewFileName;
 		try {
-			dumpPart((Part)message.getUnderlyingMessage(), att, inl, imgs, nonImgs, mimeTypes, message.getSubject());
+			dumpPart((Part)message, att, inl, imgs, nonImgs, mimeTypes, message.getSubject());
 			for (String attachFileName: att.keySet()) {
 				Part p = (Part) att.get(attachFileName);
 				writeAttachment(p, attachFileName);
@@ -261,9 +229,10 @@ public class MessageExtraction implements Serializable
 		if (endIndex < input.length()) output = output + encode(input.substring(endIndex));
 		return output;
 	}
-
+	
 	private void writeAttachment(Part p, String filename) {
-		File attachFile = new File(Config.getViewPath() + File.separatorChar + filename);
+		filename = getFilename(filename,"attachment.att");
+		File attachFile = new File(Config.getFileSystem().getViewPath() + File.separatorChar + filename);
 		OutputStream os = null;
 		InputStream is = null;
 		try {
@@ -271,11 +240,12 @@ public class MessageExtraction implements Serializable
             os = new BufferedOutputStream(new FileOutputStream(attachFile));
             is = p.getInputStream();
             BufferedInputStream bis = new BufferedInputStream(is);
-            int c;
-            while ((c = bis.read()) != -1)
-                os.write(c);
+            int c = 0;
+            while ((c = bis.read()) != -1) {
+            	os.write(c);
+            }
             os.close();
-            filesToRemove.markForDeletion(attachFile);
+            Config.getFileSystem().getTempFiles().markForDeletion(attachFile);
 		} catch (Exception ex) {
 			logger.error("failed to write attachment {filename='" + attachFile + "'}", ex);
 			try {
@@ -286,16 +256,16 @@ public class MessageExtraction implements Serializable
 	}
 
 
+
 	private String writeTempMessage(String toWrite, String ext)
 	{
-
 		try {
-			File attachFile = File.createTempFile("temp", ext, new File(Config.getViewPath()));
+			File attachFile = File.createTempFile("temp", ext, new File(Config.getFileSystem().getViewPath()));
 			logger.debug("writing temporary message {fileName='" + attachFile + "'}");
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(attachFile),"UTF8"));
 			bw.write(toWrite);
 			bw.close();
-			filesToRemove.markForDeletion(attachFile);
+			Config.getFileSystem().getTempFiles().markForDeletion(attachFile);
 			return attachFile.getName();
 		} catch (IOException ex) {
 			logger.error("failed to write temporary message {fileName='" + fileName + "'}", ex);
@@ -306,19 +276,19 @@ public class MessageExtraction implements Serializable
 	
 	private String writeOriginalMessage(EmailID emailId, InputStream originalMessageStream)
 	{
-		File file = new File(Config.getViewPath() + File.separatorChar + emailId.getUniqueID() + ".eml");
+		File file = new File(Config.getFileSystem().getViewPath() + File.separatorChar + emailId.getUniqueID() + ".eml");
 		logger.debug("writeOriginalMessage() {fileName='" + file.getAbsolutePath() + "'}");
 		OutputStream os = null;
 
 		try {
             os = new BufferedOutputStream(new FileOutputStream(file));
             BufferedInputStream bis = new BufferedInputStream(originalMessageStream);
-            int c;
-            while ((c = bis.read()) != -1)
-                os.write(c);
+            int c = 0;
+            while ((c = bis.read()) != -1) {
+            	os.write(c);
+            }
             os.close();
-            bis.close();
-            filesToRemove.markForDeletion(file);
+            Config.getFileSystem().getTempFiles().markForDeletion(file);
 			return emailId.getUniqueID() + ".eml";
 		} catch (Exception ex) {
 			logger.error("failed to write original message, {fileName='" + file.getAbsolutePath() + "'}", ex);
@@ -340,7 +310,11 @@ public class MessageExtraction implements Serializable
 		{
 			String fl = (String) enuma.nextElement();
 			fl = (String) ready.get(fl);
-			buff.append("<BR><BR><IMG SRC=\"" + fl + "\">" + System.getProperty("line.separator"));
+			if (fl.endsWith(".tif") || fl.endsWith(".tiff")) {
+				buff.append("<BR><BR><EMBED SRC=\"" + fl + "\" TYPE=\"image/tiff\" >" + System.getProperty("line.separator"));
+			} else {
+				buff.append("<BR><BR><IMG SRC=\"" + fl + "\">" + System.getProperty("line.separator"));
+			}
 		}
 		str = str.replaceAll("\r", "").replaceAll("\n", "<br>" + System.getProperty("line.separator"));
 		return writeTempMessage("<html><head><META http-equiv=Content-Type content=\"text/html; charset="+serverEncoding+"\"></head><body>" + str + System.getProperty("line.separator") + buff.toString() + "</body></html>",".html");
@@ -367,6 +341,7 @@ public class MessageExtraction implements Serializable
 					str = str.substring(0, bestStart) + plain + str.substring(bestStart);
 			else str = plain + str;
 		}
+		
 		HashSet<String> alreadyUsed = new HashSet<String>();
 		Enumeration enuma = imgs.keys();
 		
@@ -402,8 +377,11 @@ public class MessageExtraction implements Serializable
 			String fl = (String) enuma.nextElement();
 			if (!alreadyUsed.contains(fl)) {
 				fl = (String) ready.get(fl);
-				buff.append(System.getProperty("line.separator") + "<BR><BR><IMG SRC=\"" + baseURL.replaceAll("\\\\", "/") + "/temp/" + fl
-						+ "\">");
+				if (fl.endsWith(".tif") || fl.endsWith(".tiff")) {
+					buff.append(System.getProperty("line.separator") + "<BR><BR><EMBED SRC=\"" + baseURL.replaceAll("\\\\", "/") + "/temp/" + fl + "\" TYPE=\"image/tiff\">");
+				} else {
+					buff.append(System.getProperty("line.separator") + "<BR><BR><IMG SRC=\"" + baseURL.replaceAll("\\\\", "/") + "/temp/" + fl + "\">");
+				}
 			}
 		}
 		String output = "";
@@ -419,7 +397,12 @@ public class MessageExtraction implements Serializable
 				output = output.substring(0, next) + "<META http-equiv=Content-Type content=\"text/html; charset="+serverEncoding+"\">"+ output.substring(next);
 		} else 
 			output = output.replaceFirst("charset=.*\"", "charset="+serverEncoding+"\"");
+		
+		output = output.replaceAll("FONT SIZE=\\d","FONT");
+		output = output.replaceAll("font size=\\d","font");
+	
 		return writeTempMessage(output, ".html");
+		
 	}
 	
 
@@ -427,19 +410,28 @@ public class MessageExtraction implements Serializable
 	{
 		if (defaultFileName=="" || defaultFileName==null)
 			defaultFileName = "attachment.att";
-		
 		String fileName = DecodingUtil.decodeWord(p.getFileName());
 		if (fileName == null || fileName.trim().equals("")) {
 			fileName = defaultFileName;
 		} 
+		return getFilename(fileName,defaultFileName);
+	
+	}
+	
+	private static String getFilename(String fileName, String defaultFileName) {
 		try {
 			fileName = new File(fileName).getName();
-			String illegalChars[] = { "\\\\", "\\/", "\\:", "\\*", "\\?", "\\\"", "\\<", "\\>", "\\|", "\\n", "\\r", "\\t" };
-			for (int i = 0; i < illegalChars.length; i++)
-				fileName = fileName.replaceAll(illegalChars[i], "_");
+			char illegalChars[] = { '\'', '\\',':','*','?','<','>','|','\n','\r','\t',';',':','=',':','+',
+								    '<','>','|','[',']','\"','?','*','#' };
+			for (int i = 0; i < illegalChars.length; i++) {
+				fileName = fileName.replace(illegalChars[i],'_');
+			}
+			if (fileName.length()<3)
+				fileName = defaultFileName;
+			
 		} catch (Exception ex)
 		{
-			fileName = defaultFileName + ".att";
+			fileName = defaultFileName;
 		}
 		return fileName;
 	}
@@ -458,7 +450,7 @@ public class MessageExtraction implements Serializable
 	}
 	
 	public String getFilePath() {
-		String path = Config.getViewPath() + File.separatorChar + fileName;
+		String path = Config.getFileSystem().getViewPath() + File.separatorChar + fileName;
 		logger.debug("getOriginalMessageFilePath() {fileName='" + path + "'}");
 		return path;
 	}
@@ -500,12 +492,8 @@ public class MessageExtraction implements Serializable
 		
 	
 
-	public class AttachmentInfo implements Serializable
+	public class AttachmentInfo
 	{
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 6020964285330272323L;
 		protected String	name;
 		protected String	contentType;
 
@@ -531,7 +519,7 @@ public class MessageExtraction implements Serializable
 		}
 
 		public String getFilePath() {
-			return Config.getViewPath() + File.separatorChar + name;
+			return Config.getFileSystem().getViewPath() + File.separatorChar + name;
 		}
 		
 		public String getFileSize() {

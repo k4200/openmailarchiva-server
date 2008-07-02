@@ -1,11 +1,3 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
-
 /* Copyright (C) 2005 Jamie Angus Band 
  * This software program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,19 +16,15 @@
 
 package com.stimulus.archiva.plugin;
 
-import java.io.Serializable;
-import java.util.Date;
-
-import javax.servlet.ServletException;
-
-import org.apache.log4j.Logger;
 import org.apache.struts.action.ActionServlet;
 import org.apache.struts.action.PlugIn;
 import org.apache.struts.config.ModuleConfig;
-
-import com.stimulus.archiva.domain.Config;
-import com.stimulus.archiva.service.ConfigurationService;
-import com.stimulus.archiva.service.MessageService;
+import javax.servlet.ServletException;
+import com.stimulus.archiva.service.*;
+import com.stimulus.archiva.domain.*;
+import java.io.Serializable;
+import java.util.*;
+import org.apache.log4j.Logger;
 
 public class Startup  implements PlugIn, Serializable  {
 
@@ -44,30 +32,46 @@ public class Startup  implements PlugIn, Serializable  {
 	 * 
 	 */
 	private static final long serialVersionUID = 6415321408987920651L;
-	protected static Logger logger = Logger.getLogger(Startup.class);
+	protected static final Logger logger = Logger.getLogger(Startup.class);
 
     public void destroy() {
-	    logger.info("mailarchiva v"+Config.getApplicationVersion()+" shutdown at "+new Date());
+    	Config.shutdown();
+	    logger.info("mailarchiva v"+Config.getConfig().getApplicationVersion()+" shutdown at "+new Date());
 	}
 
 	public void init(ActionServlet actionServlet, ModuleConfig config) throws ServletException {
 	  
 		  
-	    logger.info("mailarchiva open source edition v"+Config.getApplicationVersion()+" started at "+new Date());
+	    logger.info("mailarchiva open source edition v"+Config.getConfig().getApplicationVersion()+" started at "+new Date());
+	    
+	    
 	    System.setProperty("mail.mime.base64.ignoreerrors", "true");
-	    Config conf = ConfigurationService.getConfig();
-	    String appPath = actionServlet.getServletConfig().getServletContext().getRealPath("/");
-	   	Config.setApplicationPath(appPath);
-	   	Config.clearViewDirectory();
-	   	Config.clearTempDirectory();
-	  
-	   	try {
-	   	    conf.load();
-	   	    conf.getVolumes().startDiskSpaceCheck();
-	   	    String recover = System.getProperty("rearchive");
-		    if (recover!=null && recover.equalsIgnoreCase("yes"))
-		    	MessageService.recoverNoArchiveMessages(null);
-	   	   
+	    
+		try {
+			Config conf = Config.getConfig();
+			
+			String appPath = actionServlet.getServletConfig().getServletContext().getRealPath("/");
+			if (appPath==null) {
+				logger.fatal("failed to retrieve application path from servlet context.");
+				logger.fatal("please clear out the work directory, browser cache, and restart the server.");
+				throw new ServletException("failed to retrieve application path from servlet context.");
+			}
+			FileSystem fs = Config.getFileSystem();
+			fs.outputSystemInfo();
+	   	    fs.setApplicationPath(appPath);
+	   	    if (!fs.checkAllSystemPaths()) {
+	   	    	logger.error("mailarchiva cannot find one or more required system paths.");
+	   	    	logger.error("the server will proceed with startup but there is a serious risk of system malfunction.");
+	   	    }
+	   	    
+		    fs.initTempDirectory();
+		    fs.clearViewDirectory();
+			fs.clearTempDirectory();
+			conf.init(MessageService.getFetchMessageCallback());
+			conf.loadSettings(MailArchivaPrincipal.SYSTEM_PRINCIPAL);
+	   	    conf.registerServices();
+	   	    conf.getServices().startAll();
+			logger.debug("startup sequence is complete");
 	   	} catch (Exception e) {
 	   	    logger.error("failed to execute startup cause: ",e);
 	   	    return;

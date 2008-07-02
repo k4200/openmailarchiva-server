@@ -1,4 +1,3 @@
-<%@ taglib uri="/WEB-INF/tld/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/tld/struts-bean.tld" prefix="bean" %>
 <table class="logo" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr> 
@@ -6,7 +5,7 @@
     <td align="center"></td>
   </tr>
 </table>
-<table class="topheader" width="100%" border="0" cellpadding="0" cellspacing="0">
+<table class="menu" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr> 
     <td width="10%">&nbsp;</td>
     <td>
@@ -14,7 +13,7 @@
 	        <tr align="right" > 
 	          <td >&nbsp;</td>
 	          <td width="6%"><font color="#FFFFFF" size=-1>
-	          <% if (request.isUserInRole("administrator")) {%>
+	          <% if (request.isUserInRole("configure")) {%>
 	          <html:link page="/configurationform.do"  styleClass="topmenuitems"><bean:message key="menu.config"/></html:link>
 	          <% } %></font></td>
 	        

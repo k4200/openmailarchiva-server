@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -26,16 +18,17 @@ package com.stimulus.archiva.exception;
 
 import java.io.Serializable;
 
-import org.apache.log4j.Logger;
+import org.apache.log4j.*;
+import com.stimulus.archiva.domain.Email;
 
 public class ChainedException extends Exception implements Serializable {
 	
-  /**
-	 * 
-	 */
-	private static final long serialVersionUID = 7945849551205785581L;
-	private Throwable cause = null;
-	protected static Logger logger = Logger.getLogger(ChainedException.class);
+ 
+  
+  private static final long serialVersionUID = 7945849551205785581L;
+  private Throwable cause = null;
+  
+  protected static Logger logger = Logger.getLogger(ChainedException.class.getName());
   
   public ChainedException() {
     super();
@@ -46,21 +39,22 @@ public class ChainedException extends Exception implements Serializable {
   }
 
   public ChainedException(String message, Throwable cause) {
+	  
     super(message);
     this.cause = cause;
   }
 
-  public ChainedException(String message, Logger logger) {
+  public ChainedException(String message, Logger logger, Level level) {
     super(message);
     logger.debug(message,cause);
-    logger.error(message); 
+    logger.log(level, message);
   }
 
-  public ChainedException(String message, Throwable cause, Logger logger) {
+  public ChainedException(String message, Throwable cause, Logger logger,Level level) {
     super(message);
     this.cause = cause;
     logger.debug(message,cause);
-    logger.error(message); 
+    logger.log(level, message);
   }
 
   public Throwable getCause() {

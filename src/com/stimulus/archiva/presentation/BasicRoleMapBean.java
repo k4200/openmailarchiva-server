@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -41,22 +33,27 @@ public class BasicRoleMapBean extends BaseBean implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -7268919629559918370L;
-	protected static Logger logger = Logger.getLogger(BasicRoleMapBean.class);
+	protected static Logger logger = Logger.getLogger(BasicRoleMapBean.class.getName());
 	protected BasicRoleMap roleMap;
+
 	
     public BasicRoleMapBean(BasicRoleMap roleMap) {
-        this.roleMap = roleMap;
+    	this.roleMap = roleMap;
     }
 
   	public String getRole() { return roleMap.getRole(); }
 
   	public void setRole(String role) throws ConfigurationException {
-  	    roleMap.setRole(role);
+  	    roleMap.setRoleValue(role);
   	}
   	
-	public String getLoginPassword() { return roleMap.getLoginPassword(); }
+	public String getLoginPassword() { return ""; }
 
-  	public void setLoginPassword(String password) { roleMap.setLoginPassword(password); }
+  	public void setLoginPassword(String password) {
+  		if (password.length()>0) {
+  			roleMap.setLoginPassword(password); 	
+  		}
+  	}
 	
   	public String getUsername() { return roleMap.getUsername(); }
   	public void setUsername(String username) { roleMap.setUsername(username); }

@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -24,51 +16,42 @@
 
 package com.stimulus.archiva.presentation;
 
-import java.io.Serializable;
-import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import com.stimulus.archiva.domain.*;
+import com.stimulus.archiva.domain.Search.Result;
+import com.stimulus.archiva.domain.fields.EmailField;
+import com.stimulus.archiva.domain.fields.EmailFields;
+import com.stimulus.archiva.service.*;
+import com.stimulus.archiva.search.*;
+import com.stimulus.struts.*;
+import com.stimulus.util.*;
+
+import java.util.*;
+import java.text.*;
 
 import org.apache.log4j.Logger;
-
-import com.stimulus.archiva.domain.Config;
-import com.stimulus.archiva.domain.Search;
-import com.stimulus.archiva.domain.fields.EmailField;
-import com.stimulus.archiva.search.SearchFactory;
-import com.stimulus.archiva.search.StandardSearch;
-import com.stimulus.archiva.service.ConfigurationService;
-import com.stimulus.archiva.service.SearchService;
-import com.stimulus.struts.BaseBean;
-import com.stimulus.util.EnumUtil;
+import com.stimulus.archiva.exception.*;
+import java.io.Serializable;
 
 
 public class SearchBean extends BaseBean implements Serializable {
   	
   private static final long serialVersionUID = -5738112871526292950L;
-  protected Search search;
+
   protected int page = 1; 
   protected int pageSize = 20;
   protected double searchTime;
+  protected Search search;
+  protected int totalHits;
+  protected int resultSize;
+  protected List<Result> results;
+  
 
  
   protected static final int NO_DISPLAY_PAGES = 10;
   
   /* advanced search attributes */
 
-  protected static final List METHOD_LIST;
-  protected static final List METHOD_LABEL_LIST;
 
-  protected static final List OPERATOR_LIST;
-  protected static final List OPERATOR_LABEL_LIST;
   protected static final List PAGE_SIZE_LIST;
   protected static final List PAGE_SIZE_LABEL_LIST;
   protected static final List MAX_RESULTS_LABEL_LIST;
@@ -77,32 +60,6 @@ public class SearchBean extends BaseBean implements Serializable {
   
   static {
    
-    List<String> methodList = new LinkedList<String>();
-    methodList.add("any");
-    methodList.add("all");
-    methodList.add("exact");
-    methodList.add("none");
-    METHOD_LIST = Collections.unmodifiableList(methodList);
-    
-    List<String> methodLabelList = new LinkedList<String>();
-    methodLabelList.add("methode_label_any");
-    methodLabelList.add("methode_label_all");
-    methodLabelList.add("methode_label_exact");
-    methodLabelList.add("methode_label_none");
-    METHOD_LABEL_LIST = Collections.unmodifiableList(methodLabelList);
-    
- 
-    
-    List<String> operatorList = new LinkedList<String>();
-    operatorList.add("AND");
-    operatorList.add("OR");
-    OPERATOR_LIST =  Collections.unmodifiableList(operatorList);
-    
-    List<String> operatorLabelList = new LinkedList<String>();
-    operatorLabelList.add("operator_and");
-    operatorLabelList.add("operator_or");
-    OPERATOR_LABEL_LIST =  Collections.unmodifiableList(operatorLabelList);
-    
     List<String> pageSizeList = new LinkedList<String>();
     pageSizeList.add("10");
     pageSizeList.add("20");
@@ -149,7 +106,7 @@ public class SearchBean extends BaseBean implements Serializable {
   
   protected static final String recvDateFieldName = "sentdate";
   // for advanced search
-  protected static Logger logger =  Logger.getLogger(SearchBean.class.getName());
+  protected static Logger logger = Logger.getLogger(SearchBean.class.getName());
   protected static final Logger audit = Logger.getLogger("com.stimulus.archiva.audit");
 
   protected boolean notSearched = true;
@@ -157,48 +114,57 @@ public class SearchBean extends BaseBean implements Serializable {
   /* Constructors */
 
   public SearchBean()  {
-
+	  try {
+			 search = (StandardSearch)SearchFactory.getFactory(Search.Type.STANDARD);
+			 search.loadSettings(null,Config.getConfig().getSettings(), null);
+		} catch (MessageSearchException mse) {
+			 logger.error("failed to create search object",mse);
+		}
   }
   
   public void reset() {
-	  if (search==null) {
-		  try { searchform(); } catch (Exception e) { logger.debug("exception occurred",e); }
-	  }
+		
+	 
   }
   
   public String searchform() throws Exception {
-	  	search = (StandardSearch)SearchFactory.getFactory(Search.Type.STANDARD);
-	    String language = getLocale().getLanguage();
+	  	 logger.debug("searchform() begin");
+	   try {
+			 search = (StandardSearch)SearchFactory.getFactory(Search.Type.STANDARD);
+			 search.loadSettings(null,Config.getConfig().getSettings(), null);
+		} catch (MessageSearchException mse) {
+			 logger.error("failed to create search object",mse);
+		}
+        String language = getLocale().getLanguage();
 	    logger.debug("browser language detected {language='"+language+"'}");
 	    search.setLanguage(language);
-	    search.setMaxResults(ConfigurationService.getConfig().getMaxSearchResults());
 	    notSearched = true;
 	    page=1;
 	    pageSize=20;
+	    logger.debug("searchform() end");
 	    return "success";
   }
   public String resetsearch() throws Exception {
-	    logger.debug("resetSearch()");
+	    logger.debug("resetsearch()");
 	    searchform();
 	    return searchMessages();
   }
   
   /* bean setters and getters */
   
-  public List getMethods() {
-  	return METHOD_LIST; 
+  public List<String> getMethods() {
+  	return EnumUtil.enumToList(Criteria.Method.values());  
   }
   
-  public List getMethodLabels() {
-  	return translateList(METHOD_LABEL_LIST); 
+  public List<String> getMethodLabels() {
+  	return translateList(EnumUtil.enumToList(Criteria.Method.values(),"methode_label_"));
   }
   
-  public List getFields() {
+  public List<String> getFields() {
 	
 	  ArrayList<String> fieldList = new ArrayList<String>();
-	  Iterator i = EmailField.getAvailableFields().iterateValues();
-	  while (i.hasNext()) {
-		  EmailField ef = (EmailField)i.next();
+	  EmailFields emailFields = Config.getConfig().getEmailFields();
+	  for (EmailField ef : emailFields.getAvailableFields().values()) {
 		  // we dont allow end-users to search using bcc
 		  if (ef.getName().equals("bcc") && getMailArchivaPrincipal().getRole().equals("user"))
 			  continue;
@@ -213,12 +179,10 @@ public class SearchBean extends BaseBean implements Serializable {
 	  return fieldList;
   }
   
-  public List getFieldLabels() {
+  public List<String> getFieldLabels() {
 	  ArrayList<String> fieldLabelList = new ArrayList<String>();
-	  Iterator i = EmailField.getAvailableFields().iterateValues();
-	  while (i.hasNext()) {
-		  EmailField ef = (EmailField)i.next();
-		  
+	  EmailFields emailFields = Config.getConfig().getEmailFields();
+	  for (EmailField ef :  emailFields.getAvailableFields().values()) {
 		  // we dont allow end-users to search using bcc
 		  if (ef.getName().equals("bcc") && getMailArchivaPrincipal().getRole().equals("user"))
 			  continue;
@@ -226,41 +190,55 @@ public class SearchBean extends BaseBean implements Serializable {
 			  continue;
 		  
 		  if (ef.getAllowSearch()==EmailField.AllowSearch.SEARCH)
-			  fieldLabelList.add(ef.getResourceKey().toLowerCase());
+			  fieldLabelList.add(ef.getResource().toLowerCase(Locale.ENGLISH));
 	  }
 	  fieldLabelList.add("field_label_all");
 	  Collections.sort(fieldLabelList, String.CASE_INSENSITIVE_ORDER);
   	  return translateList(fieldLabelList,true); 
   }
   
-  public List getOperators() {
-  	return OPERATOR_LIST; 
+  public List<String> getOperators() {
+	return EnumUtil.enumToList(Criteria.Operator.values());  
   }
   
-  public List getOperatorLabels() {
-  	return translateList(OPERATOR_LABEL_LIST); 
+  public List<String> getOperatorLabels() {
+	return translateList(EnumUtil.enumToList(Criteria.Operator.values(),"operator_"));
   }
   
   /* order by */
   
   public void setOrderBy(String sortField) {
-      if (sortField.equalsIgnoreCase(search.getSortField()))
-          search.setSortOrder(!search.getSortOrder());
+	  if (Compare.equalsIgnoreCase(sortField, search.getSortField())) {
+          if (search.getSortOrder()==Search.SortOrder.ASCENDING || 
+        	  search.getSortOrder()==Search.SortOrder.NOSORT) {
+        	  	search.setSortOrder(Search.SortOrder.DESCENDING);
+          } else { 
+        	  search.setSortOrder(Search.SortOrder.ASCENDING);
+          }
+	  }
       search.setSortField(sortField);
   }
   
   public String getOrderBy() {
-      return search.getSortField();
+	 
+	  if (search.getSortField().equals("archivedate") ||
+		  search.getSortField().equals("sentdate") ||
+		  search.getSortField().equals("receiveddate")) {
+		  	return search.getDateType().toString().toLowerCase(Locale.ENGLISH);
+  	  }
+	 
+	  return search.getSortField();
   }
   
   /* sort order */
   
-  public boolean getSortOrder() {
-      return search.getSortOrder();
+  public String getSortOrder() {
+	  
+      return search.getSortOrder().toString().toLowerCase(Locale.ENGLISH);
   }
   
-  public void setSortOrder(boolean sortOrder) {
-      search.setSortOrder(sortOrder);
+  public void setSortOrder(String sortOrder) {
+      search.setSortOrder(Search.SortOrder.valueOf(sortOrder));
   }
   
   /* search language */
@@ -274,30 +252,20 @@ public class SearchBean extends BaseBean implements Serializable {
       return search.getLanguage();
   }
   
-  public List getLanguages() {
-      Config config = ConfigurationService.getConfig();
-      Map searchAnalyzers = config.getSearchAnalyzers();
-      List<String> labels = new ArrayList<String>();
-      Iterator i = searchAnalyzers.entrySet().iterator();
-      while (i.hasNext()) {
-          Map.Entry searchAnalyzer = (Map.Entry)i.next();
+  public List<String> getLanguages() {
+	  List<String> labels = new ArrayList<String>();
+      for (Map.Entry<String,String> searchAnalyzer : search.getSearchAnalyzers().entrySet()) { 
           labels.add((String)searchAnalyzer.getKey());
       }
       return labels;
   }
   
-  public List getLanguageLabels() {
-      Config config = ConfigurationService.getConfig();
-      Map searchAnalyzers = config.getSearchAnalyzers();
+  public List<String> getLanguageLabels() {
       List<String> labels = new ArrayList<String>();
-      Iterator i = searchAnalyzers.entrySet().iterator();
-      while (i.hasNext()) {
-          Map.Entry searchAnalyzer = (Map.Entry)i.next();
+      for (Map.Entry<String,String> searchAnalyzer : search.getSearchAnalyzers().entrySet()) { 
           labels.add("searchresults.language_"+searchAnalyzer.getKey());
       }
-      List translatedLabels = translateList(labels);
-      //Collections.sort(translatedLabels);
-      return translatedLabels;
+      return translateList(labels);
   }
   
   
@@ -311,11 +279,11 @@ public class SearchBean extends BaseBean implements Serializable {
       return Integer.toString(search.getMaxResults());
   }
   
-  public List getMaxResults() {
+  public List<String> getMaxResults() {
       return MAX_RESULTS_LIST;
   }
   
-  public List getMaxResultLabels() {
+  public List<String> getMaxResultLabels() {
       return MAX_RESULTS_LABEL_LIST;
   }
   
@@ -324,7 +292,7 @@ public class SearchBean extends BaseBean implements Serializable {
   public void setSearchType(String searchType) {
 	  Search.Type typeResult = Search.Type.STANDARD;	
 	  	try {
-	  		typeResult = Search.Type.valueOf(searchType.trim().toUpperCase());
+	  		typeResult = Search.Type.valueOf(searchType.trim().toUpperCase(Locale.ENGLISH));
 	  	} catch (IllegalArgumentException iae) {
 	    		logger.error("failed to apply search type field to search. search type field is set to an illegal value {type='"+searchType+"'}");
 	    		logger.info("using standard search (error recovery)");
@@ -335,22 +303,26 @@ public class SearchBean extends BaseBean implements Serializable {
   /* search */
   
   public String getSearchType() {
-      return search.getType().toString().toLowerCase();
+      return search.getType().toString().toLowerCase(Locale.ENGLISH);
   }
   
-  public List getSearchTypes() {
+  public List<String> getSearchTypes() {
 	  return EnumUtil.enumToList(Search.Type.values());
   }
-  public List getSearchTypeLabels() {
+  public List<String> getSearchTypeLabels() {
 	  return translateList(EnumUtil.enumToList(Search.Type.values(),"searchresults.type_"));
   }
+  
+ 
+  
+  
   
   /* priority */
   
   public void setPriority(String priority) {
 	  Search.Priority priorityResult =  Search.Priority.ANY;	
 	  	try {
-	  		priorityResult =  Search.Priority.valueOf(priority.trim().toUpperCase());
+	  		priorityResult =  Search.Priority.valueOf(priority.trim().toUpperCase(Locale.ENGLISH));
 	  	} catch (IllegalArgumentException iae) {
 	    		logger.error("failed to apply priority field to search. priority field is set to an illegal value {priority='"+priority+"'}");
 	    		logger.info("searching messages associated with any priority");
@@ -359,21 +331,21 @@ public class SearchBean extends BaseBean implements Serializable {
   }
   
   public String getPriority() {
-	 return search.getPriority().toString().toLowerCase();
+	 return search.getPriority().toString().toLowerCase(Locale.ENGLISH);
   }
   
-  public List getPriorities() {
+  public List<String> getPriorities() {
 	  return EnumUtil.enumToList( Search.Priority.values());
   }
   
-  public List getPriorityLabels() {
+  public List<String> getPriorityLabels() {
 	  return translateList(EnumUtil.enumToList(Search.Priority.values(),"searchresults.priority_"));
   }
   
   public void setDateType(String dateType) {
 	  Search.DateType dateTypeResult = Search.DateType.SENTDATE;
 	  try {
-		  dateTypeResult = Search.DateType.valueOf(dateType.trim().toUpperCase());
+		  dateTypeResult = Search.DateType.valueOf(dateType.trim().toUpperCase(Locale.ENGLISH));
 	  } catch (IllegalArgumentException iae) {
 		  logger.error("failed to apply priority field to search. priority field is set to an illegal value {priority='"+dateTypeResult+"'}");
   		  logger.info("searching messages associated with any priority");
@@ -382,14 +354,14 @@ public class SearchBean extends BaseBean implements Serializable {
   }
   
   public String getDateType() {
-	  return search.getDateType().toString().toLowerCase();
+	  return search.getDateType().toString().toLowerCase(Locale.ENGLISH);
   }
   
-  public List getDateTypes() { 
+  public List<String> getDateTypes() { 
 	  return EnumUtil.enumToList( Search.DateType.values());
   }
   
-  public List getDateTypeLabels() { 
+  public List<String> getDateTypeLabels() { 
 	  return translateList(EnumUtil.enumToList(Search.DateType.values(),"searchresults.datetype_"));
   }
   
@@ -402,7 +374,7 @@ public class SearchBean extends BaseBean implements Serializable {
   public void setAttachment(String hasAttachment) {
 		Search.Attachment attach = Search.Attachment.EITHER;	
 	  	try {
-	  		attach = Search.Attachment.valueOf(hasAttachment.trim().toUpperCase());
+	  		attach = Search.Attachment.valueOf(hasAttachment.trim().toUpperCase(Locale.ENGLISH));
 	  	} catch (IllegalArgumentException iae) {
 	    		logger.error("failed to apply attachment field to search. attachment is set to an illegal value {attach='"+hasAttachment+"'}");
 	    		logger.info("searching messages associated with all attachments (error recovery)");
@@ -410,16 +382,16 @@ public class SearchBean extends BaseBean implements Serializable {
 	  	search.setAttachment(attach);
   }
   
-  public List getAttachments() {
+  public List<String> getAttachments() {
   	return EnumUtil.enumToList(Search.Attachment.values());
   }
   
-  public List getAttachmentLabels() {
+  public List<String> getAttachmentLabels() {
   	return translateList(EnumUtil.enumToList(Search.Attachment.values(),"searchresults.attachment_"));
   }
   
   public String getAttachment() {
-	  return ((Search)search).getAttachment().toString().toLowerCase();
+	  return ((Search)search).getAttachment().toString().toLowerCase(Locale.ENGLISH);
   }
   
 /* flag */
@@ -427,7 +399,7 @@ public class SearchBean extends BaseBean implements Serializable {
   public void setFlag(String flag) {
 	  Search.Flag flagResult = Search.Flag.ANY;
 	  	try {
-	  		flagResult = Search.Flag.valueOf(flag.trim().toUpperCase());
+	  		flagResult = Search.Flag.valueOf(flag.trim().toUpperCase(Locale.ENGLISH));
 	  	} catch (IllegalArgumentException iae) {
 	    		logger.error("failed to apply flag field search. flag is set to an illegal value {attach='"+flag+"'}");
 	    		logger.info("searching messages associated with any flag (error recovery)");
@@ -436,14 +408,14 @@ public class SearchBean extends BaseBean implements Serializable {
   }
   
   public String getFlag() {
-	  return search.getFlag().toString().toLowerCase();
+	  return search.getFlag().toString().toLowerCase(Locale.ENGLISH);
   }
   
-  public List getFlagLabels() {
+  public List<String> getFlagLabels() {
 	  return translateList(EnumUtil.enumToList(Search.Flag.values(),"searchresults.flag_"));
   }
   
-  public List getFlags() {
+  public List<String> getFlags() {
 	  return EnumUtil.enumToList(Search.Flag.values());
   }
   
@@ -455,9 +427,9 @@ public class SearchBean extends BaseBean implements Serializable {
   	int noHitsOnPage = 0;
   	int noPages = getNoPages();
   	if (noPages<=1) 
-  		noHitsOnPage = getTotalHits();
+  		noHitsOnPage = getResultSize();
   	else if (page==noPages)
-  		noHitsOnPage = getTotalHits() % pageSize;
+  		noHitsOnPage = getResultSize() % pageSize;
   	else noHitsOnPage = pageSize;
   	logger.debug("getNoHitsOnPage() {ret='"+noHitsOnPage+"'}");
   	return noHitsOnPage;
@@ -505,11 +477,11 @@ public class SearchBean extends BaseBean implements Serializable {
   	return pageSize; 
   }
   
-  public List getPageSizes() {
+  public List<String> getPageSizes() {
     	return PAGE_SIZE_LIST; 
     }
     
-    public List getPageSizeLabels() {
+    public List<String> getPageSizeLabels() {
     	return PAGE_SIZE_LABEL_LIST; 
     }
     
@@ -528,7 +500,7 @@ public class SearchBean extends BaseBean implements Serializable {
   
   public int getNoPages()
   {
-  	int searchSize = getTotalHits();
+  	int searchSize = getResultSize();
   	//logger.debug("getNoPages <{ search size / page size = " + searchSize / pageSize + " } ");
   	//logger.debug("getNoPages <{ search size % page size = " + searchSize % pageSize+ " } ");
   	int noPages = searchSize / pageSize + ((searchSize % pageSize)>0 ? 1:0);
@@ -537,9 +509,11 @@ public class SearchBean extends BaseBean implements Serializable {
   }
   public int getTotalHits()
   {
-  	int totalHits = search.getSize();
-  	logger.debug("getTotalHits() {ret='"+totalHits+"'}");
-  	return search.getSize();
+	  return totalHits;
+  }
+  
+  public int getResultSize() {
+	  return resultSize;
   }
   
   public int getMaxViewPage() {
@@ -577,6 +551,7 @@ public class SearchBean extends BaseBean implements Serializable {
   		logger.debug("getAfter() {sentafter='null'}");
   		return "";
   	}
+  	
   	DateFormat format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, getLocale());
   	String ra = format.format(search.getAfter());
   	logger.debug("getAfter() {sentafter='"+ra+"'}");
@@ -671,8 +646,8 @@ public class SearchBean extends BaseBean implements Serializable {
      ((StandardSearch)search).newCriteria();
 }
 
-  public List getCriteria() {
-	return ((StandardSearch)search).getCriteria();
+  public List<CriteriaBean> getCriteria() {
+	return CriteriaBean.getCriteriaBeans(((StandardSearch)search).getCriteria());
   }
  
   public String getDateFormat() {
@@ -711,50 +686,48 @@ public class SearchBean extends BaseBean implements Serializable {
 		return resetsearch();
   	} 
   	
-  	
   	return searchMessages();
   }
   
   protected String searchMessages() {
 	  try {
+		  	logger.debug("searchmessages() begin");
 		  	notSearched = false;
 	  	    String searchQuery = search.getSearchQuery();
 	  		logger.debug("search() {searchquery='"+searchQuery+"'}");
-		  	search.clearResults();
 		  	long s = (new Date()).getTime();
 		  	search.setPrincipal(getMailArchivaPrincipal());
 		  	SearchService.searchMessage(search);
 		  	long e = (new Date()).getTime();
 		  	searchTime = e - s ;
 		  	setPage(1);
-		  	
+			resultSize = search.getResultSize();
+			totalHits = search.getTotalHits();
+			results = search.getResults();
+		  	logger.debug("searchmessages() end");
 	  	} catch (Exception e) {
 	  		e.printStackTrace();
 	  	}
 	  	return "success";
   }
   
-  
-  
-
-
+ 
   public List<SearchResultBean> getSearchResults() {
-      return SearchResultBean.getSearchResultBeans(search.getResultsList(),getLocale());
+	  logger.debug("getSearchResults() {size='"+results.size()+"'}");
+	  return SearchResultBean.getSearchResultBeans(results,getLocale());
   }
   
   public List<EmailField> getAvailableFields() {
 		 ArrayList<EmailField>  list = new ArrayList<EmailField>();
-		 Iterator i = EmailField.getAvailableFields().iterateValues();
-		 while (i.hasNext()) {
-			 EmailField ef = (EmailField)i.next();
+		 EmailFields emailFields = Config.getConfig().getEmailFields();
+		 for (EmailField ef :  emailFields.getAvailableFields().values()) {
 			 if (ef.getShowResults() || ef.getShowConditional())
 				 list.add(ef);			 
 		 }
 		 return list;
 	 }
-	
-	public boolean getNotSearched() { return notSearched; }
-
+  
+  public boolean getNotSearched() { return notSearched; }
 }
  
  

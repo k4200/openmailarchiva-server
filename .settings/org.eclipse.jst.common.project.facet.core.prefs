@@ -1,3 +1,5 @@
-#Thu Dec 20 09:11:44 CET 2007
-classpath.helper/org.eclipse.jst.server.core.container\:\:org.eclipse.jst.server.tomcat.runtimeTarget\:\:Apache\ Tomcat\ v6.0/owners=jst.web\:2.4;\#system\#
+#Thu Feb 14 12:47:52 CAT 2008
+classpath.helper/org.eclipse.jdt.launching.JRE_CONTAINER\:\:org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType\:\:jre1.6.0_01/owners=jst.java\:6.0
+classpath.helper/org.eclipse.jst.server.core.container\:\:org.eclipse.jst.server.tomcat.runtimeTarget\:\:Apache\ Tomcat\ v5.5/owners=\#system\#
+classpath.helper/org.eclipse.jst.server.core.container\:\:org.eclipse.jst.server.tomcat.runtimeTarget\:\:Apache\ Tomcat\ v6.0/owners=\#system\#
 eclipse.preferences.version=1

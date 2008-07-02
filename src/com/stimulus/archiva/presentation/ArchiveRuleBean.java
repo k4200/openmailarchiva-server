@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -29,89 +21,82 @@ import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-
 import org.apache.log4j.Logger;
-
-import com.stimulus.archiva.domain.ArchiveRules;
-import com.stimulus.archiva.domain.ArchiveRules.Action;
 import com.stimulus.archiva.exception.ConfigurationException;
 import com.stimulus.struts.BaseBean;
-import com.stimulus.util.EnumUtil;
+import com.stimulus.archiva.domain.*;
 
 public class ArchiveRuleBean extends BaseBean implements Serializable {
 
 	private static final long serialVersionUID = -2975630165623482789L;
-	protected static Logger logger = Logger.getLogger(ArchiveRules.class);
-	protected ArchiveRules.Rule archiveRule;
+	protected static Logger logger = Logger.getLogger(ArchiveFilter.class.getName());
+	protected ArchiveFilter.FilterRule filterRule;
+	protected  List<ArchiveClauseBean> archiveClauseBeans = null;
 	
-    public ArchiveRuleBean(ArchiveRules.Rule archiveRule) {
-        this.archiveRule = archiveRule;
+    public ArchiveRuleBean(ArchiveFilter.FilterRule filterRule) {
+    	this.filterRule = filterRule;
     }
     
   	public void setAction(String action) throws ConfigurationException {
-  		 Action newAction = Action.ARCHIVE;
-  		 try {
-  			newAction = Action.valueOf(action.trim().toUpperCase(Locale.ENGLISH));
-  		 } catch (IllegalArgumentException iae) {
- 	    		logger.error("failed to set archive rule action. action is set to an illegal value {action='"+action+"'}");
- 	    		logger.info("archive rule is automatically set to archive the message (error recovery)");
-  		 }
-  		 archiveRule.setAction(newAction);
+  		filterRule.setAction(action);
 	}
 	  	
-	public String getAction() { return archiveRule.getAction().toString().toLowerCase(Locale.ENGLISH); }
+  	public void setOperator(String operator) throws ConfigurationException {
+  		EmailFilter.Operator op = EmailFilter.Operator.valueOf(operator.trim().toUpperCase(Locale.ENGLISH));
+  		filterRule.setOperator(op);
+  	}
+  	
+	public String getAction() { return filterRule.getAction().toString().toLowerCase(Locale.ENGLISH); }
+	
 	  	
-	public String getField() { return archiveRule.getField().toString().toLowerCase(Locale.ENGLISH); }
-
-	public void setField(String field) throws ConfigurationException {
-	  	archiveRule.setField(field);
+	public String getOperator() { return filterRule.getOperator().toString().toLowerCase(Locale.ENGLISH); }
+	
+	public List<ArchiveClauseBean> getArchiveClauses() {
+		  List<ArchiveClauseBean> archiveClauseBeans = new LinkedList<ArchiveClauseBean>();
+		  for (ArchiveFilter.FilterClause archiveClause: filterRule.getFilterClauses())
+			  archiveClauseBeans.add(new ArchiveClauseBean(archiveClause));
+		  return archiveClauseBeans; 
 	}
 	
-	public String getRegEx() { return archiveRule.getRegEx(); }
-	  	
-	public void setRegEx(String regex) { 
-		archiveRule.setRegEx(regex); 
-	}
-	 
-    public static List<ArchiveRuleBean> getArchiveRuleBeans(List<ArchiveRules.Rule> archiveRules) {
+    public static List<ArchiveRuleBean> getArchiveRuleBeans(List<ArchiveFilter.FilterRule> archiveRules) {
 		  List<ArchiveRuleBean> ArchiveRuleBeans = new LinkedList<ArchiveRuleBean>();
-		  for (ArchiveRules.Rule archiveRule: archiveRules)
+		  for (ArchiveFilter.FilterRule archiveRule: archiveRules)
 			  ArchiveRuleBeans.add(new ArchiveRuleBean(archiveRule));
 		  return ArchiveRuleBeans;
 	}
     
-    public static List<ArchiveRuleBean> getArchiveRuleBeans(ArchiveRules archiveRules) {
+    public static List<ArchiveRuleBean> getArchiveRuleBeans(ArchiveFilter archiveRules) {
     	return getArchiveRuleBeans(archiveRules.getArchiveRules());
     }
-    /*
-    public static List<String> getFields() {
-    	return EnumUtil.enumToList(ArchiveRules.Field.values());
+    
+  
+    public class ArchiveClauseBean {
+    	
+    	ArchiveFilter.FilterClause archiveClause;
+    	
+    	public ArchiveClauseBean(ArchiveFilter.FilterClause archiveClause) {
+    		this.archiveClause = archiveClause;
+    	}
+    	
+    	public String getField() { return archiveClause.getField(); }
+    	
+    	public String getCondition() { return archiveClause.getCondition().toString().toLowerCase(Locale.ENGLISH); }
+    	
+    	public String getValue() { return archiveClause.getValue(); }
+    	
+    	public void setField(String field) {
+    		archiveClause.setField(field);
+    	}
+    	
+    	public void setValue(String value) {
+    		archiveClause.setValue(value);
+    	}
+    	
+    	public void setCondition(String condition) throws ConfigurationException {
+      		EmailFilter.Condition con = EmailFilter.Condition.valueOf(condition.trim().toUpperCase(Locale.ENGLISH));
+      		archiveClause.setCondition(con);
+      	}
+
+    	
     }
-    
-    public static List<String> getFieldLabels() {
-    	return EnumUtil.enumToList(ArchiveRules.Field.values(),"field_label_");
-    }
-    
-    protected static List<Enum> getFieldEnums() {
-    	return (List<Enum>)EnumUtil.enumToListEnums(ArchiveRules.Field.values());
-    }
-    */
-    public static List<String> getActions() {
-    	return EnumUtil.enumToList(ArchiveRules.Action.values());
-    }
-    
-    public static List<String> getActionLabels() {
-    	return EnumUtil.enumToList(ArchiveRules.Action.values(),"action_label_");
-    }
-    
-    protected static List<Enum> getActionEnums() {
-    	return (List<Enum>)EnumUtil.enumToListEnums(ArchiveRules.Action.values());
-    }
-    
-    public static List<String> getPriorities() {
-    	return EnumUtil.enumToList(ArchiveRules.Priority.values());
-    }
-    
-    
-    
 }

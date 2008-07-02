@@ -18,18 +18,8 @@
 	<link href="common/mailarchiva.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<%@include file="../common/menu.jsp"%>
-<table class="section1" width="100%" border="0" cellpadding="0" cellspacing="0">
 
-  <tr> 
-    <td width="1%" >&nbsp;</td>
-    <td width="99%" align="left" valign="bottom"><strong><bean:message key="errorpage.header"/></strong></td>
-   
-  </tr>
-   
-</table>
-
-<table class="section2" width="100%" border="0" cellpadding="0" cellspacing="0" >
+<table width="100%" border="0" cellpadding="0" cellspacing="0" >
 
   <tr> 
     <td width="5%" >&nbsp;</td>
@@ -40,7 +30,7 @@
 </table>
 
 <logic:present name="errors">
-<table class="section2" width="100%" border="0" cellpadding="0" cellspacing="0" >
+<table class="pagedialog" width="100%" border="0" cellpadding="0" cellspacing="0" >
   <tr> 
     <td colspan="3">&nbsp;</td>
   </tr>
@@ -59,7 +49,7 @@
 </logic:present>
 
 <logic:present name="message">
-<table class="section2" width="100%" border="0" cellpadding="0" cellspacing="0" >
+<table class="pagetext" width="100%" border="0" cellpadding="0" cellspacing="0" >
   <tr> 
     <td colspan="3">&nbsp;</td>
   </tr>
@@ -77,14 +67,6 @@
 </table>
 </logic:present>
 
-<table class="section1" width="100%" border="0" cellpadding="0" cellspacing="0">
-  
-  <tr> 
-    <td width="5%" >&nbsp;</td>
-    <td width="95%" align="left">&nbsp;</td>
-    <td >&nbsp;<br></td>
-
-</table>
 
 </body>
 </html>

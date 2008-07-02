@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
-
-		 
+ 
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -22,17 +14,17 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-	package com.stimulus.archiva.search;
+package com.stimulus.archiva.search;
+
+import org.apache.log4j.Logger;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.TokenFilter;
+import org.apache.lucene.analysis.Token;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Stack;
-
-import org.apache.log4j.Logger;
-import org.apache.lucene.analysis.Token;
-import org.apache.lucene.analysis.TokenFilter;
-import org.apache.lucene.analysis.TokenStream;
 
 /* Many thanks to Michael J. Prichard" <michael_prich...@mac.com> for his
  * original the email filter code. It is rewritten. */
@@ -45,7 +37,7 @@ public class EmailFilter extends TokenFilter  implements Serializable {
 	private static final long serialVersionUID = -5280145822406627625L;
 
 
-	protected static Logger logger = Logger.getLogger(com.stimulus.archiva.search.EmailFilter.class.getName());
+	protected static final Logger logger = Logger.getLogger(com.stimulus.archiva.search.EmailFilter.class.getName());
 	    
 	 
     public static final String TOKEN_TYPE_EMAIL = "EMAILPART";
@@ -57,10 +49,11 @@ public class EmailFilter extends TokenFilter  implements Serializable {
         emailTokenStack = new Stack<Token>();
     }
 
-    public Token next() throws IOException {
+    @Override
+	public Token next() throws IOException {
 
         if (emailTokenStack.size() > 0) 
-            return (Token) emailTokenStack.pop();
+            return emailTokenStack.pop();
 
         Token token = input.next();
        
@@ -138,7 +131,7 @@ public class EmailFilter extends TokenFilter  implements Serializable {
 		        }
     		 }	 
     	 }
-        return (String[]) partsList.toArray(new String[0]);       
+        return partsList.toArray(new String[0]);       
     }
 
 }

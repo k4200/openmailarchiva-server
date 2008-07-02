@@ -1,11 +1,3 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
-
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -26,9 +18,7 @@ package com.stimulus.archiva.presentation;
 import java.io.Serializable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.apache.log4j.Logger;
-
 import com.stimulus.archiva.domain.fields.EmailFieldValue;
 import com.stimulus.util.EscapeUtil;
 
@@ -37,7 +27,7 @@ public class DisplayAddress  extends DisplayField implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 8902129813234053670L;
-	protected static Logger logger = Logger.getLogger(DisplayAddress.class);
+	protected static Logger logger = Logger.getLogger(DisplayAddress.class.getName());
 	static Pattern pattern = Pattern.compile("(.*)<(.*)>");
 	boolean raw = false;
 	
@@ -47,6 +37,7 @@ public class DisplayAddress  extends DisplayField implements Serializable {
 	}
 	
 	
+	@Override
 	public String getDisplay() {
 		if (!raw) {
 			StringBuffer display = new StringBuffer();
@@ -71,6 +62,7 @@ public class DisplayAddress  extends DisplayField implements Serializable {
 		} else return EscapeUtil.forHTML(efv.getValue());
 	}
 	
+	@Override
 	public String getTip() {
 		return EscapeUtil.forHTML(efv.getValue());
 	}

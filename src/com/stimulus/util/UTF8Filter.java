@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -31,11 +23,8 @@ import javax.servlet.*;
 public class UTF8Filter implements Filter, Serializable
 {
 
-  /**
-	 * 
-	 */
-	private static final long serialVersionUID = -3301833577429221220L;
-public void destroy() {}
+  private static final long serialVersionUID = -3301833527419221223L;
+  public void destroy() {}
 
   public void doFilter(ServletRequest request,
                    ServletResponse response,

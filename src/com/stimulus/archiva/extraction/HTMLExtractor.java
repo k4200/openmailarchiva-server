@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -24,17 +16,11 @@
 
 package com.stimulus.archiva.extraction;
 
-import java.io.FilterReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.Serializable;
-
-import org.apache.log4j.Logger;
-
 import com.stimulus.archiva.exception.ExtractionException;
-import com.stimulus.util.TempFiles;
+import java.io.*;
+import java.nio.charset.Charset;
+import org.apache.log4j.Logger;
+import com.stimulus.util.*;
 
 public class HTMLExtractor implements TextExtractor,Serializable
 {
@@ -42,15 +28,15 @@ public class HTMLExtractor implements TextExtractor,Serializable
 	 * 
 	 */
 	private static final long serialVersionUID = 7138851180242634460L;
-	protected static Logger logger = Logger.getLogger(Extractor.class.getName());
+	protected static final Logger logger = Logger.getLogger(Extractor.class.getName());
 
 	public HTMLExtractor()
 	{
 	}
 
-	public Reader getText(InputStream is, TempFiles tempFiles) throws ExtractionException
+	public Reader getText(InputStream is, TempFiles tempFiles, Charset charset) throws ExtractionException
 	{
-	   return new RemoveHTMLReader(new InputStreamReader(is));
+	   return new RemoveHTMLReader(new InputStreamReader(is,charset));
 	}
 
 	public class RemoveHTMLReader extends FilterReader {
@@ -64,7 +50,8 @@ public class HTMLExtractor implements TextExtractor,Serializable
 		   * It calls in.read() to get a buffer full of characters, then strips
 		   * out the HTML tags.  (in is a protected field of the superclass).
 		   **/
-		  public int read(char[] buf, int from, int len) throws IOException {
+		  @Override
+		public int read(char[] buf, int from, int len) throws IOException {
 		    int numchars = 0;        // how many characters have been read
 		    // Loop, because we might read a bunch of characters, then strip them
 		    // all out, leaving us with zero characters to return.
@@ -92,11 +79,12 @@ public class HTMLExtractor implements TextExtractor,Serializable
 		   * implement it in terms of the method above.  Our superclass implements
 		   * the remaining read() methods in terms of these two.
 		   **/
-		  public int read() throws IOException {
+		  @Override
+		public int read() throws IOException {
 		    char[] buf = new char[1];
 		    int result = read(buf, 0, 1);
 		    if (result == -1) return -1;
-		    else return (int)buf[0];
+		    else return buf[0];
 		  }
 	}
 }

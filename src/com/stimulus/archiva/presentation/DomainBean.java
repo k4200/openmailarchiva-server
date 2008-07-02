@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -27,20 +19,18 @@ package com.stimulus.archiva.presentation;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
-
 import org.apache.log4j.Logger;
-
 import com.stimulus.archiva.domain.Domains;
 import com.stimulus.struts.BaseBean;
 
 public class DomainBean extends BaseBean implements Serializable {
 
 	private static final long serialVersionUID = -3532049048337701224L;
-	protected static Logger logger =  Logger.getLogger(DomainBean.class);
+	protected static Logger logger = Logger.getLogger(DomainBean.class.getName());
 	protected Domains.Domain domain;
 
     public DomainBean(Domains.Domain domain) {
-        this.domain = domain;
+    	this.domain = domain;
     }
 
     public void setName(String name) {

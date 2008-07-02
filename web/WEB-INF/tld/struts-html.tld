@@ -1881,7 +1881,7 @@
     </tag>
     <tag>
         <name>form</name>
-        <tag-class>org.apache.struts.taglib.html.FormTag</tag-class>
+        <tag-class>com.stimulus.archiva.taglib.html.FormTag</tag-class>
         <body-content>JSP</body-content>
         <description>
             <![CDATA[
@@ -1901,6 +1901,16 @@
             </p>
         ]]>
         </description>
+        <attribute>
+            <name>autocomplete</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <description>
+                <![CDATA[
+                Disable Microsoft auto complete
+            ]]>
+            </description>
+        </attribute>
         <attribute>
             <name>action</name>
             <required>false</required>

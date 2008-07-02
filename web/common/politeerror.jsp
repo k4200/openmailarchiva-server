@@ -19,7 +19,7 @@
 </head>
 <body>
 <%@include file="../common/menu.jsp"%>
-<table class="section1" width="100%" border="0" cellpadding="0" cellspacing="0">
+<table class="pageheading" width="100%" border="0" cellpadding="0" cellspacing="0">
 
   <tr> 
     <td width="1%" >&nbsp;</td>
@@ -30,7 +30,7 @@
 </table>
 
 <logic:present name="errors">
-<table class="section2" width="100%" border="0" cellpadding="0" cellspacing="0" >
+<table class="pagedialog" width="100%" border="0" cellpadding="0" cellspacing="0" >
  
   <tr> 
     <td width="5%" >&nbsp;</td>
@@ -46,7 +46,7 @@
 </logic:present>
 
 <logic:present name="message">
-<table class="section2" width="100%" border="0" cellpadding="0" cellspacing="0" >
+<table class="pagetext" width="100%" border="0" cellpadding="0" cellspacing="0" >
   <tr> 
     <td colspan="3">&nbsp;</td>
   </tr>
@@ -55,9 +55,7 @@
   </tr>
   <tr> 
     <td width="5%" >&nbsp;</td>
-    <td width="95%" align="left">
-    	<strong><c:out value="${message}"/></strong>
-    </td>
+    <td width="95%" align="left"><strong><c:out value="${message}"/></strong></td>
     <td >&nbsp;</td>
   </tr>
    <tr> 
@@ -66,7 +64,7 @@
 </table>
 </logic:present>
 
-<table class="section1" width="100%" border="0" cellpadding="0" cellspacing="0">
+<table class="pageend" width="100%" border="0" cellpadding="0" cellspacing="0">
   
   <tr> 
     <td width="5%" >&nbsp;</td>

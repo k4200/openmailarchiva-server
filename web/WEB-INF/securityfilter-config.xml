@@ -8,7 +8,7 @@
 
  	<security-constraint>
       <web-resource-collection>
-      	 <web-resource-name>Basic Functionality</web-resource-name>
+      	 <web-resource-name>Basic</web-resource-name>
          <url-pattern>/searchform.do</url-pattern>
          <url-pattern>/search.do</url-pattern>
          <url-pattern>/advancedsearchform.do</url-pattern>
@@ -30,15 +30,13 @@
          <url-pattern>/signon.do</url-pattern>
       </web-resource-collection>
       <auth-constraint>
-          <role-name>user</role-name>
-          <role-name>auditor</role-name>
-          <role-name>administrator</role-name>
+          <role-name>search</role-name>
       </auth-constraint>
    </security-constraint>
    
    <security-constraint>
       <web-resource-collection>
-      	 <web-resource-name>Configuration Functionality</web-resource-name>
+      	 <web-resource-name>Configuration</web-resource-name>
           <url-pattern>/configurationform.do</url-pattern>
          <url-pattern>/configure.do</url-pattern>
          <url-pattern>/indexstatus.do</url-pattern>
@@ -51,9 +49,10 @@
          <url-pattern>/quarantine.do</url-pattern>
          <url-pattern>/viewauditlog.do</url-pattern>
          <url-pattern>/viewdebuglog.do</url-pattern>
+         <url-pattern>/testmailboxstatus.do</url-pattern>
       </web-resource-collection>
       <auth-constraint>
-          <role-name>administrator</role-name>
+          <role-name>configure</role-name>
       </auth-constraint>
    </security-constraint>
    

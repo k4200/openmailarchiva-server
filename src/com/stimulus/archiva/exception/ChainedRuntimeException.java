@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -29,12 +21,10 @@ import java.io.Serializable;
 import org.apache.log4j.Logger;
 
 public class ChainedRuntimeException extends RuntimeException implements Serializable  {
-  /**
-	 * 
-	 */
+  
 	private static final long serialVersionUID = -8279414563840852024L;
-private Throwable cause = null;
-protected static Logger logger = Logger.getLogger(ChainedRuntimeException.class);
+	private Throwable cause = null;
+  protected static Logger logger = Logger.getLogger(ChainedRuntimeException.class.getName());
 
   public ChainedRuntimeException() {
     super();
@@ -69,4 +59,5 @@ protected static Logger logger = Logger.getLogger(ChainedRuntimeException.class)
     super.printStackTrace(pw);
     logger.fatal(cause);
   }
+ 
 }

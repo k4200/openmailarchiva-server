@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -23,20 +15,13 @@
  */
 
 package com.stimulus.archiva.presentation;
+import com.stimulus.archiva.exception.*;
+
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-
+import java.util.*;
 import org.apache.log4j.Logger;
-
-import com.stimulus.archiva.domain.EmailID;
-import com.stimulus.archiva.domain.Search;
-import com.stimulus.archiva.domain.Volume;
-import com.stimulus.archiva.domain.fields.EmailField;
-import com.stimulus.archiva.domain.fields.EmailFieldValue;
+import com.stimulus.archiva.domain.*;
+import com.stimulus.archiva.domain.fields.*;
 
 public class SearchResultBean implements Serializable {
 
@@ -45,7 +30,7 @@ public class SearchResultBean implements Serializable {
 	 */
 	private static final long serialVersionUID = -837802320118584736L;
 	protected Search.Result searchResult;
-	protected static Logger logger =  Logger.getLogger(SearchResultBean.class.getName());
+	protected static Logger logger = Logger.getLogger(SearchResultBean.class.getName());
 	protected Locale locale;
 	
 	public SearchResultBean(Search.Result searchResult, Locale locale) {
@@ -55,37 +40,77 @@ public class SearchResultBean implements Serializable {
 	
 	 public List<DisplayField> getFieldValues() {
 		 ArrayList<DisplayField>  list = new ArrayList<DisplayField>();
-		 Iterator i = EmailField.getAvailableFields().iterateValues();
-		 while (i.hasNext()) {
-			 EmailField field = (EmailField)i.next();
+		 EmailFields emailFields = Config.getConfig().getEmailFields();
+		 for (EmailField field :  emailFields.getAvailableFields().values()) {
 			 if (field.getShowInResults()!=EmailField.ShowInResults.NORESULTS) {
-				 EmailFieldValue efv = searchResult.getFieldValue(field.getName());
-				 list.add(DisplayField.getDisplayField(efv , locale,false));
+				 try {
+					 EmailFieldValue efv = searchResult.getFieldValue(field.getName());
+					 list.add(DisplayField.getDisplayField(efv , locale,false));
+				 } catch (MessageSearchException mse) {
+					 logger.debug("failed to retrieve field value from message: "+mse.getMessage()); 
+				 }
 			 }
 		 }
 		 return list;
 	 }
 	 
 	public String getUniqueID() {
-		return searchResult.getEmailId().getUniqueID();
+		try { 
+			return searchResult.getEmailId().getUniqueID();
+		} catch (MessageSearchException mse) {
+			logger.debug("failed to retrieve unique message id: "+mse.getMessage(),mse);
+			return null;
+		}
+	}
+	
+	
+	public boolean getMessageExist() {
+		try {
+			EmailID emailID = searchResult.getEmailId();
+			Volume volume = emailID.getVolume();
+			return (volume!=null);
+				
+			/*if (volume!=null) {
+				Archiver archiver = Config.getConfig().getArchiver();
+				boolean exists = archiver.isMessageExist(emailID);
+				if (!exists) {
+					logger.debug("message is not accessible on disk");
+				}
+				return exists;
+			} else {
+				logger.debug("could not lookup volume. the index appears out of sync with volumeinfo ID field.");
+			}*/
+		} catch (Exception e) {
+			logger.debug("failed to determine if message exists in store:"+e.getMessage(),e);
+		}
+		return false;
 	}
 	
 	public String getVolumeID() {
-		EmailID emailID = searchResult.getEmailId();
-		Volume volume = emailID.getVolume();
-		if (volume!=null) {
-			String volumeID = volume.getID();
-			return volumeID;
-		} else return null;
+		try {
+			EmailID emailID = searchResult.getEmailId();
+			Volume volume = emailID.getVolume();
+			if (volume!=null) {
+				String volumeID = volume.getID();
+				return volumeID;
+			} else return null;
+		} catch (MessageSearchException mse) {
+			logger.debug("failed to retrieve volumeid: "+mse.getMessage(),mse);
+			return null;
+		}
 		//return searchResult.getEmailId().getVolume().getID();
 	}
+	
 
 
     public static List<SearchResultBean> getSearchResultBeans(List<Search.Result> results,Locale locale) {
 		List<SearchResultBean> searchResultBeans = new LinkedList<SearchResultBean>();
-		  for (Search.Result result: results)
+		  int size = 0;
+		  for (Search.Result result: results) {
 			  searchResultBeans.add(new SearchResultBean(result,locale));
+			  if (size>1000) break;
+		  }
 		  return searchResultBeans;
 	}
-
+    
 }

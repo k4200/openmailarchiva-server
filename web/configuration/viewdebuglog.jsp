@@ -26,16 +26,15 @@ function scrolldown()
 
 </head>
 
-<body onload="window.focus();scrolldown();">
-<table class="sectionheader" width="100%" border="0" cellpadding="0" cellspacing="0" >
+<body topmargin="0" leftmargin="0" onload="window.focus();scrolldown();">
+<table class="pageheading" width="100%" border="0" cellpadding="0" cellspacing="0" >
   <tr> 
-    <td width="28%" height="20"><strong><bean:message key="viewlog.title"/></strong></td>
-    <td width="27%" align="left">&nbsp;</td>
-    <td width="45%"></td>
+    <td width="50%" height="20"><strong><bean:message key="viewlog.title"/></strong></td>
+    <td width="50%" align="left">&nbsp;</td>
   </tr>
 </table>
 
-<table class="section2" width="100%" border="0" cellpadding="0" cellspacing="0" >
+<table class="pagetext" width="100%" border="0" cellpadding="0" cellspacing="0" >
   <tr>
     <td colspan="3">&nbsp;</td>
    </tr>
@@ -52,7 +51,7 @@ function scrolldown()
     <td colspan="3">&nbsp;</td>
    </tr>
 </table>
-<table class="sectionheader" width="100%" border="0" cellpadding="3" cellspacing="0">
+<table class="pageend" width="100%" border="0" cellpadding="3" cellspacing="0">
   <tr> 
     <td >&nbsp;</td>
     <td align="left">

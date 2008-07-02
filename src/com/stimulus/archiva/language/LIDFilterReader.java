@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -63,7 +55,8 @@ import java.io.Serializable;
     // Instance methods.
     // -------------------------------------------------------------------------
 
-    public synchronized int read() throws IOException
+    @Override
+	public synchronized int read() throws IOException
     {
       int i = in.read();
       
@@ -77,7 +70,8 @@ import java.io.Serializable;
       return i;
     }
 
-    public synchronized int read(char[] buf, int off, int len) throws IOException
+    @Override
+	public synchronized int read(char[] buf, int off, int len) throws IOException
     {
       int l = in.read(buf, off, len);
       if (lang==null && sample.length()<lid.getAnalyzeLength()) 
@@ -89,19 +83,21 @@ import java.io.Serializable;
       return l;
     }
 
-    public synchronized int read(char[] buf) throws IOException
+    @Override
+	public synchronized int read(char[] buf) throws IOException
     {
       return read(buf, 0, buf.length);
     }
 
-    public synchronized long skip(long len) throws IOException
+    @Override
+	public synchronized long skip(long len) throws IOException
     {
       long l = 0;
       int i = 0;
       char[] buf = new char[1024];
       while (l < len)
         {
-          i = read(buf, 0, (int) Math.min((long) buf.length, len - l));
+          i = read(buf, 0, (int) Math.min(buf.length, len - l));
           if (i == -1)
             break;
           l += i;
@@ -114,7 +110,8 @@ import java.io.Serializable;
       return sample;
     }
     
-    public void close() throws IOException {
+    @Override
+	public void close() throws IOException {
         in.close();
         if (lang==null) {
             lang = lid.identify(sample);

@@ -20,19 +20,20 @@ response.setDateHeader("Expires", 0);
 <link href="common/mailarchiva.css" rel="stylesheet" type="text/css">
 <script type="text/javascript">
 
-	function outss(str,maxLen) {
-  		adjust = 0;
-  		for (i = 0; i < str.length; i++) {
-   			if (str[i]=="#" && i+4<str.length && str[i+4] == ";") {
-    			adjust += 5;
-   			}
-  		}
-     	if (str.length-adjust>maxLen) {
-        	document.writeln(str.substring(0,maxLen-1+adjust)+"..");
-     	} else { 
-        	document.writeln(str);
-     	}
-	}
+  function outss(str,maxLen) {
+	 adjust = 0;
+	 for (i = 0; i < str.length; i++) {
+	 	if (str[i]=="#" && i+4<str.length && str[i+4] == ";") {
+	 		adjust += 5;
+	 	}
+	 }
+     if (str.length-adjust>maxLen) {
+         document.writeln(str.substring(0,maxLen-1+adjust)+"..");
+     } else { 
+         document.writeln(str);
+     }
+     
+  }
 //ID of Daily Iframe tag:
 var iframeids=["ifrm"]
 
@@ -240,20 +241,29 @@ window.onunload=saveswitchstate
 </head>
 
 <body >
+<html:form styleId="viewForm" action="/viewaction" method="POST">
 <%@include file="../common/menu.jsp"%>
-<table class="sectionheader" width="100%" border="0" cellpadding="0" cellspacing="0">
+
+<table class="pageheading" width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr > 
-    <td height="20" width="100%"><strong><strong><bean:message key="viewmail.email"/></strong></td>
+    <td height="20" width="80%"><strong><strong><bean:message key="viewmail.email"/></strong></td>
+   
   </tr>
 </table>
 
-<table class="section1" width="100%" border="0" cellspacing="3" bgcolor="#EFEFEF" cellpadding="0">
+<table class="pagedialog" width="100%" border="0" cellspacing="3" bgcolor="#EFEFEF" cellpadding="0">
   <c:if test="${messageBean.originalMessageFileName != null}">
+  
   <tr> 
-    <td>&nbsp;</td>
-    <td valign="top"><div align="right"><strong><bean:message key="viewmail.archived_message"/></strong></div></td>
-    <td>&nbsp;</td>
-    <td><a class="emailaddress" href="downloadmessage.do?name=${messageBean.originalMessageFileName}"><c:out value='${messageBean.originalMessageFileName}' escapeXml='false'/></a>&nbsp;(<c:out value='${messageBean.originalMessageFileSize}' escapeXml='false'/>)</td>
+    <td width="10%"><input type="image" src="images/LeftArrow.gif" name="submit.previous" value="Previous" />&nbsp;
+  									(<c:out value='${messageBean.resultsIndex+1}'/>&nbsp;of&nbsp;<c:out value='${messageBean.resultsSize}'/>)&nbsp;
+  									<input src="images/RightArrow.gif" type="image" name="submit.next" value="Next" /></td>
+    <td width="15%"><div align="right"><strong><bean:message key="viewmail.archived_message"/></strong></div></td>
+    <td width="2%">&nbsp;</td>
+    <td width="60%"><a class="emailaddress" href="downloadmessage.do?name=${messageBean.originalMessageFileName}"><c:out value='${messageBean.originalMessageFileName}' escapeXml='false'/></a>&nbsp;(<c:out value='${messageBean.originalMessageFileSize}' escapeXml='false'/>)</td>
+  	<td align="right" width="21%"><input type="image" src="images/LeftArrow.gif" name="submit.previous" value="Previous" />&nbsp;
+  									(<c:out value='${messageBean.resultsIndex+1}'/>&nbsp;of&nbsp;<c:out value='${messageBean.resultsSize}'/>)&nbsp;
+  									<input src="images/RightArrow.gif" type="image" name="submit.next" value="Next" /></td>
   </tr>
   </c:if>
     <c:forEach var="value" items="${messageBean.fieldValues}">
@@ -261,10 +271,11 @@ window.onunload=saveswitchstate
     <c:when test='${value.field.name == "attach"}'></c:when>
     <c:otherwise>
   	 <tr> 
-	    <td width="1%">&nbsp;</td>
-	    <td width="15%"><div align="right"><strong><bean:message key="${value.field.resourceKey}"/>:</strong></div></td>
-	    <td width="2%">&nbsp;</td>
-	    <td width="85%"><script type="text/javascript">outss("<c:out value='${value.display}' escapeXml='false'/>",1000)</script></td>
+	    <td>&nbsp;</td>
+	    <td><div align="right"><strong><bean:message key="${value.field.resource}"/>:</strong></div></td>
+	    <td>&nbsp;</td>
+	    <td ><script type="text/javascript">outss("<c:out value='${value.display}' escapeXml='false'/>",8000)</script></td>
+  		<td align="right">&nbsp;</td>
   	</tr>
   	</c:otherwise>
   	</c:choose>
@@ -285,6 +296,7 @@ window.onunload=saveswitchstate
     	&nbsp;
     </c:forEach>
     </td>
+    <td align="right">&nbsp;</td>
   </tr>
   </c:if>
   <tr> 
@@ -292,26 +304,21 @@ window.onunload=saveswitchstate
     <td valign="top"><div align="right" onClick="expandcontent(this, 'sc1')"><span class="showstate"></span><strong><bean:message key="viewmail.internet_headers"/></strong></div></td>
     <td>&nbsp;</td>
     <td><div id="sc1" class="switchcontent"><c:out value='${messageBean.internetHeaders}' escapeXml='false'/></div></td>
+    <td align="right">&nbsp;</td>
   </tr>
-  <c:if test="${messageBean.journalMessage==true}">
-  <tr> 
-    <td>&nbsp;</td>
-    <td valign="top"><div align="right" onClick="expandcontent(this, 'sc2')"><span class="showstate"></span><strong><bean:message key="viewmail.journal_report"/></strong></div></td>
-    <td>&nbsp;</td>
-    <td><div id="sc2" class="switchcontent"><c:out value='${messageBean.journalReport}' escapeXml='false'/></div></td>
-  </tr>
-  </c:if>
+
 </table>
  
 
 <iframe width="%100" scrolling="no" id=ifrm src="<c:out value='${messageBean.view}' escapeXml='false'/>"></iframe>
 
  
-<table class="sectionheader" width="100%" border="0" cellspacing="1" cellpadding="0">
+<table class="pageend" width="100%" border="0" cellspacing="1" cellpadding="0">
   <tr> 
     <td width="100%">&nbsp;</td>
   </tr>
 </table>
 <%@include file="../common/bottom.jsp"%>
+</html:form>
 </body>
 </html>

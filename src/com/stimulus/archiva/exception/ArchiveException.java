@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -27,6 +19,7 @@ package com.stimulus.archiva.exception;
 
 import java.io.Serializable;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 public class ArchiveException extends ChainedException implements Serializable {
@@ -37,14 +30,23 @@ public class ArchiveException extends ChainedException implements Serializable {
   
   protected RecoveryDirective recovery;
   
+  public ArchiveException(String message, Logger logger, Level level, RecoveryDirective recovery) {
+      super(message, logger,level);
+  }
+
+  public ArchiveException(String message, Throwable cause, Logger logger, Level level, RecoveryDirective recovery) {
+      super(message,cause, logger,level);
+      this.recovery = recovery;
+  }
+  
   public ArchiveException(String message, Logger logger, RecoveryDirective recovery) {
-      super(message, logger);
+      super(message, logger,Level.ERROR);
       this.recovery = recovery;
   }
 
   public ArchiveException(String message, Throwable cause, Logger logger, RecoveryDirective recovery) {
-	  super(message,cause, logger);
-	  this.recovery = recovery;
+      super(message,cause, logger,Level.ERROR);
+      this.recovery = recovery;
   }
   
   public RecoveryDirective getRecoveryDirective() {

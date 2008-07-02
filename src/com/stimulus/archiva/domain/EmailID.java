@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -22,22 +14,30 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 package com.stimulus.archiva.domain;
+
+import javax.mail.*;
+import java.util.concurrent.locks.*;
+import com.stimulus.util.*;
+
+import javax.mail.internet.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.Date;
+import java.security.*;
+import java.util.*;
 
 import org.apache.log4j.Logger;
-
-import com.stimulus.util.SynchronizedDateFormat;
+import java.io.*;
 
 public class EmailID implements Serializable {
-
+	private static volatile SynchronizedDateFormat format = new SynchronizedDateFormat("yyyyMMddHHmmssSS");
 	private static String hexits = "0123456789abcdef";
 	private static final long serialVersionUID = 3048326535L;
-	protected static Logger logger = Logger.getLogger(EmailID.class);
+	protected static Logger logger = Logger.getLogger(EmailID.class.getName());
     protected String uniqueId = null;
     protected Volume volume = null;
-    private static SynchronizedDateFormat format = new SynchronizedDateFormat("yyyyMMddHHmmssSS");
-    
     public EmailID() {}
 
     protected EmailID(Volume volume, Email email) {
@@ -79,13 +79,47 @@ public class EmailID implements Serializable {
     public void setVolume(Volume volume) {
     	this.volume = volume;
     }
+    
 
     public static synchronized String generateUniqueID(Email email)
     {
-     return format.format(new Date());
+    	String uuid =  UUID.randomUUID().toString().replaceAll("-","");
+    	return uuid;
     }
+    private static String toHex(byte[] block) {
+		StringBuffer buf = new StringBuffer();
 
-    public String toString() {
+		for (int i = 0; i < block.length; ++i) {
+			buf.append(hexits.charAt((block[i] >>> 4) & 0xf));
+			buf.append(hexits.charAt(block[i] & 0xf));
+		}
+		return buf + "";
+	}
+    
+    
+
+    @Override
+	public String toString() {
         return "uniqueId='"+uniqueId+"', " + volume;
     }
+    
+    public static class NullOutputStream extends OutputStream
+	{
+		@Override
+		public void write (byte [] b) throws IOException {}
+		
+		@Override
+		public void write (byte [] b, int off, int len) throws IOException {}
+			
+		@Override
+		public void write (int b) throws IOException {}
+			
+	
+		@Override
+		public void flush () throws IOException {}
+			
+		@Override
+		public void close () throws IOException {}
+		
+	}
 }

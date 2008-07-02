@@ -14,15 +14,23 @@
 <link href="common/mailarchiva.css" rel="stylesheet" type="text/css">
 </head>
 
-<body >
+<body topmargin="0" leftmargin="0">
 
 <html:form action="/recover.do" method="POST" styleId="configure">
 
-<div class="section1" id="recoveryOutput" style="width : 580px; height : 349px; overflow : auto; ">
+<table class="pageheading" width="100%" border="0" cellpadding="0" cellspacing="0" >
+  <tr> 
+    <td width="50%" height="20"><strong><bean:message key="quarantine.title"/></strong></td>
+    <td width="50%" align="left">&nbsp;</td>
+    <td ></td>
+  </tr>
+</table>
+
+<div class="pagedialog" id="recoveryOutput" style="width : 100%; height : 349px; overflow : auto; ">
 <bean:message key="quarantine.ok"/>
 </div>
 
-<table class="sectionheader" width="100%" border="0" cellpadding="3" cellspacing="0">
+<table class="pageend" width="100%" border="0" cellpadding="3" cellspacing="0">
   <tr> 
     <td >&nbsp;</td>
     <td align="left">

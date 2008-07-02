@@ -1,11 +1,3 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
-
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -63,24 +55,15 @@ public class DisplayField implements Serializable {
 		return getDisplay();
 	}
 	
-	 public static String stripGarbage(String s) {
-		 
-		 String bad = "\\/&\"'";
-		 StringBuffer result = new StringBuffer();
-	     for ( int i = 0; i < s.length(); i++ ) {
-	        if ( bad.indexOf(s.charAt(i)) < 0 )
-	           result.append(s.charAt(i));
-	     }
-	    return result.toString();
-    }
-	 
+
 	public static DisplayField getDisplayField(EmailFieldValue efv, Locale locale, boolean raw) {
-		
 		if (efv.getField().getName().equals("sentdate"))
 		 	return new DisplayDate(efv,locale);
 		else if (efv.getField().getName().equals("receiveddate"))
 			return new DisplayDate(efv,locale);
 		else if (efv.getField().getName().equals("archivedate"))
+			return new DisplayDate(efv,locale);
+		else if (efv.getField().getName().equals("receiveddate"))
 			return new DisplayDate(efv,locale);
 		else if (efv.getField().getName().equals("size"))
 			 return new DisplaySize(efv);

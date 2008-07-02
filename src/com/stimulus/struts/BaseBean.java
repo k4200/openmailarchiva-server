@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -27,13 +19,11 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
 import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
-
+import org.apache.log4j.Logger;
 import org.apache.struts.Globals;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionForm;
@@ -42,37 +32,27 @@ import org.apache.struts.action.ActionMessage;
 import org.apache.struts.action.ActionMessages;
 import org.apache.struts.util.MessageResources;
 
-import com.stimulus.archiva.security.realm.MailArchivaPrincipal;
+import com.stimulus.archiva.domain.MailArchivaPrincipal;
 
-/**
- * All actions mapped through the BeanAction class should be mapped
- * to a subclass of BaseBean (or have no form bean mapping at all).
- * <p/>
- * The BaseBean class simplifies the validate() and reset() methods
- * by allowing them to be managed without Struts dependencies. Quite
- * simply, subclasses can override the parameterless validate()
- * and reset() methods and set errors and messages using the ActionContext
- * class.
- * <p/>
- * <i>Note:  Full error, message and internastionalization support is not complete.</i>
- * <p/>
- * Date: Mar 12, 2004 9:20:39 PM
- *
- * @author Clinton Begin
- */
 public abstract class BaseBean extends ActionForm implements Serializable {
 
-  public void reset(ActionMapping mapping, ServletRequest request) {
+  private static final long serialVersionUID = 1324834450703716122L;
+  protected static Logger logger = Logger.getLogger(BaseBean.class.getName());	
+	
+  @Override
+public void reset(ActionMapping mapping, ServletRequest request) {
     ActionContext.initialize((HttpServletRequest)request, null);
     reset();
   }
 
-  public void reset(ActionMapping mapping, HttpServletRequest request) {
-    ActionContext.initialize((HttpServletRequest)request, null);
+  @Override
+public void reset(ActionMapping mapping, HttpServletRequest request) {
+    ActionContext.initialize(request, null);
     reset();
   }
 
-  public ActionErrors validate(ActionMapping mapping, ServletRequest request) {
+  @Override
+public ActionErrors validate(ActionMapping mapping, ServletRequest request) {
     ActionContext.initialize((HttpServletRequest)request, null);
     ActionContext ctx = ActionContext.getActionContext();
     Map requestMap = ctx.getRequestMap();
@@ -89,7 +69,8 @@ public abstract class BaseBean extends ActionForm implements Serializable {
     return actionErrors;
   }
 
-  public ActionErrors validate(ActionMapping mapping, HttpServletRequest request) {
+  @Override
+public ActionErrors validate(ActionMapping mapping, HttpServletRequest request) {
     ActionContext.initialize(request, null);
     ActionContext ctx = ActionContext.getActionContext();
     Map requestMap = ctx.getRequestMap();
@@ -154,9 +135,14 @@ public abstract class BaseBean extends ActionForm implements Serializable {
   
   protected String getMessage(String key) {
       Locale locale = getLocale();
-      Object sl = getServlet();
-      MessageResources mr = (MessageResources) getServlet().getServletContext().getAttribute(Globals.MESSAGES_KEY);
-      return mr.getMessage(locale,key);
+      Object servlet = getServlet();
+      if (servlet!=null) {
+	      MessageResources mr = (MessageResources) getServlet().getServletContext().getAttribute(Globals.MESSAGES_KEY);
+	      return mr.getMessage(locale,key);
+      } else {
+    	  logger.warn("getMessage(): servlet is null");
+    	  return "";
+      }
   }
   
   protected Locale getLocale() {
@@ -168,16 +154,16 @@ public abstract class BaseBean extends ActionForm implements Serializable {
 	  	  	locale = request.getLocale();
 	  }
 	  if (locale.getCountry().equalsIgnoreCase("ZA"))
-	  		locale = locale.UK; // bug in JVM concerning date formatting in South Africa
+	  		locale = Locale.UK; // bug in JVM concerning date formatting in South Africa
       return locale;
   }
   
-  protected List translateList(List srcList, boolean toLowerCase)
+  protected List<String> translateList(List<String> srcList, boolean toLowerCase)
   {
 	  List<String> translatedList = new ArrayList<String>();
 	  for (int i = 0; i < srcList.size(); i++)
 	  {
-		  String toTranslate = (String)srcList.get(i);
+		  String toTranslate = srcList.get(i);
 		  String translated = getMessage(toTranslate);
 		  if (toLowerCase) {
 			  toTranslate = toTranslate.toLowerCase();
@@ -191,7 +177,7 @@ public abstract class BaseBean extends ActionForm implements Serializable {
 	  return translatedList;
   }
 
-  protected List translateList(List srcList) {
+  protected List<String> translateList(List<String> srcList) {
 	  return translateList(srcList,false);
   }
   

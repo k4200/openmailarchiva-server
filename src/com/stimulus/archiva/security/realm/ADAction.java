@@ -1,26 +1,3 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
-
-/* Copyright (C) 2005-2007 Jamie Angus Band 
- * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 2 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
- */
-
 package com.stimulus.archiva.security.realm;
 
 import java.util.ArrayList;
@@ -40,7 +17,6 @@ import javax.naming.directory.SearchResult;
 import org.apache.log4j.Logger;
 
 import com.stimulus.archiva.authentication.ADIdentity;
-import com.stimulus.archiva.authentication.LDAPIdentity;
 import com.stimulus.archiva.security.realm.ADRealm.AttributeValue;
 
 
@@ -48,11 +24,11 @@ class ADAction implements java.security.PrivilegedAction {
 	
 	private String uname;
 	private String domain;
-	private LDAPIdentity identity;
-	protected static Logger logger = Logger.getLogger(ADRealm.class.getName());
+	private ADIdentity identity;
+	protected static final Logger logger = Logger.getLogger(ADRealm.class.getName());
 	protected static final Logger audit = Logger.getLogger("com.stimulus.archiva.audit");
 	
-	public ADAction(LDAPIdentity identity, String uname, String domain) {
+	public ADAction(ADIdentity identity, String uname, String domain) {
 	    this.identity = identity;
 	    this.uname = uname;
 	    this.domain = domain;
@@ -82,7 +58,7 @@ class ADAction implements java.security.PrivilegedAction {
 	// Active Directory Authentication
 	 
 	 private ArrayList<AttributeValue> getADAttributeValuePairs()  {
-	
+		 	logger.debug("getADAttributeValuePairs()");
 	     	String filter = "(&(sAMAccountName=" + uname + ")(objectClass=user))";
 	     	Hashtable<String,String> env = new Hashtable<String,String>(11);
 	 		String ldapAddress =  identity.getLDAPAddress();
@@ -135,7 +111,7 @@ class ADAction implements java.security.PrivilegedAction {
 		                            String attrId = attr.getID();
 		                            /* print each value */
 		                            for (Enumeration vals = attr.getAll();vals.hasMoreElements();) {
-		                                String value = (String)vals.nextElement().toString();
+		                                String value = vals.nextElement().toString();
 		                                logger.debug("LDAP attribute: "+ attrId + " = " + value);
 		                                attributeValues.add(new AttributeValue(attrId,value));
 		                            }

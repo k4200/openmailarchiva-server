@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -25,31 +17,28 @@
 
 package com.stimulus.archiva.extraction;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.Serializable;
-
-import org.apache.log4j.Logger;
-
 import com.stimulus.archiva.exception.ExtractionException;
-import com.stimulus.util.TempFiles;
-
+import java.io.*;
+import org.apache.log4j.Logger;
+import com.stimulus.util.*;
+import java.nio.charset.Charset;
 public class PlainTextExtractor implements TextExtractor, Serializable
 {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -3133399038029781732L;
-	protected static Logger logger = Logger.getLogger(Extractor.class);
+	protected static final Logger logger = Logger.getLogger(Extractor.class.getName());
 
 	public PlainTextExtractor()
 	{
 	}
 
-	public Reader getText(InputStream is, TempFiles tempFiles) throws ExtractionException
+	public Reader getText(InputStream is, TempFiles tempFiles, Charset charset) throws ExtractionException
 	{
-	   return (Reader)(new InputStreamReader(is));
+	   Reader r = new InputStreamReader(is,charset);
+	   return r;
 	}
+
 
 }

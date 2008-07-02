@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -23,12 +15,12 @@
  */
 
 package com.stimulus.archiva.extraction;
-
+import java.nio.charset.Charset;
 import com.stimulus.archiva.exception.ExtractionException;
 import java.io.*;
 import com.stimulus.util.*;
 
 public interface TextExtractor
 {
-    public abstract Reader getText(InputStream is,TempFiles tempFiles) throws ExtractionException;
+    public abstract Reader getText(InputStream is,TempFiles tempFiles, Charset charset) throws ExtractionException;
 }

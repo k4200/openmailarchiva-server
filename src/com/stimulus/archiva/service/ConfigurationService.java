@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -24,46 +16,54 @@
 
 
 package com.stimulus.archiva.service;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Locale;
+import org.apache.log4j.Logger;
+import com.stimulus.util.*;
+import com.stimulus.archiva.authentication.*;
+import com.stimulus.archiva.domain.*;
+import com.stimulus.archiva.exception.*;
+import com.stimulus.archiva.security.realm.*;
+import javax.activation.*;
+import java.text.DateFormat;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import java.io.*;
+
+import javax.mail.*;
+import javax.mail.Message.RecipientType;
+import javax.mail.internet.*;
 
 import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import com.stimulus.archiva.incoming.*;
+import com.stimulus.archiva.security.*;
 
-import com.stimulus.archiva.authentication.ADIdentity;
-import com.stimulus.archiva.authentication.LDAPIdentity;
-import com.stimulus.archiva.domain.Config;
-import com.stimulus.archiva.exception.ArchivaException;
-import com.stimulus.archiva.security.realm.ADRealm;
-import com.stimulus.archiva.security.realm.MailArchivaPrincipal;
-import com.stimulus.util.Tail;
 public class ConfigurationService implements Serializable {
 
- /**
-	 * 
-	 */
 	private static final long serialVersionUID = -7518836928932742067L;
-protected static Logger logger = Logger.getLogger(ConfigurationService.class);
- protected static Config config = null;
+	protected static final Logger logger = Logger.getLogger(ConfigurationService.class);
+	protected static Config config = null;
+	protected static DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
 
-  public static synchronized Config getConfig() {
-      return Config.getConfig();
-  }
 
-  public static void setConfig(Config config) {
-  	Config.setConfig(config);
+  public static void modifyConfig(MailArchivaPrincipal principal, Config newConfig) throws ConfigurationException {
+	  Config.getConfig().modify(principal,newConfig);
   }
   
-  public static ArrayList<ADRealm.AttributeValue> getLDAPAttributeValues(LDAPIdentity identity, String username, String password) throws ArchivaException {
+  public static ArrayList<ADRealm.AttributeValue> getLDAPAttributeValues(Config config,Identity identity, String username, String password) throws ArchivaException {
       ADRealm ar = new ADRealm();
-      return ar.getADAttributes((ADIdentity)identity,username,password);
-
+      return ar.getADAttributes(config,(ADIdentity)identity,username,password);
+  }
+  
+  
+  public static MailArchivaPrincipal authenticate(String username, String password) {
+	    ADRealm ar = new ADRealm();
+	    MailArchivaPrincipal cgp = null;
+	    try {
+	          cgp = (MailArchivaPrincipal)ar.authenticate(Config.getConfig(),username,password);
+	          return cgp;
+	      } catch (ArchivaException ae) {
+	          return null;
+	      }
   }
   
   public static String testAuthenticate(Config config, String username, String password)  {
@@ -73,8 +73,9 @@ protected static Logger logger = Logger.getLogger(ConfigurationService.class);
       try {
           cgp = (MailArchivaPrincipal)ar.authenticate(config,username,password);
           if (cgp!=null) {
-              String roleName = cgp.getRole();
-              return "Authentication success. Role "+roleName+" is assigned.";
+              String roleStr = cgp.getRole();
+              Roles.Role role = Config.getConfig().getRoles().getRole(roleStr);
+              return "Authentication success. Role "+role.getName()+" is assigned.";
           } else
               return "Authentication failed.";
       } catch (ArchivaException ae) {
@@ -83,11 +84,11 @@ protected static Logger logger = Logger.getLogger(ConfigurationService.class);
   } 
   
   public static String getDebugLog() {
-	  return Tail.tail(Config.getDebugLogPath(),300, 200000);
+	  return Tail.tail(Config.getFileSystem().getDebugLogPath(),300, 200000);
   }
   
   public static String getAuditLog() {
-	  return Tail.tail(Config.getAuditLogPath(),300, 200000);
+	  return Tail.tail(Config.getFileSystem().getAuditLogPath(),300, 200000);
   }
   
   private static String readFile(String filename) {
@@ -116,12 +117,11 @@ protected static Logger logger = Logger.getLogger(ConfigurationService.class);
   }
   
   public static void setLoggingLevel(String level) {
-	  Logger logger =  Logger.getLogger("com.stimulus");
+	  Logger logger = Logger.getLogger("com.stimulus");
 	  if (logger==null) {
 		  logger.error("failed set logging level. failed to obtain logger for com.stimulus.archiva.");
 		  return;
 	  }
-
 	  Level newLevel = Level.toLevel(level);
 	  Level oldLevel = logger.getLevel();
 	  if (oldLevel==null) {
@@ -130,7 +130,7 @@ protected static Logger logger = Logger.getLogger(ConfigurationService.class);
 	  }
 	
 	  logger.setLevel(newLevel);
-	  String logfilename = Config.getClassesPath()+File.separator+"log4j.properties";
+	  String logfilename = Config.getFileSystem().getClassesPath()+File.separator+"log4j.properties";
 	  String logsource = readFile(logfilename);
 	  logsource = logsource.replaceAll("log4j.logger.com.stimulus="+oldLevel.toString(),"log4j.logger.com.stimulus="+newLevel.toString());
 	  logsource = logsource.replaceAll("log4j.logger.com.stimulus="+oldLevel.toString().toUpperCase(Locale.ENGLISH),"log4j.logger.com.stimulus="+newLevel.toString());
@@ -145,7 +145,7 @@ protected static Logger logger = Logger.getLogger(ConfigurationService.class);
   }
   
   public static String getLoggingLevel() {
-	  Logger logger =  Logger.getLogger("com.stimulus");
+	  Logger logger = Logger.getLogger("com.stimulus");
 	  if (logger!=null || logger.getLevel()!=null)
 		  return logger.getLevel().toString().toUpperCase(Locale.ENGLISH);
 	  else {	  
@@ -154,6 +154,16 @@ protected static Logger logger = Logger.getLogger(ConfigurationService.class);
 	  }
   }
   
+  public static void testMailboxConnection(MailboxConnection connection, IAPTestStatus testStatus) {
+	  IAPService service = new IAPService(null);
+	  service.testConnection(connection,testStatus);
+  }
+  
+  
+  public static abstract class IAPTestStatus implements IAPRunnable.IAPTestCallback {
+	  
+	  public abstract void statusUpdate(String result);
+  }
   
 }
 

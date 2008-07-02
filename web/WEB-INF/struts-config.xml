@@ -12,13 +12,10 @@
     <form-bean name="messageBean" type="com.stimulus.archiva.presentation.MessageBean"/>
     <form-bean name="configBean" type="com.stimulus.archiva.presentation.ConfigBean"/>
 	<form-bean name="searchResultBean" type="com.stimulus.archiva.presentation.SearchResultBean"/>
-	<form-bean name="multiMessageBean" type="com.stimulus.archiva.presentation.MultiMessageBean"/>
+	<form-bean name="archiveRuleBean" type="com.stimulus.archiva.presentation.ArchiveRuleBean"/>
   </form-beans>
 
-  <global-exceptions>
-    <exception key="errors.general" type="java.lang.Exception" handler="com.stimulus.struts.ActionExceptionHandler" path="/common/error.jsp"/>
-  </global-exceptions>
-
+ 
   <global-forwards>
     <forward name="failure" path="/common/error.jsp"/>
     <forward name="error" path="/common/error.jsp"/>
@@ -49,13 +46,13 @@
       <forward name="print" path="/print.do"/>
       <forward name="view" path="/view.do"/>
     </action>
-    
+   
     <action path="/view" type="com.stimulus.struts.BeanAction"
      name="multiMessageBean" scope="session" validate="false">
       <forward name="success" path="/message/viewmessages.jsp"/>
     </action>
     
-  
+ 
     <action path="/searchsort" type="com.stimulus.struts.BeanAction"
       name="searchBean" scope="session" 
       validate="false" >
@@ -99,6 +96,18 @@
       <forward name="success" path="/configuration/lookuprolecriterion.jsp"/>
     </action>
     
+     <action path="/lookuprolecriterion" type="com.stimulus.struts.BeanAction"
+      name="configBean" scope="session" 
+      validate="false" >
+      <forward name="success" path="/configuration/lookuprolecriterion.jsp"/>
+    </action>
+    
+     <action path="/lookuprolecriterionldapform" type="com.stimulus.struts.BeanAction"
+      name="configBean" scope="session" 
+      validate="false" >
+      <forward name="success" path="/configuration/lookuprolecriterion.jsp"/>
+     </action>
+    
     <action path="/lookuprolecriterion" type="com.stimulus.struts.BeanAction"
       name="configBean" scope="session" 
       validate="false" >
@@ -112,7 +121,7 @@
     </action>
     
     <action path="/testloginform" type="com.stimulus.struts.BeanAction"
-      name="configBean" scope="session" parameter="*"
+      name="configBean" scope="session"
       validate="false" >
       <forward name="success" path="/configuration/testlogin.jsp"/>
     </action>
@@ -123,12 +132,22 @@
       <forward name="success" path="/common/calendar.jsp"/>
      </action>
     
-    
+    <action path="/testmailboxstatus" type="com.stimulus.struts.BeanAction"
+      name="configBean" scope="session" parameter="*"
+      validate="false" >
+      <forward name="success" path="/configuration/testmailboxstatus.jsp"/>
+    </action>
+
     <action path="/viewmail" type="com.stimulus.struts.BeanAction"
       name="messageBean" scope="session" 
       validate="false" >
       <forward name="success" path="/message/viewmail.jsp"/>
       <forward name="reload" path="/common/politeerror.jsp"/>
+    </action>
+    
+    <action path="/viewaction" type="com.stimulus.struts.BeanAction"
+     name="messageBean" scope="session" validate="false">
+      <forward name="success" path="/message/viewmail.jsp"/>
     </action>
     
     <action path="/viewattachment" type="com.stimulus.struts.BeanAction"
@@ -183,8 +202,10 @@
       validate="false" >
       <forward name="success" path="/configuration/viewdebuglog.jsp"/>
     </action>
+  
     
     
+
   </action-mappings>
 
   <message-resources parameter="properties.application"/>

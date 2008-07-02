@@ -12,6 +12,10 @@
 <head>
 <title><bean:message key="recover.title"/></title>
 <link href="common/mailarchiva.css" rel="stylesheet" type="text/css">
+<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<META HTTP-EQUIV="Expires" CONTENT="-1">
+<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache">
+
 <script language="javascript" src="common/Ajax.js">
 </script>
 <script language="javascript" >
@@ -28,10 +32,18 @@ function confirmQuarantine()
 		}
 		
 }
-   
+
+function uncache(url,form){
+    var d = new Date();
+    var time = d.getTime();
+    url += '?time='+time;
+    retrieveURL(url,form);
+
+}
+
 function timerfunc() {
 	      if (!complete) {
-			  retrieveURL("recover.do",null);
+			  uncache("recover.do",null);
 			  textObj = document.getElementById('recoveryOutput');
 			  textObj.scrollTop = textObj.scrollHeight;
 		  }
@@ -39,17 +51,25 @@ function timerfunc() {
 </script>
 </head>
 
-<body onload="window.focus();timerfunc();setInterval('timerfunc()', 100);">
+<body topmargin="0" leftmargin="0" onload="window.focus();timerfunc();setInterval('timerfunc()', 20);">
 
-<html:form action="/recover.do" method="POST" styleId="configure">
+<html:form action="/recover.do" method="POST" styleId="configure" autocomplete="false">
 
-<div class="section3" id="recoveryOutput" style="width : 580px; height : 349px; overflow : auto; ">
+<table class="pageheading" width="100%" border="0" cellpadding="0" cellspacing="0" >
+  <tr> 
+    <td width="50%" height="20"><strong><bean:message key="recover.title"/></strong></td>
+    <td width="50%" align="left">&nbsp;</td>
+    <td ></td>
+  </tr>
+</table>
+
+<div class="dialog" id="recoveryOutput" style="width : 100%; height : 349px; overflow : auto; ">
 <span id="status">
 <c:out value='${configBean.recoveryOutput}' escapeXml='false'/>
 </span>
 </div>
 
-<table class="sectionheader" width="100%" border="0" cellpadding="3" cellspacing="0">
+<table class="pageend" width="100%" border="0" cellpadding="3" cellspacing="0">
   <tr> 
     <td >&nbsp;</td>
     <td align="left">

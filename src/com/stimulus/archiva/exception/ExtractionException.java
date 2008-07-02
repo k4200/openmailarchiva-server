@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -24,8 +16,9 @@
 
 package com.stimulus.archiva.exception;
 import java.io.Serializable;
+import org.apache.log4j.*;
 
-import org.apache.log4j.Logger;
+import com.stimulus.archiva.monitor.Event;
 
 public class ExtractionException extends ArchivaException implements Serializable {
 
@@ -35,11 +28,22 @@ public class ExtractionException extends ArchivaException implements Serializabl
 	 */
 	private static final long serialVersionUID = -5452475188871051774L;
 
-public ExtractionException(String message,Logger logger) {
-    super(message,logger);
+	public ExtractionException(String message,Logger logger) {
+    super(message,logger,Level.WARN);
   }
 
   public ExtractionException(String message, Throwable cause, Logger logger) {
-    super(message, cause, logger);
+    super(message, cause, logger,Level.WARN);
   }
+  
+  
+  public ExtractionException(String message, Logger logger, Level level) {
+      super(message, logger,level);
+  }
+
+  public ExtractionException(String message, Throwable cause, Logger logger, Level level) {
+      super(message,cause, logger,level);
+  }
+  
+  
 }

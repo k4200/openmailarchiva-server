@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -25,11 +17,11 @@ package com.stimulus.struts;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
+//import org.apache.commons.logging.Log;
+//import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Logger;
 import org.apache.struts.Globals;
 import org.apache.struts.action.ActionErrors;
@@ -63,11 +55,11 @@ public final class ActionExceptionHandler extends ExceptionHandler implements Se
 	 * 
 	 */
 	private static final long serialVersionUID = -4219810091670377408L;
-	protected static Logger logger = Logger.getLogger(ActionExceptionHandler.class);
+	protected static final Logger logger = Logger.getLogger(ActionExceptionHandler.class);
 //~ Instance fields ========================================================
 
 
-//private Log log = Logger.getLogger(ActionExceptionHandler.class);
+//private Log log = LogFactory.getLog(ActionExceptionHandler.class);
 
 
 //~ Methods ================================================================
@@ -90,6 +82,7 @@ public final class ActionExceptionHandler extends ExceptionHandler implements Se
  *      )
  */
 
+@Override
 public ActionForward execute(Exception ex, ExceptionConfig ae,ActionMapping mapping,
 							 ActionForm formInstance,HttpServletRequest request,
                              HttpServletResponse response) throws ServletException {
@@ -169,6 +162,7 @@ protected void storeException(HttpServletRequest request, String property,
 
  */
 
+@Override
 protected void logException(Exception ex) {
     StringWriter sw = new StringWriter();
     ex.printStackTrace(new PrintWriter(sw));

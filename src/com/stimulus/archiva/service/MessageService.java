@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -24,91 +16,38 @@
 
 
 package com.stimulus.archiva.service;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
+
+import com.stimulus.archiva.domain.*;
+import com.stimulus.archiva.extraction.*;
+import com.stimulus.archiva.search.*;
 import java.security.Principal;
-import java.util.Hashtable;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.zip.GZIPInputStream;
-
-import org.apache.log4j.Logger;
-
-import com.stimulus.archiva.domain.ArchiveRules;
-import com.stimulus.archiva.domain.Config;
-import com.stimulus.archiva.domain.Email;
-import com.stimulus.archiva.domain.EmailID;
-import com.stimulus.archiva.domain.Volume;
-import com.stimulus.archiva.domain.Volumes;
-import com.stimulus.archiva.exception.ArchivaException;
-import com.stimulus.archiva.exception.ArchiveException;
-import com.stimulus.archiva.exception.ChainedRuntimeException;
-import com.stimulus.archiva.exception.ConfigurationException;
-import com.stimulus.archiva.exception.MaxMessageSizeException;
-import com.stimulus.archiva.exception.MessageStoreException;
-import com.stimulus.archiva.exception.ProcessException;
-import com.stimulus.archiva.extraction.MessageExtraction;
-import com.stimulus.archiva.incoming.MilterServer;
-import com.stimulus.archiva.incoming.SMTPServer;
-import com.stimulus.archiva.incoming.StoreMessageCallback;
+import java.io.*;
 import com.stimulus.archiva.index.MessageIndex;
-import com.stimulus.archiva.search.MessageSearch;
-import com.stimulus.archiva.security.realm.MailArchivaPrincipal;
-import com.stimulus.archiva.store.MessageStore;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import com.stimulus.archiva.exception.*;
+import com.stimulus.archiva.exception.ArchiveException.RecoveryDirective;
+
+import javax.mail.event.*;
+import javax.mail.*;
 
 public class MessageService implements Serializable {
-
-  protected static Logger logger = Logger.getLogger(MessageService.class);
+  
+  private static final long serialVersionUID = -11293874311212271L;
+  protected static final Logger logger = Logger.getLogger(MessageService.class);
   protected static Hashtable<String,MessageExtraction> extractedMessages = new Hashtable<String,MessageExtraction>();
   protected static final Logger audit = Logger.getLogger("com.stimulus.archiva.audit");
-  protected static MessageSearch messageSearch = null; 
-  protected static MessageStore messageStore = null;
-  protected static MessageIndex messageIndex = null;
-  protected static SMTPServer smtpServer = null;
-  protected static MilterServer milter = null;
-  
-  protected static Thread purger = null;
-  //protected static int lastDayPurgeExecuted = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
-  protected static int lastDayPurgeExecuted =0;
   public static enum MessageState { COMPRESSED, UNCOMPRESSED };
+  protected static WriteMessageCallback callback = new WriteMessageCallback();
+  protected static int MAX_QUEUED_TASKS = 100;
   
-  static {
-      initMessageStore();
-      messageSearch = new MessageSearch(messageStore);
-      messageIndex = new MessageIndex(messageStore);
-      smtpServer = new SMTPServer(new MessageService.WriteMessageCallback());
-      smtpServer.start();
-      milter = new MilterServer(new MessageService.WriteMessageCallback());
-      milter.start();
-  }
-  
-  protected static synchronized void initMessageStore() {
-      try {
-	      if (messageStore==null)
-	          messageStore = new MessageStore();
-      } catch (MessageStoreException ms) {
-          throw new ChainedRuntimeException(ms.toString(),ms,logger);
-      }
-  }
-  public static synchronized MessageStore getMessageStore() {
-      if (messageStore==null)
-          initMessageStore();
-      return messageStore;
-  }
-  
-  public static void restartIncomingListeners() {
-	  smtpServer.shutdown();
-	  milter.shutdown();
-	  smtpServer = new SMTPServer(new MessageService.WriteMessageCallback());
-	  smtpServer.start();
-	  milter = new MilterServer(new MessageService.WriteMessageCallback());
-  }
-  
-  public static MessageIndex getMessageIndex() { return messageIndex; }
-  
-  public static void initCipherKeys() throws ArchivaException {
-      messageStore.initKeys();
+  public static void init() throws ArchivaException {
+      Config.getConfig().getArchiver().init();
   }
   
   public static Email getMessageByID(String volumeName, String uniqueId, boolean headersOnly) throws ArchivaException {
@@ -116,33 +55,36 @@ public class MessageService implements Serializable {
           throw new ArchivaException("assertion failure: null emailId",logger);
 
     logger.debug("getMessageByID() {volumeName="+volumeName+",uniqueId='"+uniqueId+"'}");
-    Volume volume = ConfigurationService.getConfig().getVolumes().getNewVolume(volumeName);
+    Volume volume = Config.getConfig().getVolumes().getNewVolume(volumeName);
     EmailID emailID = EmailID.getEmailID(volume, uniqueId);
-  	return messageStore.retrieveMessage(emailID);
+  	return Config.getConfig().getArchiver().retrieveMessage(emailID);
   }
 
-
+  public static FetchMessageCallback getFetchMessageCallback() {
+	  return callback;
+  }
   
-  public static boolean createVolumeDirectories(Volume v) {
-	  if (v.getStatus()==Volume.Status.EJECTED)
+  public static boolean prepareVolume(Volume v) {
+	  if (v.getStatus()==Volume.Status.EJECTED || v.getStatus()==Volume.Status.REMOTE )
 		  return true;
 	  try { 
-		  logger.debug("creating message store directory (if necessary) {"+v+"}");
-	      MessageStore.createMessageStoreDir(v);
-	      logger.debug("creating index directory (if necessary) {"+v+"}");
-	      messageIndex.createIndexDir(v);
+		  logger.debug("preparing store for future write (if necessary) {"+v+"}");
+		  Config.getConfig().getArchiver().prepareStore(v);
+	      logger.debug("preparing index for future write (if necessary) {"+v+"}");
+	      Config.getConfig().getIndex().prepareIndex(v);
 	  } catch (ArchivaException ae) {
-		  logger.debug("failed to create volume directories."+ae.getMessage(),ae);
+		  logger.debug("failed to prepare volume. cause:"+ae.getMessage(),ae);
 		  return false;
 	  }
 	  return true;
   }
 
+  
   protected static void closeVolume(Volumes vols, Volume volume) {
 	  logger.info("closing active volume due to io error. {"+volume+"}");
  		try {
  			volume.setStatus(Volume.Status.CLOSED);
-   		vols.saveVolumeInfo(volume,true);
+ 			volume.save();
  		} catch (ConfigurationException ce) {
  			logger.debug("exception occurred while closing volume {"+volume+"}");	
  		}
@@ -155,17 +97,30 @@ public class MessageService implements Serializable {
       Volume activeVolume = vols.getActiveVolume();
       if (activeVolume==null)
     	  throw new ArchivaException("failed to archive message. there are no volumes available with sufficient diskspace. please configure one.",logger);
+      activeVolume.ensureDiskSpaceCheck();
       EmailID emailID = EmailID.getEmailID(activeVolume, message);
       message.setEmailID(emailID);  
   }
   
   protected static void archive(Principal principal, Email message,boolean retry) throws Exception {
-	  	Volumes vols = ConfigurationService.getConfig().getVolumes();
+	  
+	    if (Config.getShutdown()) {
+	    	throw new ArchiveException("mailarchiva is shutdown",logger,Level.DEBUG,ArchiveException.RecoveryDirective.RETRYLATER);
+	    }
+	 
+	  	Volumes vols = Config.getConfig().getVolumes();
 	  	assignEmailID(message,vols);
+	  	
 	    try {
-	         if (messageStore.insertMessage(message.getEmailID(),message)) {
-		         vols.touchActiveVolume();
-		         messageIndex.indexMessage(message.getEmailID());
+	         if (Config.getConfig().getArchiver().insertMessage(message.getEmailID(),message)) {
+		         vols.touchActiveVolume(message);
+		         try {
+		        	 Config.getConfig().getIndex().indexMessage(message);
+		         } catch (OutOfMemoryError ofme) {
+		  			 logger.debug("failed index message: out of memory",ofme);
+		  		 } catch (Throwable t) {
+		  			 logger.debug("failed index message:"+t.getMessage(),t);
+		  		 }
 	         }
          } catch (Exception e) {   
     		if (e.getCause() instanceof IOException && e.getMessage().contains("space")) {
@@ -184,32 +139,15 @@ public class MessageService implements Serializable {
 
   public static void storeMessage(Principal principal, InputStream compressedStream, MessageState compressed) throws ArchiveException
   {
-	  
-			
+	  			
+	  			
 	      		if (compressedStream == null)
 	      		    throw new ArchiveException("assertion failure: null message,username or remoteIP",logger,ArchiveException.RecoveryDirective.RETRYLATER);
 	
 	      		logger.debug("message received for archival (via smtp service) {"+principal+"'}");
 	
-		  	    Config config = ConfigurationService.getConfig();
-		  	    
-		
-		  	    /*
-		  	  try {
-		    		File faultyFile = new File("c:\\temp.tmp");
-			    	FileOutputStream fos = new FileOutputStream(faultyFile);
-			    	byte[] buf = new byte[1024];
-				    int numRead = 0;
-				    while ((numRead = compressedStream.read(buf)) >= 0) {
-						fos.write(buf, 0, numRead);
-				    }
-				    fos.close();
-		    	} catch (Exception e) {
-		    		logger.error(e);
-		    		return;
-		    	}	
-		    	return;*/
-		    	
+		  	    Config config = Config.getConfig();
+		  	 
 		  	    Email message =  null;
 		  	    
 		  	    try {
@@ -218,6 +156,7 @@ public class MessageService implements Serializable {
 		  	    		message = new Email(null,new GZIPInputStream(compressedStream));
 		  	    	else
 		  	    		message = new Email(null,compressedStream);
+		
 		  	    } catch (Exception io) {
 		  	    	if (io.getCause() instanceof MaxMessageSizeException) {
 		  	    		logger.error("cannot process message. max message size is exceeded.",io.getCause());
@@ -225,32 +164,45 @@ public class MessageService implements Serializable {
 		  	    	}
 		  	        logger.error("archive message is corrupted. unable to parse it.",io);
 		  	       try {
-	  	    			messageStore.copyEmailToNoArchiveQueue(message);
+	  	    			config.getArchiver().backupMessage(message);
 		    		} catch (Exception e2) {
-		    			throw new ArchiveException("failed to copy message to the no archive queue.",e2,logger,ArchiveException.RecoveryDirective.RETRYLATER);
+		    			logger.debug(e2);
+		    			logger.warn("messages cannot be written to the no archive queue. this likely to be a permissions/disk space issue.");
+		    			throw new ArchiveException("failed to copy message to the no archive queue. message is corrupted.",e2,logger,Level.DEBUG,ArchiveException.RecoveryDirective.REJECT);
 		    		}
 		  	    }
+		  	   
+		  	    if (message==null) {
+		  	    	logger.error("message was not received entirely.");
+		  	    	return;
+		  	    }
 		  	    
-		  	    if (!config.isDefaultPassPhraseModified()) {
+		  	    if (!config.getArchiver().isDefaultPassPhraseModified()) {
 		  	    	try {
-	  	    			messageStore.copyEmailToNoArchiveQueue(message);
+		  	    		config.getArchiver().backupMessage(message);
 		    		} catch (Exception e2) {
+		    			logger.debug(e2);
+		    			logger.warn("messages cannot be written to the no archive queue. this likely to be a permissions/disk space issue.");
 		    			throw new ArchiveException("failed to copy message to the no archive queue.",e2,logger,ArchiveException.RecoveryDirective.RETRYLATER);
 		    		}
 		    		logger.error("failed to archive message. encryption password is not set.");
 		  	    }
-		  	    
-		  	    
-		  	    if (config.getArchiveRules().shouldArchive(message,ConfigurationService.getConfig().getDomains())==ArchiveRules.Action.ARCHIVE) {
+		  	 
+		  	    if (config.getArchiveFilter().shouldArchive(message,Config.getConfig().getDomains())==ArchiveFilter.Action.ARCHIVE) {
 		  	    	
 		  	    	try {
 		  	    		archive(principal,message,false);
 		  	    	} catch (Exception e) { 
 		  	    		logger.error("error occurred while archiving message. message will be reprocessed on server restart",e);
 		  	    		try {
-		  	    			messageStore.copyEmailToNoArchiveQueue(message);
-			    		} catch (Exception e2) {
-			    			throw new ArchiveException("failed to copy message to the no archive queue.",e2,logger,ArchiveException.RecoveryDirective.RETRYLATER);
+		  	    			config.getArchiver().backupMessage(message);
+			    		} catch (MessageStoreException e2) {
+			    			if (e2.getCause() instanceof javax.mail.MessagingException) {
+			    				throw new ArchiveException("failed to copy message to the no archive queue.",e2,logger,ArchiveException.RecoveryDirective.REJECT);
+			    			} else {
+			    				logger.warn("messages cannot be written to the no archive queue. this likely to be a permissions/disk space issue.");
+			    				throw new ArchiveException("failed to copy message to the no archive queue.",e2,logger,ArchiveException.RecoveryDirective.RETRYLATER);
+			    			}
 			    		}
 		  	    	}
 		  	   
@@ -263,43 +215,34 @@ public class MessageService implements Serializable {
 	}
   
   
-  public static void indexVolume(Principal principal, int volumeIndex, IndexStatus status) throws ArchivaException {
-      if (status == null )
-		    throw new ArchivaException("assertion failure: null status",logger);
-      status.start();
-      Volume volume = ConfigurationService.getConfig().getVolumes().getVolume(volumeIndex);
-      audit.info("index volume {"+volume+", "+principal+"}");
-	  logger.debug("index volume {"+volume+", "+principal+"}");
-      messageIndex.deleteIndex(volume);
-      List<Volume> volumes = new LinkedList<Volume>();
-      volumes.add(volume);
-      IndexMessage indexMessage = new MessageService.IndexMessage(ConfigurationService.getConfig(),volumes, true, true, false,status);
-      try {
-          messageStore.processMessages(indexMessage);
-     } catch (ProcessException pe) {
-         status.finish();
-         status.setErrorMessage(pe.getMessage());
-     }
-      status.finish();
+  public static void indexVolume(Principal principal, int volumeIndex) throws ArchivaException {
+    new IndexThread(principal,volumeIndex).start();
+	  
   }
-
-  public static void indexAllVolumes(Principal principal, IndexStatus status) throws ArchivaException {
-      if (status == null )
-		    throw new ArchivaException("assertion failure: null status",logger); 
-      status.start();
-      audit.info("index all volumes {"+principal+"}");
-	  logger.debug("index all volumes {"+principal+"}");
-      List<Volume> volumes = ConfigurationService.getConfig().getVolumes().getVolumes();
-      for (Volume v : volumes) 
-    	  messageIndex.deleteIndex(v);
-      IndexMessage indexMessage = new MessageService.IndexMessage(ConfigurationService.getConfig(),volumes, true, true, false,status);
-	  try {
-	      messageStore.processMessages(indexMessage);
-	  } catch (ProcessException pe) {
-	     status.finish();
-	     status.setErrorMessage(pe.getMessage());
+  
+  public static class IndexThread extends Thread {
+	  
+	  Principal principal;
+	  int volumeIndex;
+	  
+	  public IndexThread(Principal principal, int volumeIndex) {
+		  this.principal = principal;
+		  this.volumeIndex = volumeIndex;
 	  }
-      status.finish();
+	  
+	  public void run() {
+		  Config config = Config.getConfig();
+	      Volume volume = config.getVolumes().getVolume(volumeIndex);
+	      audit.info("index volume {"+volume+", "+principal+"}");
+		  logger.debug("index volume {"+volume+", "+principal+"}");
+		  MessageIndex index = (MessageIndex)config.getIndex();
+	      try {
+	    	  index.deleteIndex(volume);
+	    	  config.getArchiver().processMessages(new IndexMessage(volume));
+	     } catch (Exception e) {
+	    	 logger.error("failed to index volume {"+volume+"}:"+e.getMessage(),e);
+	     }
+	  }
   }
 
 /* deliberately non recursive (so we avoid situations where the whole h/d is deleted) */
@@ -307,38 +250,50 @@ public class MessageService implements Serializable {
   public static void recoverNoArchiveMessages(Recovery recovery) {
 	  if (recovery==null)
 		  recovery = new Recovery();
-      messageStore.restoreEmailsFromNoArchiveQueue(recovery);
+	  try {
+		  Config.getConfig().getArchiver().recoverMessages(recovery);
+	  } catch (MessageStoreException mse) {
+		  
+	  }
   }
 
-  public static int getNoWaitingMessagesInNoArchiveQueue() {
-  	return messageStore.getNoWaitingMessagesInNoArchiveQueue();
+  public static int getNoMessagesForRecovery() {
+  	return Config.getConfig().getArchiver().getNoMessagesForRecovery();
   }
   
-  public static void quarantineEmails() {
-	   messageStore.quarantineEmails();
+  public static void quarantineMessages() {
+	  Config.getConfig().getArchiver().quarantineMessages();
   }
   
-  public static int getNoQuarantinedEmails() {
-	  return messageStore.getNoQuarantinedEmails();
+  public static int getNoQuarantinedMessages() {
+	  return Config.getConfig().getArchiver().getNoQuarantinedMessages();
   }
   
-  public static class Recovery implements MessageStore.RecoverEmail {
-	  
+  public static class Recovery implements com.stimulus.archiva.domain.Archiver.RecoverMessage {
+	  ExecutorService pool = Executors.newFixedThreadPool(Config.getConfig().getArchiver().getArchiveThreads());
 	  public void start() {};
   	
 	  public void end(int failed, int success, int total) {};
 	 
+	  public void submitToPool(ArchiveEmail email) {
+			 ThreadPoolExecutor poolexec = (ThreadPoolExecutor)pool;
+			 while (poolexec.getQueue().size()>=MAX_QUEUED_TASKS) {
+					 try { Thread.sleep(200); } catch (Exception e) {};
+			}
+			pool.submit(email);
+	  }
+	  
 	  public boolean recover(InputStream is, String filename) {
-		  Volumes vols = ConfigurationService.getConfig().getVolumes();
+		  Config config = Config.getConfig();
+		  Volumes vols = config.getVolumes();
 		  EmailID emailID = EmailID.getEmailID(null,filename);
 		  Email email = null;
 		  try {
-			 email = new Email(emailID,is);
+			  email = new Email(emailID,is);
 			  assignEmailID(email,vols);
-		      messageStore.insertMessage(email.getEmailID(), email);
-			  vols.touchActiveVolume();
-			  messageIndex.indexMessage(email.getEmailID()); 
-			  audit.info("recovered email {"+email+"}");
+			  if (config.getArchiveFilter().shouldArchive(email,Config.getConfig().getDomains())==ArchiveFilter.Action.ARCHIVE) {
+				  submitToPool(new ArchiveEmail(vols.getActiveVolume(),email));
+			  }
 		  } catch (Exception e) {
 			  email = new Email();
 			  email.setEmailID(emailID);
@@ -351,42 +306,119 @@ public class MessageService implements Serializable {
 	  }  
 	  
 	  public void update(Email email, boolean success, String output) {}
+	  
+	  public static class ArchiveEmail implements Runnable {
+		  
+		  Volume volume;
+		  Email email;
+		  
+		  public ArchiveEmail(Volume volume, Email email) {
+			  this.volume = volume;
+			  this.email = email;
+		  }
+		  public void run() {
+			  try {
+				  volume.touchModified(email);
+				  Config.getConfig().getArchiver().insertMessage(email.getEmailID(), email);
+				  Config.getConfig().getIndex().indexMessage(email);
+	        	  audit.info("recovered email {"+email+"}");
+	          } catch (Exception e0) { 
+			  } catch (OutOfMemoryError ofme) {
+		  			 logger.debug("failed archive message: out of memory",ofme);
+			  }
+		  }
+		  
+	  }
+	  
   }
   
-  public static class IndexMessage extends MessageStore.ProcessMessage {
-      IndexStatus status = null;
-      public IndexMessage(Config config, List volumes, boolean decompress, boolean decrypt, boolean headersOnly, IndexStatus status) {
-          super(config, volumes, decompress, decrypt);
-          this.status = status;
+  public static class IndexMessage extends com.stimulus.archiva.domain.Archiver.ProcessMessage {
+	  ExecutorService pool = Executors.newFixedThreadPool(Config.getConfig().getArchiver().getArchiveThreads());
+	  
+	  public IndexMessage(Volume volume) {
+		  super(volume);
+	  }
+	  
+	  public void submitToPool(IndexEmail email) {
+			 ThreadPoolExecutor poolexec = (ThreadPoolExecutor)pool;
+			 while (poolexec.getQueue().size()>=MAX_QUEUED_TASKS) {
+					 try { Thread.sleep(200); } catch (Exception e) {};
+			}
+			pool.submit(email);
+	  }
+	  
+	  
+	  public void process(Volume volume, Email email) throws ProcessException {
+		  logger.debug("processing email {"+email+","+volume+"}");
+		  submitToPool(new IndexEmail(volume,email));
+            
       }
-      public void process(Config config, Volume volume, Email email, long completeSize, long totalSize, long completeFileCount, long totalFileCount) throws ProcessException {
-          if (status!=null)
-              status.update(completeSize,totalSize,completeFileCount,totalFileCount);
-
-              try {
-                  logger.debug("processing email {"+email+"}");
-              messageIndex.indexMessage(email.getEmailID());
-              } catch (Exception e0) {}
-
-      }
-
-  }
-
- 
-
-  public interface IndexStatus {
-
-      public void start();
-
-      public void finish();
-
-      public void update(long completeSize, long totalSize, long completeFileCount, long totalFileCount);
-
-      public void setErrorMessage(String error);
-
+	  
+	  public static class IndexEmail implements Runnable {
+		  
+		  Volume volume;
+		  Email email;
+		  
+		  public IndexEmail(Volume volume, Email email) {
+			  this.volume = volume;
+			  this.email = email;
+		  }
+		  public void run() {
+			  try {
+				  volume.touchModified(email);
+	        	  Config.getConfig().getIndex().indexMessage(email);
+	          } catch (Exception e0) {
+			  } catch (OutOfMemoryError ofme) {
+		  			 logger.debug("failed index message: out of memory",ofme);
+			  }
+		  }
+		  
+	  }
   }
   
- 
+
+  public static class TransmitMessageStatus extends TransportAdapter {
+	  
+	  protected String feedback = "";
+	  protected int totalMessages = 0;
+	  protected int processedMessages = 0;
+	  protected boolean working = false;
+	  
+	  public String getFeedback() { return feedback; }
+	  public int getTotalMessages() { return totalMessages; }
+	  public int getProcessedMessages() { return processedMessages; }
+	  public boolean getWorking() { return working; }
+	  
+	  public void setFeedback(String feedback) { this.feedback = feedback; }
+	  public void setTotalMessages(int totalMessages) { this.totalMessages = totalMessages; }
+	  public void setProcessedMessages(int processedMessages) { this.processedMessages = processedMessages; }
+	  public void setWorking(boolean working) { this.working = working; }
+	  
+	  public void updateStatus(Message message, Address[] addrs, String status) {
+		  if (addrs.length==0)
+			  return;
+		  
+		  for (int i=0; i<addrs.length ; i++) {
+			  processedMessages += 1;
+			  try { 
+				  feedback+= "'"+message.getSubject()+"' to:"+addrs[i]+" " + status;
+			  } catch (Exception ex) {}  
+		  }
+		  if (feedback.endsWith(","))
+				  feedback=feedback.substring(0, feedback.length()-1);
+		  feedback+="<br>";
+	  }
+	  
+	  public void messageDelivered(TransportEvent e) {
+		  updateStatus(e.getMessage(),e.getValidSentAddresses(),"sent OK");
+		  updateStatus(e.getMessage(),e.getInvalidAddresses(),"FAILED");
+	  }
+	  
+	  public void messageNotDelivered(TransportEvent e) {
+		  updateStatus(e.getMessage(),e.getValidSentAddresses(),"sent OK");
+		  updateStatus(e.getMessage(),e.getInvalidAddresses(),"FAILED");
+	  }
+  }
 
   public static MessageExtraction extractMessage(Email message, String baseURL, boolean isOriginalMessage) throws ArchivaException {
 	    if (message == null || baseURL == null )
@@ -397,10 +429,13 @@ public class MessageService implements Serializable {
 		  
 		if (isOriginalMessage) {
 		    try {
-		        is = messageStore.getMessageInputStream(message.getEmailID(),true,true);
-		    } catch (IOException io) {
-		        logger.error("failed to retrieve raw message contents. cause:",io);
+		        is = Config.getConfig().getArchiver().getMessageInputStream(message.getEmailID());
+		    } catch (MessageStoreException mse) {
+		        logger.error("failed to retrieve raw message contents. cause:",mse);
 		        is = null;
+		    } catch (IOException io) {
+		    	 logger.error("failed to retrieve raw message contents. cause:",io);
+			     is = null;
 		    }
 		}
 		MessageExtraction messageExtract = new MessageExtraction(message, is, baseURL);
@@ -408,56 +443,34 @@ public class MessageService implements Serializable {
 		
 		return messageExtract;
   }
-/*
-  public static void deleteExtractedMessage(String uniqueID) throws ArchivaException {
-      if (uniqueID == null)
-		    throw new ArchivaException("assertion failure: null uniqueID",logger);
 
-    MessageExtraction me = (MessageExtraction)extractedMessages.get(uniqueID);
-  	me.deleteExtractedMessage();
-  	extractedMessages.remove(me);
-  }
-*/
- 
-  
-  public static class WriteMessageCallback implements StoreMessageCallback {
+  public static class WriteMessageCallback implements FetchMessageCallback {
 	  
 	  public void store(InputStream is, String remoteIP) throws ArchiveException {
-				String userName = "smtpservice";
-		 		MailArchivaPrincipal mp = new MailArchivaPrincipal(userName,userName,null,remoteIP);
-		 		
-		 		logger.debug("storeMessage (via smtp service)");
+		  		logger.debug("store (via smtp service)");
+		  		String userName = "smtpservice";
+		 		MailArchivaPrincipal mp = new MailArchivaPrincipal(userName,Roles.SYSTEM_ROLE.getName(),null,remoteIP);
 		 		logger.info("message received for archival (via smtp service)) {username='"+userName+"', client ip='"+remoteIP+"'}");
 		 	  	try {
+		 	  		logger.debug("start store message");
 		 	  	    storeMessage(mp,is,MessageState.UNCOMPRESSED);
+		 	  	    logger.debug("end store message");
 		 	  	} catch (ArchiveException me) {
 		 	  	    logger.debug("failed to store message. Cause:",me);
-		 	  	    int esc = Integer.MAX_VALUE;
-		 	  	    logger.debug("consuming stream");
-		 	  	    try {
-		 	  	    	while (is.read()!=-1 && esc>0) { esc--; }
-		 	  	    } catch (Exception e) {}
-		 	  	    logger.debug("consumed stream. now throwing exception");
+		 	  	    
+		 	  	     logger.debug("now throwing exception");
 		 	  	    throw me;
+		 	  	} finally {
+		 	  		logger.debug("consuming stream");
+		 	  		byte[] b = new byte[1024];
+		 	  	    try {
+		 	  	    	while (is.read(b)!=-1) {  }
+		 	  	    } catch (Exception e) {}
+		 	  	    logger.debug("consumed stream.");
 		 	  	}
 	  }
   }
-  public abstract class ProcessMessageCallback {
 
-	boolean headersOnly;
-	boolean decompress;
-
-	public ProcessMessageCallback(boolean headersOnly, boolean decompress) {
-		this.headersOnly = headersOnly;
-		this.decompress = decompress;
-	}
-
-	public abstract void process(Email message, long completeSize, long totalSize, long completeFileCount, long totalFileCount );
-	public boolean getHeadersOnly() { return headersOnly; };
-	public boolean getDecompress() { return decompress; }
-  }
-  
-  
  
 }
 

@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -26,20 +18,14 @@ package com.stimulus.archiva.search;
 import java.io.Serializable;
 
 import com.stimulus.archiva.exception.MessageSearchException;
-import com.stimulus.archiva.domain.Search;
+import com.stimulus.archiva.domain.*;
 
 public class SearchFactory  implements Serializable {
 	
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -8318199726045277443L;
 
 	public static final Search getFactory(Search.Type searchType) throws MessageSearchException {
-         switch (searchType) {
-           case STANDARD: return new StandardSearch();
-         } 
-         return new StandardSearch();
+        return new StandardSearch(Config.getConfig());
 	}
 			 
 }

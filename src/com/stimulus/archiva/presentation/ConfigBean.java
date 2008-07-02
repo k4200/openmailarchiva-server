@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -25,37 +17,26 @@
 
 package com.stimulus.archiva.presentation;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.regex.Pattern;
-
-import org.apache.log4j.Logger;
-
-import com.stimulus.archiva.authentication.ADIdentity;
-import com.stimulus.archiva.authentication.LDAPIdentity;
-import com.stimulus.archiva.domain.ArchiveRules;
-import com.stimulus.archiva.domain.Config;
-import com.stimulus.archiva.domain.Domains;
-import com.stimulus.archiva.domain.Email;
-import com.stimulus.archiva.domain.Identity;
-import com.stimulus.archiva.domain.Volume;
-import com.stimulus.archiva.domain.Volumes;
+import com.stimulus.archiva.domain.*;
+import com.stimulus.archiva.domain.EmailFilter.Condition;
+import com.stimulus.archiva.domain.Volume.Status;
 import com.stimulus.archiva.domain.fields.EmailField;
-import com.stimulus.archiva.exception.ArchivaException;
-import com.stimulus.archiva.exception.ChainedRuntimeException;
-import com.stimulus.archiva.exception.ConfigurationException;
+import com.stimulus.archiva.domain.fields.EmailFields;
+import com.stimulus.archiva.exception.*;
 import com.stimulus.archiva.security.realm.ADRealm;
-import com.stimulus.archiva.service.ConfigurationService;
-import com.stimulus.archiva.service.MessageService;
-import com.stimulus.struts.ActionContext;
-import com.stimulus.struts.BaseBean;
+import com.stimulus.archiva.service.*;
+import com.stimulus.archiva.service.ConfigurationService.IAPTestStatus;
+import com.stimulus.archiva.authentication.*;
+import com.stimulus.struts.*;
 import com.stimulus.util.Compare;
 import com.stimulus.util.EnumUtil;
+import org.apache.log4j.Logger;
+import java.io.Serializable;
+import java.util.regex.*;
+import java.util.*;
+
+import javax.mail.*;
+import java.net.*;
 public class ConfigBean extends BaseBean implements Serializable {
 
   private static final long serialVersionUID = 2275642295115995805L;
@@ -64,22 +45,24 @@ public class ConfigBean extends BaseBean implements Serializable {
   
   protected String lookupPassword = "";
   protected String lookupUsername = "";
-  protected String ldapAttributes = "";
   protected String testAuthenticate = "";
-  protected List<PermissionBean> permissions = null;
-  protected IndexStatus status = new IndexStatus();
   protected String logLevel = "DEBUG";
   protected String recoveryOutput = "";
   protected boolean recoveryComplete = false;
   protected Config config = null;
   protected int recoveryFailed = 0;
-  protected boolean portChange = false;
+  protected String mailboxTestOutput = "";
+  protected String passPhrase1;
+  protected String passPhrase2;
+  protected String lookupAttribute;
+  protected int lookupIndex;
+  protected String lookupValue;
+  protected ArrayList<String> ldapAttributes = new ArrayList<String>();
+  protected String lookupError;
   
   public ConfigBean() {
   		config = new Config();
-  		logLevel = ConfigurationService.getLoggingLevel();
-  		configurationform();
-  		
+  		config.init(null);
   }
 
   public Config getConfig() {
@@ -96,57 +79,106 @@ public class ConfigBean extends BaseBean implements Serializable {
 		 return list;
 	 }
 	 */
-  public List getRuleFields() {
-	  	ArrayList<String>  list = new ArrayList<String>();
-	  
-		 Iterator i = EmailField.getAvailableFields().values().iterator();
-		 while (i.hasNext()) {
-			 EmailField ef = (EmailField)i.next();
-			 list.add(ef.getName());			 
-			 
+  public List<String> getRuleFields() {
+	  	 ArrayList<String>  list = new ArrayList<String>();
+	  	EmailFields emailFields = Config.getConfig().getEmailFields();
+		 for (EmailField ef : emailFields.getAvailableFields().values()) {
+			 if (!Compare.equalsIgnoreCase(ef.getName(),"body") &&
+				 !Compare.equalsIgnoreCase(ef.getName(),"attachments"))	{
+				 	list.add(ef.getName());			 
+			 }
 		 }
+		 list.add("addresses");
 		 Collections.sort(list, String.CASE_INSENSITIVE_ORDER);
 		 return list;
   }
 
-  public List getRuleFieldLabels() {
+  public List<String> getRuleFieldLabels() {
 	  	 ArrayList<String>  list = new ArrayList<String>();
-		 Iterator i = EmailField.getAvailableFields().values().iterator();
-		
-		 while (i.hasNext()) {
-			 
-			 EmailField ef = (EmailField)i.next();
-			 list.add(ef.getResourceKey());			 
+	  	 EmailFields emailFields = Config.getConfig().getEmailFields();
+	  	 for (EmailField ef : emailFields.getAvailableFields().values()) {
+	  		 if (!Compare.equalsIgnoreCase(ef.getName(),"body") &&
+					 !Compare.equalsIgnoreCase(ef.getName(),"attachments"))	{ 
+	  			 list.add(ef.getResource());			 
+	  		 }
 		 }
+	  	 list.add("field_label_addresses");
 		 Collections.sort(list, String.CASE_INSENSITIVE_ORDER);
 		 return translateList(list);
   }
 
-  public List getRuleActionFields() {
-  	return ArchiveRuleBean.getActions();
+  public List<String> getRuleActionFields() {
+  	return EnumUtil.enumToList(ArchiveFilter.Action.values()); 
   }
   
-  public List getRuleActionLabels() {
-  	return translateList(ArchiveRuleBean.getActionLabels());
+  public List<String> getRuleActionLabels() {
+	  return translateList(EnumUtil.enumToList(ArchiveFilter.Action.values(),"action_label_"));
   }
+  
+  public List<String> getRuleOperatorFields() { return EnumUtil.enumToList(EmailFilter.Operator.values()); };
+	
+  public List<String> getRuleOperatorLabels() {
+	 return translateList(EnumUtil.enumToList(EmailFilter.Operator.values(),"config.sec_rules_operator_"));
+   }
+    
+  public List<String> getRuleClauseConditionFields() { return EnumUtil.enumToList(EmailFilter.Condition.values()); };
+	
+  public List<String> getRuleClauseConditionLabels() {
+	 return translateList(EnumUtil.enumToList(EmailFilter.Condition.values(),"config.sec_rules_clauses_condition_"));
+   }
 
-  public List getADRoleMapAttributes() {
+  public List<String> getMethods() {
+  	return EnumUtil.enumToList(Criteria.Method.values());  
+  }
+  
+  public List<String> getMethodLabels() {
+  	return translateList(EnumUtil.enumToList(Criteria.Method.values(),"methode_label_"));
+  }
+  
+  public List<String> getFields() {
+	
+	  ArrayList<String> fieldList = new ArrayList<String>();
+	  EmailFields emailFields = Config.getConfig().getEmailFields();
+	  for (EmailField ef : emailFields.getAvailableFields().values()) {
+		  fieldList.add(ef.getName());
+	  }
+	  fieldList.add("all");
+	  fieldList.add("addresses");
+	  Collections.sort(fieldList, String.CASE_INSENSITIVE_ORDER);
+	  return fieldList;
+  }
+  
+  public List<String> getFieldLabels() {
+	  ArrayList<String> fieldLabelList = new ArrayList<String>();
+	  EmailFields emailFields = Config.getConfig().getEmailFields();
+	  for (EmailField ef :  emailFields.getAvailableFields().values()) {
+		  fieldLabelList.add(ef.getResource().toLowerCase(Locale.ENGLISH));
+	  }
+	  fieldLabelList.add("field_label_all");
+	  fieldLabelList.add("field_label_addresses");
+	  Collections.sort(fieldLabelList, String.CASE_INSENSITIVE_ORDER);
+  	  return translateList(fieldLabelList,true); 
+  }
+  
+  public List<String> getOperators() {
+	return EnumUtil.enumToList(Criteria.Operator.values());  
+  }
+  
+  public List<String> getOperatorLabels() {
+	return translateList(EnumUtil.enumToList(Criteria.Operator.values(),"operator_"));
+  }
+  
+
+  public List<String> getADRoleMapAttributes() {
 	return ADIdentity.ATTRIBUTES;
   }
 
-  public List getADRoleMapAttributeLabels() {
+  public List<String> getADRoleMapAttributeLabels() {
     return translateList(ADIdentity.ATTRIBUTE_LABELS);
   }
-  
-  public List getRoleMapRoles() {
-   	return Identity.getRoles();
-  }
+ 
 
-  public List getRoleMapRoleLabels() {
-    	return translateList(Identity.getRoleLabels());
-  }
-
-  public List getDebugLoggingLevelLabels() {
+  public List<String> getDebugLoggingLevelLabels() {
 	  List<String> loggingLevels = new LinkedList<String>();
 	  loggingLevels.add("config.log_level_all");
 	  loggingLevels.add("config.log_level_debug");
@@ -158,8 +190,7 @@ public class ConfigBean extends BaseBean implements Serializable {
 	  return translateList(Collections.unmodifiableList(loggingLevels));
   }
 
-  public List getDebugLoggingLevels() {
-
+  public List<String> getDebugLoggingLevels() {
 	  List<String> loggingLevels = new LinkedList<String>();
 	  loggingLevels.add("ALL");
 	  loggingLevels.add("DEBUG");
@@ -178,55 +209,158 @@ public class ConfigBean extends BaseBean implements Serializable {
   public String getDebugLoggingLevel() {
 	  return logLevel; 
   }
-  
-  public String getSmtpServerAddress() { return config.getSmtpServerAddress(); }
-  
-  public String getSmtpPassword() { return config.getSmtpPassword(); }
-  
-  public String getSmtpUsername() { return config.getSmtpUsername(); }
-  
-  public void setSmtpServerAddress(String smtpServerAddress) { config.setSmtpServerAddress(smtpServerAddress); }
-  
-  public void setSmtpUsername(String smtpUsername) { config.setSmtpUsername(smtpUsername); }
-  
-  public void setSmtpPassword(String smtpPassword) { config.setSmtpPassword(smtpPassword); }
-  
-  public void setArchiveInbound(boolean archiveInbound) { config.getArchiveRules().setArchiveInbound(archiveInbound); };
 
-  public void setArchiveOutbound(boolean archiveOutbound) {  config.getArchiveRules().setArchiveOutbound(archiveOutbound);  };
+  
+  public void setArchiveInbound(boolean archiveInbound) { config.getArchiveFilter().setArchiveInbound(archiveInbound); };
 
-  public void setArchiveInternal(boolean archiveInternal) { config.getArchiveRules().setArchiveInternal(archiveInternal); };
+  public void setArchiveOutbound(boolean archiveOutbound) {  config.getArchiveFilter().setArchiveOutbound(archiveOutbound);  };
 
-  public boolean getArchiveInbound() {  return config.getArchiveRules().getArchiveInbound(); }
+  public void setArchiveInternal(boolean archiveInternal) { config.getArchiveFilter().setArchiveInternal(archiveInternal); };
 
-  public boolean getArchiveOutbound() {return config.getArchiveRules().getArchiveOutbound(); }
+  public boolean getArchiveInbound() {  return config.getArchiveFilter().getArchiveInbound(); }
 
-  public boolean getArchiveInternal() { return config.getArchiveRules().getArchiveInternal(); }
+  public boolean getArchiveOutbound() {return config.getArchiveFilter().getArchiveOutbound(); }
+
+  public boolean getArchiveInternal() { return config.getArchiveFilter().getArchiveInternal(); }
 
 
-  public void setAuthMethod(String authMethod) { config.setAuthMethod(authMethod); }
+  public void setIndexAttachments(boolean indexAttachments) { config.getIndex().setIndexAttachments(indexAttachments); };
   
-  public String getAuthMethod() { return config.getAuthMethod().toString().toLowerCase(Locale.ENGLISH); }
-
-  public List getAuthMethods() {
-  	return EnumUtil.enumToList(Config.AuthMethod.values());
+  public boolean getIndexAttachments() { return config.getIndex().getIndexAttachments(); }
+  
+  public void setIndexMessageBody(boolean indexMessageBody) { config.getIndex().setIndexMessageBody(indexMessageBody); };
+  
+  public boolean getIndexMessageBody() { return config.getIndex().getIndexMessageBody(); }
+  
+  public void setMaxMessageSize(int maxMessageSize) { config.getArchiver().setMaxMessageSize(maxMessageSize); }
+  
+  public int getMaxMessageSize() { return config.getArchiver().getMaxMessageSize(); }
+  
+ 
+  public int getIndexThreads() { return config.getIndex().getIndexThreads(); }
+  
+  public void setIndexThreads(int indexThreads) { config.getIndex().setIndexThreads(indexThreads); }
+  
+  public List<String> getIndexLanguages() {
+      List<String> labels = new ArrayList<String>();
+      for (Map.Entry<String,String> searchAnalyzer : config.getSearch().getSearchAnalyzers().entrySet()) {
+    	  labels.add((String)searchAnalyzer.getKey());
+      }
+      return labels;
   }
   
-  public List getAuthMethodLabels() {
-  	return translateList(EnumUtil.enumToList(Config.AuthMethod.values(),"config.sec_auth_method_"));
+  public List<String> getIndexLanguageLabels() {
+	  List<String> labels = new ArrayList<String>();
+      for (Map.Entry<String,String> searchAnalyzer : config.getSearch().getSearchAnalyzers().entrySet()) {
+    	  labels.add("searchresults.language_"+searchAnalyzer.getKey());
+      }
+	  return translateList(labels);
+  }
+  
+  public void setIndexLanguageDetection(boolean indexLanguageDetection) { config.getIndex().setIndexLanguageDetection(indexLanguageDetection); }
+  
+  public boolean getIndexLanguageDetection() {  return config.getIndex().getIndexLanguageDetection();  }
+  
+  public void setIndexLanguage(String language) { config.getIndex().setIndexLanguage(language); }
+  
+  public String getIndexLanguage() { return config.getIndex().getIndexLanguage(); }
+  
+  public void setAuthMethod(String authMethod) { config.getAuthentication().setAuthMethod(authMethod); }
+  
+  public String getAuthMethod() { return config.getAuthentication().getAuthMethod().toString().toLowerCase(Locale.ENGLISH); }
+
+  public void setDefaultLoginDomain(String defaultLoginDomain) { config.getAuthentication().setDefaultLoginDomain(defaultLoginDomain); }
+  
+  public String getDefaultLoginDomain() { return config.getAuthentication().getDefaultLoginDomain(); };
+  
+  public List<String> getAuthMethods() {
+  	return EnumUtil.enumToList(Authentication.AuthMethod.values());
+  }
+  
+  public List<String> getAuthMethodLabels() {
+  	return translateList(EnumUtil.enumToList(Authentication.AuthMethod.values(),"config.sec_auth_method_"));
   }
  
+
+  public String getInitialSortField() {
+	  return config.getSearch().getInitialSortField().toLowerCase(Locale.ENGLISH);
+  }
+  
+  public void setInitialSortField(String sortField) {
+	  config.getSearch().setInitialSortField(sortField.toLowerCase(Locale.ENGLISH));
+  }
+  public String getInitialSortOrder() {
+      return config.getSearch().getInitialSortOrder().toString().toLowerCase(Locale.ENGLISH);
+  }
+  
+  public void setInitialSortOrder(String sortOrder) {
+	  config.getSearch().setInitialSortOrder(Search.SortOrder.valueOf(sortOrder.toUpperCase(Locale.ENGLISH)));
+  }
+  
+  public List<String> getInitialSortFields() {
+	  return getRuleFields();
+  }
+  
+  public List<String> getInitialSortFieldLabels() {
+	  return getRuleFieldLabels();
+  }
+  
+  public List<String> getInitialSortOrders() {
+  	return EnumUtil.enumToList(Search.SortOrder.values());
+  }
+  
+  public List<String> getInitialSortOrderLabels() {
+  	return translateList(EnumUtil.enumToList(Search.SortOrder.values(),"config.gen_search_initial_sort_order_"));
+  }
+  
+  
+  public void setInitialDateType(String dateType) {
+	  config.getSearch().setInitialDateType(Search.DateType.valueOf(dateType.toUpperCase(Locale.ENGLISH)));
+  }
+  
+  public String getInitialDateType() {
+	  return config.getSearch().getInitialDateType().toString().toLowerCase(Locale.ENGLISH);
+  }
+  
+  public List<String> getInitialDateTypes() {
+  	return EnumUtil.enumToList(Search.DateType.values());
+  }
+  
+  public List<String> getInitialDateTypeLabels() {
+  	return translateList(EnumUtil.enumToList(Search.DateType.values(),"config.gen_search_initial_date_type_"));
+  }
+	  
+  public void setOpenIndex(String openIndex) {
+	  Search.OpenIndex openIdx = Search.OpenIndex.SEARCH;
+	  try { 
+		  openIdx = Search.OpenIndex.valueOf(openIndex.trim().toUpperCase(Locale.ENGLISH));
+	  } catch (IllegalArgumentException iae) {
+  		logger.error("failed to apply open index type to search. open index type is set to an illegal value {type='"+openIndex+"'}");
+	}
+	  config.getSearch().setOpenIndex(openIdx);
+  }
+  
+  public String getOpenIndex() {
+      return config.getSearch().getOpenIndex().toString().toLowerCase(Locale.ENGLISH);
+  }
+  
+  public List<String> getOpenIndexes() {
+	  return EnumUtil.enumToList(Search.OpenIndex.values());
+  }
+  public List<String> getOpenIndexLabels() {
+	  return translateList(EnumUtil.enumToList(Search.OpenIndex.values(),"config.gen_search_open_index_per_"));
+  }
+  
   public void reset() {
   	
   }
 
   public String reload() {
-      ldapAttributes = "";
+	  initLdapLookup();
       testAuthenticate = "";
       recoveryOutput = "";
       recoveryComplete = false;
       recoveryFailed = 0;
-      portChange = false;
       return "reload";
   }
   
@@ -254,81 +388,139 @@ public class ConfigBean extends BaseBean implements Serializable {
   }
   
   public String getAgentSMTPPort() {
-	  return Integer.toString(config.getAgent().getSMTPPort());
+	  return Integer.toString(config.getSMTPServerService().getSMTPPort());
+  }
+  
+  public String getAgentSMTPAddress() {
+	  return config.getSMTPServerService().getIpAddress();
+  }
+  
+  public boolean getAgentSMTPEnable() {
+	  return config.getSMTPServerService().getSMTPEnable();
   }
   
   public void setAgentSMTPPort(String port) {
 	  int portVal = Integer.valueOf(port);
-	  if (portVal!=config.getAgent().getSMTPPort()) {
-		  portChange = true;
-		  config.getAgent().setSMTPPort(portVal);
-	  }
+	  config.getSMTPServerService().setSMTPPort(portVal);
+  }
+  
+  public void setAgentSMTPAddress(String address) {
+	  config.getSMTPServerService().setIpAddress(address);
+  }
+  
+  public void setAgentSMTPAuth(boolean auth) {
+	  config.getSMTPServerService().setSMTPAuth(auth);
+  }
+  
+  public boolean getAgentSMTPAuth() {
+	  return config.getSMTPServerService().getSMTPAuth();
+  }
+  
+  public void setAgentSMTPPassword(String smtpPassword) {
+	  config.getSMTPServerService().setSMTPPassword(smtpPassword);
+  }
+  
+  public String getAgentSMTPPassword() {
+	  return config.getSMTPServerService().getSMTPPassword();
+  }
+  
+  public void setAgentSMTPUsername(String username) {
+	  config.getSMTPServerService().setSMTPUsername(username);
+  }
+  
+  public String getAgentSMTPUsername() {
+	  return config.getSMTPServerService().getSMTPUsername();
+  }
+  
+  public void setAgentSMTPTLS(boolean smtpTLS) {
+	  config.getSMTPServerService().setSMTPTLS(smtpTLS);
+  }
+  
+  public boolean getAgentSMTPTLS() {
+	  return config.getSMTPServerService().getSMTPTLS();
+  }
+  
+  public boolean getAgentMilterEnable() {
+	  return config.getMilterServerService().getMilterEnable();
+  }
+  
+  public void setAgentMilterEnable(boolean enable) {
+	  config.getMilterServerService().setMilterEnable(enable);
+  }
+  
+  public void setAgentSMTPEnable(boolean enable) {
+	  config.getSMTPServerService().setSMTPEnable(enable);
   }
   
   public String getAgentMilterPort() {
-	  return Integer.toString(config.getAgent().getMilterPort());
+	  return Integer.toString(config.getMilterServerService().getMilterPort());
   }
   
-  public void setAgentMilterAgentPort(String port) {
-	  int portVal = Integer.valueOf(port);
-	  if (portVal!=config.getAgent().getMilterPort()) {
-		  portChange = true;
-		  config.getAgent().setMilterPort(portVal);
-	  }
+  public String getAgentMilterAddress() {
+	  return config.getMilterServerService().getIpAddress();
   }
-
+  
+  public void setAgentMilterPort(String port) {
+	  int portVal = Integer.valueOf(port);
+	  config.getMilterServerService().setMilterPort(portVal);
+	  
+  }
+  
+  public void setAgentMilterAddress(String address) {
+	  config.getMilterServerService().setIpAddress(address);
+  }
   /* volumes */
   
-  public List getVolumes() {
+  public List<VolumeBean> getVolumes() {
   	return VolumeBean.getVolumeBeans(config.getVolumes());
   }
   
   public Volume getMessageStoreVolume(int index) {
 	  	return config.getVolumes().getVolume(index);
   }
-	  
-  public String indexAllVolumes() throws ArchivaException {
-      logger.debug("indexAllVolumes()");
-      MessageService.indexAllVolumes(getMailArchivaPrincipal(),status);
-      return "reload";
-  }
 
   public String indexVolume(int volumeIndex) throws ArchivaException {
       logger.debug("indexVolume() {volumeIndex='"+volumeIndex+"'}");
-      MessageService.indexVolume(getMailArchivaPrincipal(),volumeIndex,status);
+      MessageService.indexVolume(getMailArchivaPrincipal(),volumeIndex);
       return "reload";
   }
 
   public String closeVolume(int volumeIndex) throws ConfigurationException {
       logger.debug("closeVolume()");
+      config.getVolumes().loadAllVolumeInfo();
       config.getVolumes().closeVolume(volumeIndex);
-      return "reload";
+      setSimpleMessage(getMessage("config.volume_status_change_notification"));
+     return "reload";
   }
   
   public String unmountVolume(int volumeIndex) throws ConfigurationException {
       logger.debug("unmountVolume()");
       config.getVolumes().unmountVolume(volumeIndex);
+      setSimpleMessage(getMessage("config.volume_status_change_notification"));
       return "reload";
   }
 
   public String deleteVolume(int id) throws ConfigurationException {
     logger.debug("deleteVolume() {volumeIndex='"+id+"'}");
-  	config.getVolumes().removeVolume(id);
+    config.getVolumes().removeVolume(id);
+    setSimpleMessage(getMessage("config.volume_status_change_notification"));
   	return "reload";
   }
   public String newVolume() throws ConfigurationException {
   	logger.debug("newVolume()");
-  	config.getVolumes().addVolume("","",config.getDefaultVolumeMaxSize());
-  	
+  	config.getVolumes().addVolume("","",config.getVolumes().getDefaultVolumeMaxSize(),false);
+  	setSimpleMessage(getMessage("config.volume_status_change_notification"));
   	return "reload";
   }
 
   public String prioritizeVolume(int id) throws ConfigurationException {
-  	config.getVolumes().setVolumePriority(id, Volumes.Priority.PRIORITY_LOWER);
+  	config.getVolumes().setVolumePriority(id, Volumes.Priority.PRIORITY_HIGHER);
+  	setSimpleMessage(getMessage("config.volume_status_change_notification"));
   	return "reload";
   }
   public String dePrioritizeVolume(int id) throws ConfigurationException {
   	config.getVolumes().setVolumePriority(id, Volumes.Priority.PRIORITY_LOWER);
+  	setSimpleMessage(getMessage("config.volume_status_change_notification"));
   	return "reload";
   }
 
@@ -344,11 +536,11 @@ public class ConfigBean extends BaseBean implements Serializable {
     	return "reload";
   }
   
-  public List getDomains() {
+  public List<DomainBean> getDomains() {
   	return DomainBean.getDomainBeans(config.getDomains().getDomains());
   }
 
-  public List getDomainLabels() {
+  public List<String> getDomainLabels() {
 	  List<String> domainList = new LinkedList<String>();
       List<Domains.Domain> domains = config.getDomains().getDomains();
       for (Domains.Domain domain : domains) {
@@ -373,39 +565,16 @@ public class ConfigBean extends BaseBean implements Serializable {
     	return config.getADIdentity().getRoleMap(index);
   }
 
-  public List getADRoleMaps() {
-      return LDAPRoleMapBean.getLDAPRoleMapBeans(config.getADIdentity().getRoleMaps());
+  public List<ADRoleMapBean> getADRoleMaps() {
+      return ADRoleMapBean.getADRoleMapBeans(config.getADIdentity().getRoleMaps());
   }
   
-  public String deleteLDAPRoleMap(int id) {
-      config.getLDAPIdentity().deleteRoleMap(id);
-      return "reload";
-  }
-
-  public String newLDAPRoleMap() throws ConfigurationException {
-	  	config.getLDAPIdentity().newRoleMap();
-    	return "reload";
-  }
-  
-  public List getLDAPRoleMaps() {
-      return LDAPRoleMapBean.getLDAPRoleMapBeans(config.getLDAPIdentity().getRoleMaps());
-  }
-  
-  public static List<String> getAdRoles() {
-  	return Identity.getRoles();
-  }
-  
-  public static List<String> getAdRoleLabels() {
-	return Identity.getRoleLabels();
-  }
-
+ 
+ 
   public ADIdentity getADIdentity() {
 	  return config.getADIdentity();
   }
-  
-  public LDAPIdentity getLDAPIdentity() {
-	  return config.getLDAPIdentity();
-  }
+ 
   /* basic role map */
   
 /* ad role maps */
@@ -424,54 +593,74 @@ public class ConfigBean extends BaseBean implements Serializable {
     	return config.getBasicIdentity().getRoleMap(index);
   }
 
-  public List getBasicRoleMaps() {
+  public List<BasicRoleMapBean> getBasicRoleMaps() {
       return BasicRoleMapBean.getBasicRoleMapBeans(config.getBasicIdentity().getRoleMaps());
   }
   
-  public static List<String> getBasicRoles() {
-  	return Identity.getRoles();
-  }
-  
-  public static List<String> getBasicRoleLabels() {
-	return Identity.getRoleLabels();
-  }
   /* archive rules */
 
   public String deleteArchiveRule(int id) throws ConfigurationException {
-  	config.getArchiveRules().deleteArchiveRule(id);
+  	config.getArchiveFilter().deleteArchiveRule(id);
   	return "reload";
   }
   
   public String newArchiveRule() throws ConfigurationException {
-  	config.getArchiveRules().addArchiveRule();
+  	config.getArchiveFilter().newArchiveRule();
   	return "reload";
   }
 
+  
   public String prioritizeArchiveRule(int id) throws ConfigurationException {
-  	config.getArchiveRules().setArchiveRulePriority(id, ArchiveRules.Priority.HIGHER);
+  	config.getArchiveFilter().setPriority(id, EmailFilter.Priority.HIGHER);
   	return "reload";
   }
   public String dePrioritizeArchiveRule(int id) throws ConfigurationException {
-  	config.getArchiveRules().setArchiveRulePriority(id, ArchiveRules.Priority.LOWER);
+  	config.getArchiveFilter().setPriority(id, EmailFilter.Priority.LOWER);
   	return "reload";
   }
 
-  public List getArchiveRules() {
-  	return ArchiveRuleBean.getArchiveRuleBeans(config.getArchiveRules());
+  public String newArchiveRuleClause(int id) {
+	  EmailFilter.FilterRule filterRule = config.getArchiveFilter().getArchiveRule(id);
+	  EmailFilter.FilterClause clause = new EmailFilter.FilterClause("subject", Condition.CONTAINS,"");
+	  filterRule.addClause(clause);
+	return "reload";
+ }
+
+  public String deleteArchiveRuleClause(int id, int cid ) {
+	  EmailFilter.FilterRule filterRule = config.getArchiveFilter().getArchiveRule(id);
+	// we do not want to allow deletion 
+	if (filterRule.getFilterClauses().size()<2)
+		return "reload";
+
+	EmailFilter.FilterClause clause = filterRule.getClause(cid);
+	if (clause!=null)
+		filterRule.deleteClause(clause);
+	return "reload";
+  }
+
+  public List<ArchiveRuleBean> getArchiveRules() {
+  	return ArchiveRuleBean.getArchiveRuleBeans(config.getArchiveFilter().getArchiveRules());
   }
 
   public ArchiveRuleBean getArchiveRule(int index) {
-  	return new ArchiveRuleBean(config.getArchiveRules().getArchiveRule(index));
+  	return new ArchiveRuleBean(config.getArchiveFilter().getArchiveRule(index));
   }
 
   public void setPassPhrase(String passPhrase) {
       //logger.debug("setPassPhrase {passPhrase='"+passPhrase+"'}");
       if (passPhrase.trim().length()>0)
-          config.setPassPhrase(passPhrase);
+    	  passPhrase1=passPhrase;
+      
+  }
+  
+  public void setPassPhraseAgain(String passPhrase) {
+      //logger.debug("setPassPhrase {passPhrase='"+passPhrase+"'}");
+      if (passPhrase.trim().length()>0)
+    	  passPhrase2=passPhrase;
   }
   
   public boolean getDefaultPassPhraseModified() {
-      return config.isDefaultPassPhraseModified();
+      return config.getArchiver().isDefaultPassPhraseModified();
   }
   
   public String getLookupPassword() {
@@ -489,37 +678,88 @@ public class ConfigBean extends BaseBean implements Serializable {
       this.lookupUsername = username;
   }
   
-  public String getLdapAttributes() {
-      return ldapAttributes;
-  }
-
-  public void setLdapAttributes(String ldapAttributes) {
-      this.ldapAttributes = ldapAttributes;
-  }
-  
   public void setTestAuthenticate(String testAuthenticate) {
       this.testAuthenticate = testAuthenticate;
+  }
+  
+  public String getLookupAttribute() {
+	  return lookupAttribute;
+  }
+  public void setLookupAttribute(String lookupAttribute) {
+	  this.lookupAttribute = lookupAttribute;
+  }
+  
+  public int getLookupIndex() {
+	  return lookupIndex;
+  }
+  
+  public void setLookupIndex(int lookupIndex) {
+	  this.lookupIndex = lookupIndex;
+  }
+  
+  public String getLookupValue() {
+	  return lookupValue; 
+  }
+  
+  public void setLookupValue(String lookupValue) {
+	  this.lookupValue = lookupValue;
   }
   
   public String getTestAuthenticate() {
       return testAuthenticate;
   }
   
+  public int getPollingIntervalSecs() {
+	  return config.getMailboxConnections().getPollingIntervalSecs();
+  }
 
-
+  public void setPollingIntervalSecs(int pollingIntervalSecs) {
+	  config.getMailboxConnections().setPollingIntervalSecs(pollingIntervalSecs);
+  }
+  
+  public MailboxConnectionBean getMailboxConnection() {
+	  return new MailboxConnectionBean(config.getMailboxConnections().getConnection());
+  }
+  
+  public List<String> getProtocols() {
+  	return EnumUtil.enumToList(MailboxConnections.Protocol.values());
+  }
+  
+  public List<String> getProtocolLabels() {
+  	return translateList(EnumUtil.enumToList(MailboxConnections.Protocol.values(),"config.mailbox_connections_protocol_"));
+  }
+  
+  public List<String> getConnectionModes() {
+	  return EnumUtil.enumToList(MailboxConnections.ConnectionMode.values());
+  }
+  
+  public List<String> getConnectionModeLabels() {
+	  	return translateList(EnumUtil.enumToList(MailboxConnections.ConnectionMode.values(),"config.mailbox_connections_connection_mode_"));
+  }
+  
+  
+ 
+ 
   public String configurationform() {
+	  logLevel = ConfigurationService.getLoggingLevel();
   	try {
-  		config.load();
+  		
+  		Config.getConfig().cloneTo(getMailArchivaPrincipal(),config);
   		if (getNoWaitingMessagesInNoArchiveQueue()>0) {
-	  		ActionContext ctx = ActionContext.getActionContext();
-	  		
 	  		if (getServlet()!=null)
 	  			setSimpleMessage(getMessage("config.no_archive_warning")+" "+getNoWaitingMessagesInNoArchiveQueue()+".");
   		}
+  	
   	} catch (ConfigurationException ce) {
  		logger.error("failed to load configuration",ce);
  		throw new ChainedRuntimeException(ce.toString(),ce,logger);
  	}
+	if (getDefaultPassPhraseModified()) {
+			passPhrase1 = passPhrase2 = "modified";
+		} else {
+			passPhrase1 = "changeme1";
+			passPhrase2 = "changeme2";
+		}
   	return "success";
   }
   
@@ -550,18 +790,62 @@ public class ConfigBean extends BaseBean implements Serializable {
   }
   
   public int getNoWaitingMessagesInNoArchiveQueue() {
-	  	return MessageService.getNoWaitingMessagesInNoArchiveQueue();
+	  	return MessageService.getNoMessagesForRecovery();
   }
   
   public String quarantine() {
-	  MessageService.quarantineEmails();
+	  MessageService.quarantineMessages();
 	  return "success";
   }
   
   public int getNoQuarantinedEmails() {
-	  return MessageService.getNoQuarantinedEmails();
+	  return MessageService.getNoQuarantinedMessages();
+  }
+  
+  
+  public class MailboxConnectionTestStatus extends IAPTestStatus {
+	  
+	  public void statusUpdate(String result) {
+		  mailboxTestOutput += result + "<br>";
+	  }
+	  
   }
 
+  public String getMailboxTestOutput() {
+	  return mailboxTestOutput;
+  }
+	  
+  public String testMailboxConnection() {
+	  mailboxTestOutput = "please wait. testing mailbox connection...<br>";
+	  MailboxConnection connection = config.getMailboxConnections().getConnection();
+	  if (connection!=null) {
+		  ConfigurationService.testMailboxConnection(connection,new MailboxConnectionTestStatus());
+	  }
+	  return "reload";
+  }
+
+  public String testloginform() {
+	  testAuthenticate = "";
+	  return "success";
+  }
+  
+  
+  public void initLdapLookup() {
+	  ldapAttributes = new ArrayList<String>();
+      lookupError = "";
+      lookupAttribute = "";
+	  lookupValue = "";
+  }
+  public String lookuprolecriterionldapform() {
+	  initLdapLookup();
+	  return "success";
+  }
+  
+  public String lookuprolecriterionform() {
+	  initLdapLookup();
+	  return "success";
+  }
+  
   public String configure() throws ArchivaException
   {
     SubmitButton button = getSubmitButton();
@@ -571,7 +855,6 @@ public class ConfigBean extends BaseBean implements Serializable {
     
   	logger.debug("configure() {action ='"+button.action+"', value='"+button.value+"'}");
 
-  	
 	  	if (button.action.equals("newvolume")) {
 	  		return newVolume();
 		} else if (button.action.equals("deletevolume")) {
@@ -590,8 +873,6 @@ public class ConfigBean extends BaseBean implements Serializable {
 	  		return dePrioritizeArchiveRule(Integer.parseInt(button.value));
 	  	} else if (button.action.equals("cancel")) {
 	  		return cancel();
-	  	} else if (button.action.equals("indexallvolumes")) {
-	  	    return indexAllVolumes();
 	  	} else if (button.action.equals("indexvolume")) {
 	  	    return indexVolume(Integer.parseInt(button.value));
 	  	} else if (button.action.equals("newadrolemap")) {
@@ -620,66 +901,47 @@ public class ConfigBean extends BaseBean implements Serializable {
 	  		return recoverEmails();
 	  	} else if (button.action.equals("quarantineemails")) {
 	  		return quarantine();
-	  	}
-	  	
+	  	} else if (button.action.equals("testmailboxconnection")) {
+	  		return testMailboxConnection();
+	  	} else if (button.action.equals("newarchiveruleclause")) {
+	  		return newArchiveRuleClause(Integer.parseInt(button.value));
+	  	} else if (button.action.equals("deletearchiveruleclause")) {
+	  		int dotpos = button.value.indexOf('.');
+	  		String id = button.value.substring(0,dotpos);
+	  		String cid = button.value.substring(dotpos+1,button.value.length());
+	  		return deleteArchiveRuleClause(Integer.parseInt(id),Integer.parseInt(cid));
+	  	} 
+	  		
 	  	ActionContext ctx = ActionContext.getActionContext();
+	 
+	  	if (ctx.isSimpleErrorsExist())
+	  		return reload();
 	  	
-	  	
-	  	/*  
-	  	
-	  
-  public List<String> getAgentIPAddresses() {
-	  return config.getAgent().getIPAddresses();
-  }
-  
-  public void newAgentIPAddress() {
-	  config.getAgent().addAllowedIPAddress("127.0.0.1");
-  }
-  
-  public void deleteAgentIPAddress(int id) {
-	  config.getAgent().removeIPAddress(id);
-  }
-  
-  public String getAgentPort() {
-	  return Integer.toString(config.getAgent().getPort());
-  }
-  
-  public void setAgentPort(String port) {
-	  config.getAgent().setPort(Integer.valueOf(port));
-  }
-  
-	  	 */
 	  	if (!createVolumeDirectories())
 	  		return reload();
-	  	config.getVolumes().saveAllVolumeInfo(false);
-	  	config.getVolumes().loadAllVolumeInfo();
-	  	
-	  	ConfigurationService.setConfig(config);
-	  	
-	  
-	  	
-	  	config.save();
-	  	setSimpleMessage(getMessage("config.saved"));
-	  	MessageService.initCipherKeys(); // initialize cipher keys (for new password)
-	  	if (portChange) {
-	  		MessageService.restartIncomingListeners(); // restart incoming SMTP and milter listeners
-	  		portChange = false;
+	
+	 	boolean error = false;
+	 
+	  	if (!error) {
+	  		setSimpleMessage(getMessage("config.saved"));
 	  	}
-	  
-	  	audit.info("update config "+ config.getProperties().toString());
+	
+	 	ConfigurationService.modifyConfig(getMailArchivaPrincipal(),config);
+	  	MessageService.init(); // initialize cipher keys (for new password)
+
 	  	ConfigurationService.setLoggingLevel(logLevel);
+	 
       	return save();
   }
   
+	
+  
   protected boolean createVolumeDirectories() {
-	      List volumes = config.getVolumes().getVolumes();
 	      boolean success = true;
 	      ActionContext ctx = ActionContext.getActionContext();
-	      Iterator i = volumes.iterator();
 	      int c = 0;
-	      while (i.hasNext()) {
-	          Volume v = (Volume)i.next();
-	          if (!MessageService.createVolumeDirectories(v)) {
+	      for (Volume v : config.getVolumes().getVolumes()) {
+	          if (!MessageService.prepareVolume(v)) {
 	        	  ctx.addSimpleError(getMessage("config.volume_create_failed")+" "+c+".");
 	        	  success=false;
 	          }
@@ -692,40 +954,63 @@ public class ConfigBean extends BaseBean implements Serializable {
 	 
 	  SubmitButton button = getSubmitButton();
       String action = button.action;
-      ldapAttributes = "";
+      initLdapLookup();
       if (action!=null && Compare.equalsIgnoreCase(action, "lookup")) {    	 
 	      try {
-	    	  if (config.getAuthMethod()==Config.AuthMethod.ACTIVEDIRECTORY)
-	    		  ldapAttributes = getAttributeValues(config.getADIdentity(),true);
-	    	  else
-	    		  ldapAttributes = getAttributeValues(config.getLDAPIdentity(),false);
+	    	  ldapAttributes = getAttributeValues(config.getADIdentity());
 	      } catch (ArchivaException ae) {
-	          ldapAttributes = getMessage("lookup_role.failure")+"." + ae.getMessage();
-	          return "success";
+	    	  lookupError = getMessage("lookup_role.failure")+":";
+	          String message = ae.getMessage();
+	        
+	          if (message!=null) {
+	        	  int infoIndex = message.lastIndexOf("{");
+	        	  if (infoIndex>-1) {
+	        		  message = message.substring(0,infoIndex-1);
+	        	  }
+	        	  lookupError= message + " " + getAuthenticationErrorHint(message);
+	          }
+	         return "success";
 	      }
       } 
       return "success";
   }
   
   
-  protected String getAttributeValues(LDAPIdentity identity,boolean constrain) throws ArchivaException {
-      String ldapAttributes = "";
+  protected String getAuthenticationErrorHint(String error) {
+	  String retError = "";
+	  if (error.contains("(7)"))
+		  retError += getMessage("config.sec_ad_7");
+      if (error.contains("(37)"))
+    	  retError += getMessage("config.sec_ad_37");
+      if (error.contains("(24)")) 
+    	  retError += getMessage("config.sec_ad_24");
+      if (error.contains("(18)")) 
+    	  retError += getMessage("config.sec_ad_18");
+      if (error.contains("(14)"))
+    	  retError += getMessage("config.sec_ad_14");
+      if (error.contains("(906)"))
+    	  retError += getMessage("config.sec_ad_906");
+      if (error.contains("(68)"))
+    	  retError += getMessage("config.sec_ad_68");
+      if (error.contains("(6)"))
+    	  retError += getMessage("config.sec_ad_6");
+      return retError;
+  }
+  
+  protected ArrayList<String> getAttributeValues(ADIdentity identity) throws ArchivaException {
+      ArrayList<String> ldapAttributes = new ArrayList<String>();
       ArrayList<ADRealm.AttributeValue> attributeValues;
-	  attributeValues = ConfigurationService.getLDAPAttributeValues(identity,lookupUsername, lookupPassword);
+	  attributeValues = ConfigurationService.getLDAPAttributeValues(config,identity,lookupUsername, lookupPassword);
       for (ADRealm.AttributeValue attributeValue: attributeValues) {
-    	  if (constrain) {
-	    	  for (String key: ADIdentity.ATTRIBUTES) {
-	    		 if (Compare.equalsIgnoreCase(attributeValue.getAttribute(), key)) {
-	    			 ldapAttributes += attributeValue.getAttribute() + " : " + attributeValue.getValue() + "<br>";  
-	    	     }
-	    	  }
-    	  } else ldapAttributes += attributeValue.getAttribute() + " : " + attributeValue.getValue() + "<br>";  
+	    		 ldapAttributes.add(attributeValue.getAttribute()+" : "+attributeValue.getValue());  
       } 
       return ldapAttributes;
   }
   
+  
   public String testlogin() {
       testAuthenticate = ConfigurationService.testAuthenticate(config,lookupUsername,lookupPassword);
+      testAuthenticate = testAuthenticate+" "+getAuthenticationErrorHint(testAuthenticate);
       return "success";
   }
   
@@ -736,7 +1021,7 @@ public class ConfigBean extends BaseBean implements Serializable {
 
   public String cancel() {
       try {	  	
-            config.load();
+            config.loadSettings(getMailArchivaPrincipal());
             setSimpleMessage(getMessage("config.cancelled"));
       } catch (ConfigurationException ce) {
         logger.error("failed to load configuration",ce);
@@ -753,42 +1038,61 @@ public class ConfigBean extends BaseBean implements Serializable {
       String action = button.action;
       if (action!=null && Compare.equalsIgnoreCase(action, "save")) {
 	      ActionContext ctx = ActionContext.getActionContext();
-	     
-	      Iterator i = config.getArchiveRules().getArchiveRules().iterator();
+	      
+	      validateRequiredField(passPhrase1, getMessage("config.sec_enc_passwd_not_entered"));
+
+	      if (Compare.equalsIgnoreCase(passPhrase1,"changeme1")) {
+	    	  ctx.addSimpleError(getMessage("config.sec_enc_passwd_not_entered"));
+	      } else {
+		      if (!Compare.equalsIgnoreCase(passPhrase1,passPhrase2)) 
+		    	  ctx.addSimpleError(getMessage("config.sec_enc_passwd_not_match"));
+		      else if (!passPhrase1.equalsIgnoreCase("modified")) {
+		    	  config.getArchiver().setPassPhrase(passPhrase1);
+		    	  passPhrase1 = passPhrase2 = "modified";
+		      }
+	      }
+	      
+	      
 	      int j = 0;
-	      while (i.hasNext()) {
-	          ArchiveRules.Rule ar = (ArchiveRules.Rule)i.next();
-	          ArchiveRuleBean arb = new ArchiveRuleBean(ar);
+	      for (EmailFilter.FilterRule ar : config.getArchiveFilter().getArchiveRules()) {
+	    	  ArchiveRuleBean arb = new ArchiveRuleBean(ar);
 	          validateRequiredField(arb.getAction(), getMessage("config.sec_rules_action_missing")+" "+j+".");
-	          validateRequiredField(arb.getField(), getMessage("config.sec_rules_field_missing")+" "+j+".");
-	          validateRequiredField(arb.getRegEx(), getMessage("config.sec_rules_match_crit_missing")+" "+j+".");
-	          try {
-	              Pattern p = Pattern.compile(arb.getRegEx());
-	          } catch (Exception e) {
-	              ctx.addSimpleError(getMessage("config.rules_sec_match_crit_invalid")+" "+j+".");
+	          validateRequiredField(arb.getOperator(), getMessage("config.sec_rules_operator_missing")+" "+j+".");
+	          for (EmailFilter.FilterClause fc : ar.getFilterClauses()) {
+	        	  validateRequiredField(fc.getField(), getMessage("config.sec_rules_clause_field_missing")+" "+j+".");
+	        	  validateRequiredField(fc.getValue(), getMessage("config.sec_rules_clause_value_missing")+" "+j+".");
+	        	  validateRequiredField(fc.getCondition().toString(), getMessage("config.sec_rules_clause_condition_missing")+" "+j+".");
+	        	  
+	        	  if (fc.getCondition()==EmailFilter.Condition.MATCHES) {
+	        		  try {
+	    	              Pattern p = Pattern.compile(fc.getValue());
+	    	          } catch (Exception e) {
+	    	              ctx.addSimpleError(getMessage("config.sec_rules_clause_value_invalid")+" "+j+".");
+	    	          }
+	        	  }
 	          }
 	          j++;
 	      }
 	      j = 0;
-	      i = config.getVolumes().getVolumes().iterator();
-	      while (i.hasNext()) {
-	          Volume v = (Volume)i.next();
+	      for (Volume v : config.getVolumes().getVolumes()) {
 	          validateRequiredField(v.getPath(), getMessage("config.volume_store_path_missing")+" "+j+".");
 	          validateRequiredField(v.getIndexPath(), getMessage("config.volume_index_path_missing")+" "+j+".");
+	          if (Compare.equalsIgnoreCase(v.getPath().trim(),v.getIndexPath().trim())) {
+	        		  ctx.addSimpleError(getMessage("config.volume_paths_match")+" "+j+".");
+	          }
 	          j++;
 	      }
 	      
 	      // active directory
 	      
-	      if (this.config.getAuthMethod()==Config.AuthMethod.ACTIVEDIRECTORY) {
+	      if (this.config.getAuthentication().getAuthMethod()==Authentication.AuthMethod.ACTIVEDIRECTORY) {
 	          validateRequiredField(config.getADIdentity().getKDCAddress(), getMessage("config.sec_kdc_missing"));
 	          validateRequiredField(config.getADIdentity().getLDAPAddress(), getMessage("config.sec_ldap_missing"));
 	      }
 	      
 	      j = 0;
-	      i = config.getADIdentity().getRoleMaps().iterator();
-	      while (i.hasNext()) {
-	          LDAPIdentity.LDAPRoleMap r = (LDAPIdentity.LDAPRoleMap)i.next();
+	      for (Identity.RoleMap rolemap : config.getADIdentity().getRoleMaps()) {
+	      ADIdentity.ADRoleMap r = (ADIdentity.ADRoleMap)rolemap;
 	          validateRequiredField(r.getRole(), getMessage("config.sec_role_no_select")+" "+j+".");
 	          validateRequiredField(r.getAttribute(), getMessage("config.sec_ldap_no_select")+" "+j+".");
 	          validateRequiredField(r.getRegEx(), getMessage("config.sec_role_match_crit_invalid")+" "+j+".");
@@ -801,20 +1105,50 @@ public class ConfigBean extends BaseBean implements Serializable {
 	      }
 	      
 	    
+	      
+	      j = 0;
+	      for (Identity.RoleMap rolemap : config.getBasicIdentity().getRoleMaps()) {
+	    	  BasicIdentity.BasicRoleMap r = (BasicIdentity.BasicRoleMap)rolemap;
+	          validateRequiredField(r.getRole(), getMessage("config.sec_role_no_select")+" "+j+".");
+	          validateRequiredField(r.getUsername(), getMessage("config.sec_role_match_username_invalid")+" "+j+".");
+	          validateRequiredField(r.getLoginPassword(), getMessage("config.sec_role_match_password_invalid")+" "+j+".");
+	          
+	          String username = r.getUsername();
+		      int at = username.lastIndexOf('@');
+		      if (at==-1) {
+		    	   validateRequiredField(null, getMessage("config.sec_role_match_username_format_invalid")+" "+j+".");
+		      }
+	          j++;
+	      }
+	  
 
+	      j = 0;
+	      for (Domains.Domain d : config.getDomains().getDomains()) {
+	          validateRequiredField(d.getName(), getMessage("config.sec_domain_missing")+" "+j+".");
+	          j++;
+	      }
+	      /*
+	      j = 0;
+	      
+	      for (Roles.Role r : config.getRoles().getRoles()) {
+	    		if (r.equals(Roles.ADMINISTRATOR_ROLE) ||
+	    		    	r.equals(Roles.USER_ROLE) ||
+	    		    	r.equals(Roles.AUDITOR_ROLE) || 
+	    		    	r.equals(Roles.SYSTEM_ROLE)) {
+	    		    	continue;
+	    	    	}
+	    	  validateRequiredField(r.getName(), getMessage("config.role_name_missing")+" "+j+".");
+	    	  for (Criteria criterion : r.getViewFilter().getCriteria()) {
+	    		  validateRequiredField(criterion.getQuery(), getMessage("config.role_view_filter_query_missing")+" "+j+".");
+	    	  }
+	    	  j++;
+	      }*/
       }
   }
 
- 
-
-  public class RecoverInfo extends MessageService.Recovery implements Serializable {
+  public class RecoverInfo extends MessageService.Recovery {
 	  
-	  /**
-	 * 
-	 */
-	private static final long serialVersionUID = -6960318442102586086L;
-
-	public RecoverInfo() {
+	  public RecoverInfo() {
 		  recoveryOutput = "";
 		  recoveryComplete = false;
 		  recoveryFailed = 0;
@@ -844,65 +1178,7 @@ public class ConfigBean extends BaseBean implements Serializable {
 
   }
 
-  public IndexStatus getIndexStatus() {
-      return status;
-  }
 
-  public static class IndexStatus implements MessageService.IndexStatus, Serializable {
-
-      /**
-	 * 
-	 */
-	private static final long serialVersionUID = 8430809249326795262L;
-	protected long completeSize=0;
-      protected long totalSize=0;
-      protected long completeFileCount=0;
-      protected long totalFileCount = 0;
-      protected boolean initialized = false;
-      protected boolean complete = false;
-      protected boolean error = false;
-      protected String errorMessage = "unknown";
-
-      public void start() {
-          completeSize = 0; totalSize = 0; completeFileCount = 0; totalFileCount = 0;
-          initialized = false; complete = false; error = false;
-          logger.debug("start(). starting to process messages for indexing.");
-      }
-
-      public void finish() {
-          logger.debug("finished(). indexing of messages complete. {"+toString()+"}");
-          this.complete = true;
-          }
-
-      public void update(long completeSize, long totalSize, long completeFileCount, long totalFileCount) {
-
-          this.completeSize = completeSize;
-          this.totalSize = totalSize;
-          this.completeFileCount = completeFileCount;
-          this.totalFileCount = totalFileCount;
-          initialized = true;
-          logger.debug("index updated {"+toString()+"}");
-      }
-      public long getCompleteSize() { return completeSize / 1024; }
-      public long getTotalSize() { return totalSize / 1024; }
-      public long getCompleteFileCount() { return completeFileCount; }
-      public long getTotalFileCount() { return totalFileCount; }
-      public long getPercentComplete() { return totalFileCount!=0 ? (completeFileCount / totalFileCount) * 100 : 0; }
-      public boolean getInitialized() { return initialized; }
-      public boolean getComplete() { return complete; }
-      public boolean getError() { return error;}
-      public String getErrorMessage() { return errorMessage; }
-      public void setErrorMessage(String errorMessage) {
-          logger.debug("failed to index message {error='"+errorMessage+"',"+toString()+"}");
-          this.errorMessage = errorMessage;
-          error = true;
-      }
-
-      public String toString() {
-          return "totalSize='"+totalSize+"',completeSize='"+completeSize+"',totalFileCount='"+totalFileCount+"',completeFileCount='"+completeFileCount+"'";
-      }
-  }
-  
   public String getDebugLog() {
 	  return ConfigurationService.getDebugLog();
   }
@@ -912,7 +1188,95 @@ public class ConfigBean extends BaseBean implements Serializable {
   }
   
   public String getVersion() {
-	  return ConfigurationService.getConfig().getApplicationVersion();
+	  return Config.getConfig().getApplicationVersion();
   }
+  
+  public List<String> getLDAPAttributes() {
+	  return ldapAttributes;
+  }
+  
+  public int getLDAPAttributeListSize() {
+	  return ldapAttributes.size();
+  }
+  public List<String> getLDAPAttributeLabels() {
+	  ArrayList<String> ldapAttributeLabels = new ArrayList<String>();
+	  for (String attributeValue: ldapAttributes) {
+		  
+		  String value = "";
+		  
+		  if (attributeValue.length() > 60) {
+			  value = attributeValue.substring(0,60);
+			  value += "..";  
+		  } else {
+			  value = attributeValue;
+		  }
+		  ldapAttributeLabels.add(value);  
+		  
+	  } 
+	  return ldapAttributeLabels;
+  }
+
+  public String getLookupError() {
+	  return lookupError;
+  }
+  
+  public void setLDAPAttributes(ArrayList<String> ldapAttributes) {
+	  this.ldapAttributes = ldapAttributes;
+  }
+  
+  public int getIndexMaxSize() { 
+	  return config.getIndex().getIndexMaxSize();
+  }
+  
+  public void setIndexMaxSize(int maxIndexSize) {
+	  config.getIndex().setIndexMaxSize(maxIndexSize);
+  }
+  
+  public int getArchiveThreads() {
+	   return config.getArchiver().getArchiveThreads();
+  }
+  
+  public void setArchiveThreads(int archiveThreads) {
+	   config.getArchiver().setArchiveThreads(archiveThreads);
+  }
+  
+  public List<String> getRoleValues() {
+	  ArrayList<String> roleValues = new ArrayList<String>();
+	  for (Roles.Role role : config.getRoles().getRoles()) {
+		  if (Compare.equalsIgnoreCase(role.getName(),"system"))
+			  continue;
+		  roleValues.add(role.getName());
+	  }
+	  return roleValues;
+  }
+
+	public List<String> getBindIPAddresses() {
+		ArrayList<String> ipAddresses = new ArrayList<String>();
+		ipAddresses.add("all");
+		addIpAddresses(ipAddresses);
+		return ipAddresses;
+	  }
+	
+	
+	protected void addIpAddresses(ArrayList<String> ipAddresses) {
+		try {
+			for (Enumeration e = NetworkInterface.getNetworkInterfaces(); e.hasMoreElements();) {
+				NetworkInterface iface = (NetworkInterface) e.nextElement();
+				for (Enumeration a = iface.getInetAddresses(); a.hasMoreElements();) {
+					InetAddress addr = (InetAddress) a.nextElement();
+					ipAddresses.add(addr.getHostAddress());
+				}
+			}
+		} catch (Exception e) {
+			logger.error("failed to retrieve bind ip addresses:"+e.getMessage());
+		}
+	}
+	public List<String> getBindIPAddressLabels() {
+		ArrayList<String> ipAddresses = new ArrayList<String>();
+		ipAddresses.add(getMessage("config.agent_all_interfaces"));
+		addIpAddresses(ipAddresses);
+		return ipAddresses;
+	  }
+	
 
 }

@@ -14,22 +14,9 @@
 <link href="common/mailarchiva.css" rel="stylesheet" type="text/css">
 <title><bean:message key="signon.title"/></title>
 
-<style type="text/css">
-<!--
-
-.boxborder {
-	border: 1px groove #000000;
-}
-body {
-	background-image:  url(images/gradient.jpg);
-	background-repeat:repeat-x;
-	background-color: #C6CFD0;
-}
--->
-</style>
 </head>
 
-<body onLoad="document.LoginForm.j_username.focus();">
+<body class="signonbackground" onLoad="document.LoginForm.j_username.focus();">
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr> 
@@ -40,13 +27,10 @@ body {
   
   <tr align="center"> 
     
-    <td colspan="3"><form name="LoginForm" id="LoginForm" action="j_security_check" method="POST">
-      <table class="section1"  width="400" border="0" cellpadding="0" cellspacing="6">
-        <tr> 
-          <td align="center" colspan="3" nowrap></td>
-        </tr>
-        <tr align="center"> 
-    		<td colspan="3"><h2><bean:message key="signon.title"/></h2></td>
+    <td colspan="3"><form name="LoginForm" id="LoginForm" action="j_security_check" autocomplete="false" method="POST">
+      <table class="pagedialog"  width="400" border="0" cellpadding="0" cellspacing="2">
+       <tr align="center"> 
+    		<td colspan="3"><img align="center" src="<bean:message key="signon.image"/>" hspace="0" vspace="0" border="0"></td>
   		</tr>
         <tr> 
           <td align="right" nowrap><bean:message key="signon.username"/></td>
@@ -66,8 +50,8 @@ body {
      </form> 
   </tr>
   <tr> 
-    <td width="5%"><font size="2">&nbsp;</font></td>
-    <td width="90%" align="center"><font size="2"><bean:message key="signon.software_title"/></font><br/></td>
+    <td width="5%"><font size="2">&nbsp;</td>
+    <td width="90%" align="center"><font size="2"><bean:message key="signon.software_title"/><br/></td>
     <td width="5%"><div align="right"></div></td>
   </tr>
 </table>

@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -25,25 +17,18 @@
 
 package com.stimulus.archiva.extraction;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.Serializable;
-
-import org.apache.log4j.Logger;
-import org.apache.poi.poifs.eventfilesystem.POIFSReader;
-import org.apache.poi.poifs.eventfilesystem.POIFSReaderEvent;
-import org.apache.poi.poifs.eventfilesystem.POIFSReaderListener;
-import org.apache.poi.poifs.filesystem.DocumentInputStream;
-import org.apache.poi.util.LittleEndian;
-
 import com.stimulus.archiva.exception.ExtractionException;
-import com.stimulus.util.Compare;
-import com.stimulus.util.TempFiles;
+import java.io.*;
+
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.poi.poifs.eventfilesystem.POIFSReaderEvent;
+import org.apache.poi.poifs.filesystem.DocumentInputStream;
+import org.apache.poi.poifs.eventfilesystem.POIFSReader;
+import org.apache.poi.poifs.eventfilesystem.POIFSReaderListener;
+import org.apache.poi.util.LittleEndian;
+import com.stimulus.util.*;
+import java.nio.charset.Charset;
 
 public class PowerpointExtractor implements TextExtractor,POIFSReaderListener,Serializable {
 
@@ -51,14 +36,14 @@ public class PowerpointExtractor implements TextExtractor,POIFSReaderListener,Se
 	 * 
 	 */
 	private static final long serialVersionUID = -6003013329110133862L;
-	protected static Logger logger = Logger.getLogger(Extractor.class.getName());
+	protected static final Logger logger = Logger.getLogger(Extractor.class.getName());
 	private OutputStream output = null;
 	
 	public PowerpointExtractor()
 	{
 	}
 
-	public Reader getText(InputStream is,TempFiles tempFiles) throws ExtractionException
+	public Reader getText(InputStream is,TempFiles tempFiles, Charset charset) throws ExtractionException
 	{
 	    File file = null;
 	    try {
@@ -69,7 +54,7 @@ public class PowerpointExtractor implements TextExtractor,POIFSReaderListener,Se
 	        reader.registerListener(this);
 	        reader.read(is);
 	    } catch (Exception ex) {
-	        throw new ExtractionException("failed to extract text from powerpoint document",ex,logger);
+	        throw new ExtractionException("failed to extract text from powerpoint document",ex,logger,Level.DEBUG);
 	    }  finally {
             if (output != null) {
                 try {
@@ -80,7 +65,7 @@ public class PowerpointExtractor implements TextExtractor,POIFSReaderListener,Se
 	    try {
 	        return new FileReader(file);
 	    } catch(Exception ex) {
-	        throw new ExtractionException("failed to extract text from powerpoint document",ex,logger);
+	        throw new ExtractionException("failed to extract text from powerpoint document",ex,logger,Level.DEBUG);
 	    }
 	}
 

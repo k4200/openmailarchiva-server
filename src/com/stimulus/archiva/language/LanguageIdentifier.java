@@ -1,26 +1,20 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-/* Copyright (C) 2005-2007 Jamie Angus Band 
- * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 2 of the License, or (at your option) any later version.
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 
 /**
  * Identify the language of a content, based on statistical analysis.
@@ -36,20 +30,10 @@
 package com.stimulus.archiva.language;
 
 // JDK imports
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
-
-import org.apache.log4j.Logger;
-
+import java.io.*;
+import java.util.*;
 import com.stimulus.archiva.language.NGramProfile.NGramEntry;
+import org.apache.log4j.Logger;
 
 
 public class LanguageIdentifier implements Serializable {
@@ -63,7 +47,7 @@ private final static int MINIMUM_SAMPLE_LENGTH = 300;
 	 
   private final static int DEFAULT_ANALYSIS_LENGTH = 1500;    // 0 means full content
   
-  protected static Logger logger = Logger.getLogger(LanguageIdentifier.class.getName());
+  protected static final Logger logger = Logger.getLogger(LanguageIdentifier.class.getName());
     
   private ArrayList languages = new ArrayList();
 

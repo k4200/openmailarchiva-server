@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -23,18 +15,13 @@
  */
 
 package com.stimulus.archiva.language;
-import java.io.Serializable;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.PerFieldAnalyzerWrapper;
-import org.apache.lucene.analysis.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.*;
+import com.stimulus.archiva.domain.*;
+import com.stimulus.archiva.search.*;
 
-import com.stimulus.archiva.domain.Config;
-import com.stimulus.archiva.search.ArchivaAnalyzer;
-import com.stimulus.archiva.search.EmailAnalyzer;
-import com.stimulus.archiva.search.FileNameAnalyzer;
+import java.io.Serializable;
+import java.util.*;
 
 public class AnalyzerFactory implements Serializable {
 
@@ -45,20 +32,24 @@ public class AnalyzerFactory implements Serializable {
 
 	public enum Operation { INDEX, SEARCH };
 	
-    protected static Logger logger = Logger.getLogger(AnalyzerFactory.class.getName());
+    protected static final Logger logger = Logger.getLogger(AnalyzerFactory.class.getName());
     
     public static Analyzer getAnalyzer(String language, Operation operation) {
+    	
+    	if (language==null) {
+    		language="en";
+    	}
         Analyzer analyzer = null;
         logger.debug("getAnalyzer() {language='"+language+"'}");
         String className = null;
         
         try {
-            Map analyzers = Config.getConfig().getSearchAnalyzers();
+            Map analyzers = Config.getConfig().getSearch().getSearchAnalyzers();
             if (analyzers.containsKey(language)) {
                 className = (String)analyzers.get(language);
                 logger.debug("successfully obtained class name for search analyzer {language='"+language+"', class='"+className+"'}");
             } else {
-                className = (String)analyzers.get(Config.getConfig().getIndexLanguage());
+                className = (String)analyzers.get(Config.getConfig().getIndex().getIndexLanguage());
                 logger.debug("email language is unsupported. using default language.  {language='"+language+"', class='"+className+"'}");
             }
             Class analyzerClass = Class.forName(className);

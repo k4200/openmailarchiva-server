@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -27,25 +19,36 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
-public class TempFiles implements Serializable {
+import org.apache.commons.logging.*;
+import com.stimulus.archiva.index.VolumeIndex;
+
+public class TempFiles implements Serializable, Runnable {
     
-    /**
-	 * 
-	 */
+    
 	private static final long serialVersionUID = 4872238025782129277L;
 	protected ArrayList<TempFile> fileDeleteList = new ArrayList<TempFile>();
-    public static final int DELETE_WAIT = 30; // minutes
-    protected boolean exit = false;
-    protected Thread deleteHelper;
-    protected transient Object lock = new Object();
+	ScheduledExecutorService scheduler;
+	ScheduledFuture<?> scheduledTask;
+    protected Object lock = new Object();
+    protected static final Log logger = LogFactory.getLog(VolumeIndex.class.getName());
+    public static final int DELETE_WAIT = 5; // minutes
     
     public TempFiles() {
-    	deleteHelper = new DeleteHelper();
+		 scheduler = Executors.newScheduledThreadPool(1); 
     }
     
     public void startDaemon() {
-    	deleteHelper.start();
+   	 	scheduledTask = scheduler.scheduleAtFixedRate(this, 5, 5, TimeUnit.SECONDS);
+    }
+    
+    public void stopDaemon() {
+    	scheduledTask.cancel(true);
+		scheduler.shutdownNow();
     }
     
 	 public void markForDeletion(File file) {
@@ -55,21 +58,14 @@ public class TempFiles implements Serializable {
 		 }
 	 }
 	 
-	 protected void finalize() throws Throwable {
-		 synchronized(lock) {
-			 exit = true;
-			 for (TempFile temp : fileDeleteList) {
-		         try { temp.getFile().delete(); } catch(Exception e) {}
-		     }
-		     fileDeleteList.clear();
-		 }
-	     super.finalize();
+	 @Override
+	protected void finalize() throws Throwable {
+		 stopDaemon();
 	 }
 	 
-	 public class TempFile implements Serializable{
+	 public class TempFile {
 		 
-		private static final long serialVersionUID = 1024913070784419025L;
-		File file;
+		 File file;
 		 long created;
 		 
 		 public TempFile(File file) {
@@ -85,31 +81,21 @@ public class TempFiles implements Serializable {
 			 return elapsedmins > DELETE_WAIT;
 		 }
 	 }
-	 
-	 public class DeleteHelper extends Thread implements Serializable{ 
-		private static final long serialVersionUID = -6971822512796791665L;
 
-			public DeleteHelper() {
-		    	setDaemon(true);
-		    }
-		    
-	        public void run() {
-	        	
-	        	setName("deleteHelper");
-	        	while (!exit) {
-	        	  synchronized(lock) {
-	        		  for (Iterator it = fileDeleteList.iterator (); it.hasNext (); ) {
-	        			  	TempFile temp = (TempFile)it.next();
-	        			  	if (temp.getOld()) {
-	        			  		it.remove();
-	        			  		
-		        				try { temp.getFile().delete(); } catch (Exception e) {}
-		        			}
-	        		  }
-	        	  }
-        		  try { sleep(60000); } catch (Exception e) { exit=true; }
-	        	}
-	        }
-	 }
+        public void run() {
+        	
+        	Thread.currentThread().setName("deleteHelper");
+        	synchronized(lock) {
+        		  for (Iterator it = fileDeleteList.iterator (); it.hasNext (); ) {
+        			  	TempFile temp = (TempFile)it.next();
+        			  	if (temp.getOld()) {
+        			  		logger.debug("removing temporary file {tempfile='"+temp.getFile().getAbsolutePath()+"'");
+        			  		it.remove();
+        			  		try { temp.getFile().delete(); } catch (Exception e) {}
+	        			}
+        		  }
+        	  }
+        }
+	
 
 }

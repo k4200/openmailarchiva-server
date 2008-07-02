@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -34,7 +26,7 @@ import com.stimulus.struts.BaseBean;
 public class AccountBean extends BaseBean  implements Serializable {
 
 	private static final long serialVersionUID = -6557623393822264395L;
-	protected static Logger logger = Logger.getLogger(MessageBean.class.getName());
+	protected static final Logger logger = Logger.getLogger(MessageBean.class.getName());
     protected static final Logger audit = Logger.getLogger("com.stimulus.archiva.audit");
     
     

@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -23,23 +15,18 @@
  */
 
 package com.stimulus.archiva.extraction;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.Serializable;
-
-import jxl.Cell;
-import jxl.Sheet;
-import jxl.Workbook;
-
-import org.apache.log4j.Logger;
 
 import com.stimulus.archiva.exception.ExtractionException;
-import com.stimulus.util.TempFiles;
+import java.io.*;
+import org.apache.log4j.*;
+import com.stimulus.util.*;
+import java.nio.charset.Charset;
+import java.util.Iterator;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 
 public class ExcelExtractor implements TextExtractor,Serializable
 {
@@ -47,46 +34,51 @@ public class ExcelExtractor implements TextExtractor,Serializable
 	 * 
 	 */
 	private static final long serialVersionUID = -4500591813545392474L;
-	protected static Logger logger = Logger.getLogger(Extractor.class.getName());
+	protected static final Logger logger = Logger.getLogger(Extractor.class.getName());
 
-	public ExcelExtractor()
-	{
+	public ExcelExtractor(){
 	}
 
-	public Reader getText(InputStream is, TempFiles tempFiles) throws ExtractionException
+	public Reader getText(InputStream is, TempFiles tempFiles, Charset charset) throws ExtractionException
 	{
-	    File file = null;
-	    PrintWriter out = null;
-	    try {
-
-	      file = File.createTempFile("extract", ".tmp");
-		  tempFiles.markForDeletion(file);
-		  out = new PrintWriter(new BufferedWriter(new FileWriter(file)));
-	      Workbook workbook = Workbook.getWorkbook(is);
-	      Sheet[] sheets = workbook.getSheets();
-	      for (int i = 0; i < sheets.length; i++) {
-	        Sheet sheet = sheets[i];
-	        int nbCol = sheet.getColumns();
-	        for (int j = 0; j < nbCol; j++) {
-	          Cell[] cells = sheet.getColumn(j);
-	          for (int k = 0; k < cells.length; k++) {
-	              out.print(cells[k].getContents() + " ");
-	          }
+		try {
+			POIFSFileSystem fs;
+	        HSSFWorkbook workbook;
+		    fs = new POIFSFileSystem(is);
+		    workbook = new HSSFWorkbook (fs);
+		    StringBuilder builder = new StringBuilder();
+	        for (int numSheets = 0; numSheets < workbook.getNumberOfSheets(); numSheets++) {
+	        	HSSFSheet sheet = workbook.getSheetAt(numSheets);
+	        	Iterator rows = sheet.rowIterator();
+	        	while( rows.hasNext() ) {          
+	        		HSSFRow row = (HSSFRow) rows.next();
+	        		Iterator cells = row.cellIterator();
+		            while( cells.hasNext() ) 
+		            {
+		                HSSFCell cell = (HSSFCell) cells.next();
+		                processCell (cell, builder);
+		            }
+	        	}
 	        }
-	      }
-	    }
-	    catch (Exception e) {
-	        throw new ExtractionException("could not extract Excel document",e,logger);
-	    } finally {
-            if (out != null) {
-               out.close(); 
-            }
-	    }
-	    try {
-	        return new FileReader(file);
-	    } catch(Exception ex) {
-	        throw new ExtractionException("failed to extract text from powerpoint document",ex,logger);
-	    }
+	        return new StringReader(builder.toString());
+		} catch (Exception ee) {
+			throw new ExtractionException("failed to extract excel document",logger,Level.DEBUG);
+		}
+        
 	}
+	
+	
+    private void processCell (HSSFCell cell, StringBuilder builder) 
+    {
+        switch ( cell.getCellType() ) 
+        {
+            case HSSFCell.CELL_TYPE_STRING:
+                builder.append (cell.getStringCellValue());
+                builder.append (" ");
+                break;
+            default:
+                break;
+        }
+    }
 
 }

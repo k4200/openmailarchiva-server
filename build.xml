@@ -1,0 +1,229 @@
+<?xml version="1.0" ?>
+	<!--
+	  Requires CATALINA_HOME environment variable set 
+	  and $CATALINA_HOME/server/lib/catalina-ant.jar in CLASSPATH. -->
+	  
+<project name="mailarchiva" default="compile" basedir=".">
+
+  <property environment="env"/> <!-- ADDED -->  
+  <property file="build.properties"/> 
+  <property file="${user.home}/build.properties"/> 
+  <property name="build.compiler" value="modern" />
+  <property name="app.name"      	   value="${ant.project.name}"/> <!-- CHANGED --> 
+  <property name="app.path"      	   value="/${app.name}"/> 
+  <property name="app.version"   	   value="0.1-dev"/> 
+  <property name="src.home"      value="${basedir}/src"/> 
+  <property name="web.home"      value="${basedir}/web"/> 
+  <property name="lib.home"      value="${basedir}/lib"/> 
+ 
+  <property name="axis.home" value="${lib}"/>
+  <property name="wsdl.name" value="mailarchiva.wsdl" description="Name of the generated WSDL file"/>
+  <property name="wsdl.class.name" value="MailArchiva" 
+			description="Name of the class against this script generate a WSDL file"/>
+	<property name="wsdl.class.imp.name" value="MailArchivaImpl" 
+				description="Name of the implementation class (for substitution)"/>
+
+	
+  <property name="endpoint.package.structure" value="com.stimulus.archiva.webservice"
+   	  		description="Package structure where the endpoint service reside (the class that will become a webservice"/>
+  <property name="generated.package.structure" value="com.stimulus.archiva.webservice"
+	  		description="Package structure containing the AXIS generated files."/>
+  <property name="service.namespace" value="url:MAILARCHIVA"/>
+  <property name="service.name" value="MailArchiva"/>
+	
+	
+  <taskdef name="install" classname="org.apache.catalina.ant.InstallTask"/> 
+  <taskdef name="list"    classname="org.apache.catalina.ant.ListTask"/> 
+  <taskdef name="reload"  classname="org.apache.catalina.ant.ReloadTask"/> 
+  <taskdef name="remove"  classname="org.apache.catalina.ant.RemoveTask"/> 
+
+  <property name="compile.debug"       value="true"/> 
+  <property name="compile.deprecation" value="false"/> 
+  <property name="compile.optimize"    value="true"/> 
+	
+  <!-- <property name="foo.jar"  value="/path/to/foo.jar"/> -->
+  <path id="compile.classpath">  
+  	<fileset dir="${lib.home}">
+  		<include name="*.jar"/> 
+  	</fileset> 
+  </path> 
+
+  <!-- for building of web service -->
+  <path id="compiled.classpath">
+		<pathelement location="${build.home}/WEB-INF/classes" />
+  </path>
+	
+	<taskdef resource="axis-tasks.properties"
+	  classpathref="compile.classpath" />
+	
+
+  <target name="clean" 
+   description="Delete build directories"> 
+    <delete dir="${build.home}"/> 
+  </target> 
+	
+	<!-- ***** prepare application for compilation ***** -->
+  <target name="prepare"  description="prepare application for compilation"> 
+    <mkdir  dir="${build.home}"/> 
+    <mkdir  dir="${build.home}/WEB-INF"/> 
+    <mkdir  dir="${build.home}/WEB-INF/classes"/>
+    <copy todir="${build.home}"> 
+      <fileset dir="${web.home}"/> 
+    </copy>
+	<copy todir="${build.home}/WEB-INF/lib">
+	      <fileset dir="${lib.home}" />
+	</copy>
+    <mkdir  dir="${build.home}/WEB-INF/lib"/> 
+  </target> 
+
+  <target name="compile" depends="prepare" 
+   description="Compile Java sources"> 
+    <!-- Compile Java classes as necessary --> 
+    <mkdir    dir="${build.home}/WEB-INF/classes"/> 
+    <javac srcdir="${src.home}" 
+          destdir="${build.home}/WEB-INF/classes" 
+            debug="${compile.debug}" 
+      deprecation="${compile.deprecation}" 
+         optimize="${compile.optimize}"
+    		target="1.6"
+    	    source="1.6"> 
+    	
+        <classpath refid="compile.classpath"/> 
+    	
+    </javac> 
+	
+  	<!-- Copy application resources --> 
+  	    <copy  todir="${build.home}/WEB-INF/classes"> 
+  	      <fileset dir="${src.home}" excludes="**/*.java"/> 
+  	    </copy> 
+  </target> 
+
+	<target name="all" depends="clean,compile" 
+	   description="Clean build directory, then compile"/> 
+		
+	<target name="generate-wsdl" description="Generate WSDL file using Axis Java2WSDL tool" depends="compile">
+  		<delete file="${wsdl.name}"/>
+  		<axis-java2wsdl classname="${endpoint.package.structure}.${wsdl.class.name}"
+     			style="wrapped"
+  			namespace="${service.namespace}"
+  	                location="http://${host}:${port}/mailarchiva/services/${service.name}"
+  	                output="${wsdl.name}">
+  	        <classpath refid="compiled.classpath"/>
+  	        <classpath refid="compile.classpath"/>
+		</axis-java2wsdl> 	                
+  	</target>
+			
+	<target name="generate-wsdd" description="Generate deployment descriptor for the webservice" depends="generate-wsdl">
+		    <axis-wsdl2java 
+		    	output="${build.home}"
+		    	verbose="true"
+		        url="${wsdl.name}"
+		        serverside="true"
+		        debug="false">
+		      	<mapping namespace="${service.namespace}" package="${generated.package.structure}"/>
+		    </axis-wsdl2java>
+		
+		</target>
+	  	
+  	<target name="compile-axis-generated" description="Compile wsdl2java generated classes" depends="generate-wsdd">
+	
+		<javac destdir="${build.home}/WEB-INF/classes" target="1.6" source="1.6" debug="true"
+			deprecation="false" optimize="false" failonerror="true">
+			<src path="${build.home}"/>
+			<classpath refid="compile.classpath"/>
+		</javac>
+		
+		<echo message="Applying classname substitution..."/>
+  		
+  				<replaceregexp 
+  				  file="${build.home}/com/stimulus/archiva/webservice/deploy.wsdd"
+  				  match="${generated.package.structure}.MailArchivaSoapBindingImpl"
+  				  replace="${endpoint.package.structure}.${wsdl.class.imp.name}"
+  				/>
+  	</target>
+					
+  <target name="install" depends="compile" 
+   description="Install application to servlet container"> 
+    <install url="${manager.url}" 
+        username="${manager.username}" 
+        password="${manager.password}" 
+            path="${app.path}" 
+             war="file://${build.final.home}"/> 
+  </target> 
+	
+  <target name="installeverything" depends="compile,deploy-webservice,reload" 
+	   description="Install everything (both application and web service)"> 
+  </target> 
+
+ <target name="uninstalleverything" depends="undeploy-webservice,remove,clean" 
+	   description="Uninstall everything (both application and web service"> 
+  </target> 
+	
+	
+<!--
+  <target name="javadoc" depends="compile" 
+   description="Create Javadoc API documentation"> 
+    <mkdir          dir="${dist.home}/docs/api"/> 
+    <javadoc sourcepath="${src.home}" 
+                destdir="${dist.home}/docs/api" 
+           packagenames="*"> 
+      <classpath refid="compile.classpath"/> 
+    </javadoc> 
+  </target> -->
+
+  <target name="list" 
+   description="List installed applications on servlet container"> 
+    <list    url="${manager.url}" 
+        username="${manager.username}" 
+        password="${manager.password}"/> 
+  </target> 
+
+
+
+	<!-- ***** reload application ***** -->
+	<target name="reload" depends="compile" 
+   description="Reload application on servlet container"> 
+
+    <reload url="${manager.url}" 
+       username="${manager.username}" 
+       password="${manager.password}" 
+           path="${app.path}"/> 
+  </target> 
+
+  <!-- ***** remove application ***** -->
+  <target name="remove" 
+   description="Remove application on servlet container"> 
+
+    <remove url="${manager.url}" 
+       username="${manager.username}" 
+       password="${manager.password}" 
+           path="${app.path}"/> 
+
+  </target> 
+	
+	<!-- ***** undeploy webservice ***** -->
+  	<target name="undeploy-webservice" depends="">
+    	
+  		<axis-admin
+    			port="${port}"
+			hostname="${host}"
+		    	failonerror="true"
+			servletpath="mailarchiva/services/AdminService"
+		    	debug="false"
+			xmlfile="${build.home}/com/stimulus/archiva/webservice/undeploy.wsdd"/>  
+	</target>
+	
+	<!-- ***** deploy webservice ***** -->
+  	<target name="deploy-webservice" depends="compile-axis-generated">	
+		<axis-admin
+    			port="${port}"
+			hostname="${host}"
+		    	failonerror="true"
+			servletpath="mailarchiva/services/AdminService"
+		    	debug="true"
+			xmlfile="${build.home}/com/stimulus/archiva/webservice/deploy.wsdd"/>  
+	</target>
+  		
+  </project>    
+      
+           

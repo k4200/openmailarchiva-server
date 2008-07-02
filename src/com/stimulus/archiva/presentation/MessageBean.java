@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -24,32 +16,25 @@
 
 package com.stimulus.archiva.presentation;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
+import java.util.*;
 import javax.servlet.http.HttpServletRequest;
-
 import org.apache.log4j.Logger;
 import org.apache.struts.upload.FormFile;
-
-import com.stimulus.archiva.domain.Email;
+import com.stimulus.archiva.domain.*;
 import com.stimulus.archiva.domain.fields.EmailField;
 import com.stimulus.archiva.domain.fields.EmailFieldValue;
-import com.stimulus.archiva.exception.ArchivaException;
-import com.stimulus.archiva.extraction.MessageExtraction;
-import com.stimulus.archiva.service.MessageService;
-import com.stimulus.struts.ActionContext;
-import com.stimulus.struts.BaseBean;
-import com.stimulus.util.EscapeUtil;
-
+import com.stimulus.archiva.domain.fields.EmailFields;
+import com.stimulus.archiva.service.*;
+import com.stimulus.archiva.extraction.*;
+import java.util.concurrent.locks.*;
+import com.stimulus.struts.*;
+import com.stimulus.archiva.exception.*;
+import com.stimulus.util.*;
+import java.io.*;
 public class MessageBean extends BaseBean implements Serializable {
 
   private static final long serialVersionUID = 1624887450703706628L;
-  protected static Logger logger = Logger.getLogger(MessageBean.class.getName());
+  protected static final Logger logger = Logger.getLogger(MessageBean.class.getName());
   protected static MessageService messageService = null;
 
   protected static final Logger audit = Logger.getLogger("com.stimulus.archiva.audit");
@@ -66,10 +51,12 @@ public class MessageBean extends BaseBean implements Serializable {
   protected final Lock 			lock = new ReentrantLock();
   protected final Condition 	extracted  = lock.newCondition(); 
   protected String				volumeID = null;
+  protected int					resultsIndex = 0;
   
   /* Constructors */
 
   public MessageBean() {
+	 
   }
 
   public void setVolumeID(String volumeID) {
@@ -149,10 +136,8 @@ public class MessageBean extends BaseBean implements Serializable {
   protected void viewMessage(Email email, boolean isOriginalMessage) {
 	  try {
 		  	this.email = email;
-	  		logger.info("user viewing message {"+email+"}");
-	  		String remoteIP="unknown"; // FIX
-	  		String userName="unknown";
-	  		audit.info("view email {"+email+",ip='"+remoteIP+"',uname='"+userName+"'}");
+		  	logger.info("view email {"+email+", "+getMailArchivaPrincipal()+"}");
+	  		audit.info("view email {"+email+", "+getMailArchivaPrincipal()+"}");
 
 	  		//deleteExtractedMessage();
 	  		HttpServletRequest hsr = ActionContext.getActionContext().getRequest();
@@ -239,10 +224,30 @@ public class MessageBean extends BaseBean implements Serializable {
 	  waitForExtraction();
 	  return messageExtraction;
   }
+/*
+  private void deleteExtractedMessage() {
+  	try {
+	  	if (viewMessageURL!=null)
+	  		MessageService.deleteExtractedMessage(messageId);
+  	} catch (ArchivaException me) {
+  		logger.error("failed to delete extracted message {messageId='"+messageId+"'}",me);
+  	}
+  }*/
+  /*
+  protected void finalize() {
+  	try {
+	  	if (messageId!=null)
+	  		MessageService.deleteExtractedMessage(messageId);
+  	} catch (ArchivaException me) {
+  		logger.error("failed to delete extracted message {messageId='"+messageId+"'}",me);
+  	}
+  }*/
+
   
 	 public List<EmailField> getFields() {
 		 ArrayList<EmailField>  list = new ArrayList<EmailField>();
-		 Iterator i = EmailField.getAvailableFields().values().iterator();
+		 EmailFields emailFields = Config.getConfig().getEmailFields();
+		 Iterator i = emailFields.getAvailableFields().values().iterator();
 		 while (i.hasNext()) {
 			 EmailField ef = (EmailField)i.next();
 			 
@@ -262,14 +267,14 @@ public class MessageBean extends BaseBean implements Serializable {
 	  
 	 public List<DisplayField> getFieldValues() {
 		 ArrayList<DisplayField>  list = new ArrayList<DisplayField>();
-		 Iterator i = email.getFields().iterateValues();
-		 while (i.hasNext()) {
-			 EmailFieldValue efv = (EmailFieldValue)i.next();
+		 for (EmailFieldValue efv : email.getFields().values()) {
 			 
 //			 we dont allow end-users to view bcc or delivered-to flags
 			  if (efv.getField().getName().equals("bcc") && getMailArchivaPrincipal().getRole().equals("user"))
 				  continue;
 			  if (efv.getField().getName().equals("deliveredto") && getMailArchivaPrincipal().getRole().equals("user"))
+				  continue;
+			  if (efv.getField().getName().equals("recipient") && getMailArchivaPrincipal().getRole().equals("user"))
 				  continue;
 			  
 			 if (efv.getField().getViewEmail()==EmailField.AllowViewMail.VIEWMAIL) {
@@ -280,30 +285,6 @@ public class MessageBean extends BaseBean implements Serializable {
 	 }
     
    
-
-	public String getJournalReport() {
-		String report = "";
-        try {
-        	 boolean showHidden = !getMailArchivaPrincipal().getRole().equals("user");
-             report= email.getJournalReport(showHidden);
-        }
-        catch(Exception ex) {
-        	logger.error("failed to retrieve journal report from email {"+email.toString()+"}");
-        }
-    	return EscapeUtil.forHTML(report).replace("\n","<br>");
-	}
-	
-	public boolean getJournalMessage() {
-		try {
-			return email.isJournalMessage();
-		}
-        catch(Exception ex) {
-        	logger.error("failed to establish whether email is a journalled message {"+email.toString()+"}");
-        	return false;
-        }
-	}
-	
-	
     public String getInternetHeaders() {
     	String headers = "";
         try {
@@ -321,7 +302,71 @@ public class MessageBean extends BaseBean implements Serializable {
     	return email;
     }
     
+    public String nextMessage() {
+    	Search search = getSearch();
+    	List<Search.Result> results = search.getResults();
+    	resultsIndex += 1;
+    	if (resultsIndex>=results.size())
+    		resultsIndex = 0;
+    	try {
+    		setVolumeID(results.get(resultsIndex).getEmailId().getVolume().getID());
+    		setMessageID(results.get(resultsIndex).getEmailId().getUniqueID());
+    	} catch (MessageSearchException mse) {
+    		logger.error("failed to set volume ID or message ID:"+mse.getMessage());
+    	}
+    	return viewmail();
+    }
     
+    public String previousMessage() { 
+    	Search search = getSearch();
+    	List<Search.Result> results = search.getResults();
+    	resultsIndex -= 1;
+    	if (resultsIndex<0)
+    		resultsIndex = results.size()-1;
+    	try {
+    		setVolumeID(results.get(resultsIndex).getEmailId().getVolume().getID());
+    		setMessageID(results.get(resultsIndex).getEmailId().getUniqueID());
+    	} catch (MessageSearchException mse) {
+    		logger.error("failed to set volume ID or message ID:"+mse.getMessage());
+    	}
+    	return viewmail();
+    }
+    
+    private Search getSearch() {
+  	  SearchBean searchBean = (SearchBean)ActionContext.getActionContext().getSessionMap().get("searchBean");
+  	  return searchBean.getSearch();
+    }
+    
+    public String viewaction() throws ArchivaException {
+      SubmitButton button = getSubmitButton();
+      
+      if (button==null | button.action==null)
+          return "success";
+      
+    	logger.debug("viewaction() {action ='"+button.action+"', value='"+button.value+"'}");
+        
+    	if (button.action.equals("next")) {
+	  		return nextMessage();
+    	} else if (button.action.equals("previous")) {
+	  		return previousMessage();
+    	}
+	  		
+    	return "success";
+    }
+    
+    public void setResultsIndex(int index) {
+    	this.resultsIndex = index;
+    }
+    
+    public int getResultsIndex() { 
+    	return resultsIndex;
+    }
+    
+    public int getResultsSize() {
+    	Search search = getSearch();
+    	return search.getResultSize();
+    }
+
 }
 
 

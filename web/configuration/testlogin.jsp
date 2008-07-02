@@ -15,17 +15,16 @@
 <link href="common/mailarchiva.css" rel="stylesheet" type="text/css">
 </head>
 
-<body onload="window.focus();">
-	<html:form action="/testlogin" method="POST">
-	<table class="sectionheader" width="100%" border="0" cellpadding="0" cellspacing="0" >
+<body topmargin="0" leftmargin="0" onload="window.focus();">
+	<html:form action="/testlogin" method="POST" autocomplete="false">
+	<table class="pageheading" width="100%" border="0" cellpadding="0" cellspacing="0" >
 	  <tr > 
-	    <td width="28%" ><strong><bean:message key="testlogin.title"/></strong></td>
-	    <td width="27%" align="left"></td>
-	    <td width="45%"></td>
+	    <td width="50%" ><strong><bean:message key="testlogin.title"/></strong></td>
+	    <td width="50%" align="left"></td>
 	  </tr>
 	</table>
 
-      <table class="section1" width="100%" border="0" cellpadding="0" cellspacing="3" >
+      <table class="pagedialog" width="100%" border="0" cellpadding="0" cellspacing="3" >
         
         <tr> 
           <td width="5%">&nbsp;</td>
@@ -42,7 +41,7 @@
           <td width="5%" align="left">&nbsp;</td>
         </tr>
       </table>
-      <table class="section2" width="100%" border="0" cellpadding="0" cellspacing="0" >
+      <table class="pagetext" width="100%" border="0" cellpadding="0" cellspacing="0" >
        
         <tr> 
           <td width="100%" colspan="3">&nbsp;</td>
@@ -56,7 +55,7 @@
           <td width="100%" colspan="3">&nbsp;</td>
         </tr>
       </table>
-      <table class="sectionheader" width="100%" border="0" cellpadding="3" cellspacing="0">
+      <table class="pageend" width="100%" border="0" cellpadding="3" cellspacing="0">
 	  <tr> 
 	    <td >&nbsp;</td>
 	    <td align="left"><input type="submit" name="close" onClick="window.close();" value="<bean:message key="testlogin.close"/>">

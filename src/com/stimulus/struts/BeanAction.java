@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -23,13 +15,6 @@
  */
 package com.stimulus.struts;
 
-import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.log4j.Logger;
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
@@ -37,7 +22,13 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import com.stimulus.archiva.domain.Config;
-import com.stimulus.archiva.exception.BeanActionException;
+import com.stimulus.archiva.exception.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * BeanAction is an extension to the typical Struts Action class that
@@ -137,7 +128,7 @@ public class BeanAction extends Action implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -8636344294577044962L;
-	protected static Logger logger = Logger.getLogger(Config.class);
+	protected static final Logger logger = Logger.getLogger(Config.class);
 	
 	public final static String getActionPathMethodName(ActionMapping mapping) {
 		String methodName = mapping.getPath();
@@ -163,7 +154,8 @@ public class BeanAction extends Action implements Serializable {
           return forward;
 	}
 
-  public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  @Override
+public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response) throws Exception {
     response.setContentType("text/html;charset=UTF-8");
     String forward = "success";
 

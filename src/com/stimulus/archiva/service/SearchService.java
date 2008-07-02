@@ -1,12 +1,4 @@
-/*
- * Subversion Infos:
- * $URL$
- * $Author$
- * $Date$
- * $Rev$
-*/
 
-		
 /* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
@@ -23,19 +15,20 @@
  */
 
 package com.stimulus.archiva.service;
+import com.stimulus.archiva.exception.*;
+import com.stimulus.archiva.domain.*;
+import org.apache.log4j.*;
+
 import java.io.Serializable;
-
-import org.apache.log4j.Logger;
-
-import com.stimulus.archiva.domain.Search;
-import com.stimulus.archiva.exception.ArchivaException;
-import com.stimulus.archiva.search.MessageSearch;
 
 public class SearchService implements Serializable {
 
-  /* Constants */
-  protected static Logger logger = Logger.getLogger(SearchService.class.getName());
-  protected static MessageSearch messageSearch = new MessageSearch(MessageService.getMessageStore());
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 3070046454950483002L;
+/* Constants */
+  protected static final Logger logger = Logger.getLogger(SearchService.class.getName());
   protected static final Logger audit = Logger.getLogger("com.stimulus.archiva.audit");
   /* protected Fields */
 
@@ -45,6 +38,7 @@ public class SearchService implements Serializable {
   	logger.debug("searchMessage {querystring='"+search.getSearchQuery()+"'}");
   	audit.info("search emails {"+search.getPrincipal()+",query='"+search.getSearchQuery()+"'}");
     logger.debug("search email {"+search.getPrincipal()+"}");
-  	messageSearch.searchMessage(search);
+  	search.searchMessage();
   }
+  
 }
