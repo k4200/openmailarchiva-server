@@ -11,6 +11,8 @@
 <%@ taglib uri="/WEB-INF/tld/taglib186.tld" prefix="t" %>
 <html>
 <head>
+<meta http-equiv="expires" content="-1">
+<meta http-equiv="no-cache"> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title><bean:message key="searchresults.title"/></title>
 <link href="common/mailarchiva.css" rel="stylesheet" type="text/css">
@@ -50,19 +52,48 @@
      }
      
   }
-  
-  function showhide(id) {
-	if (document.getElementById){
-		obj = document.getElementById(id);
-		if (obj.style.display == "none"){
-			obj.style.display = "";
-		} else {
-			obj.style.display = "none";
+  	
+  	 function showhide() {
+		if (document.getElementById){
+			obj = document.getElementById("options");
+			if (obj.style.display == "none"){
+				obj.style.display = "block";
+			} else {
+				obj.style.display = "none";
+			}
 		}
 	}
+	function setcursoratend(obj) { 
+		if (obj.createTextRange) { 
+			var r = (obj.createTextRange()); 
+			r.moveStart('character', (obj.value.length)); 
+			r.collapse(); 
+			r.select(); 
+		}
+	}
+	
+    function setfocus() 
+    {
+    	obj = document.getElementById("criteriaquery0");
+    	obj.focus();
+    	setcursoratend(obj);
+    }
+
+var NS = (document.layers) ? 1 : 0;
+var IE = (document.all)    ? 1 : 0;
+if (NS) document.captureEvents(Event.KEYPRESS); // uncomment if you wish to cancel the key
+document.onkeypress = keyhandler;
+function keyhandler(e) {
+  if (NS) {
+    Key = e.which;
+  } else {
+    Key = window.event.keyCode;
   }
-
-
+  if (Key==13) {
+    document.forms[0].search.click();
+    return false; //swallow it if we processed it
+  }
+}
 
  </script>
  
@@ -116,14 +147,14 @@ cal2.setDayHeaders('<bean:message key="calendar.su"/>',
 cal2.setWeekStartDay(1);
 cal2.setTodayText("<bean:message key="calendar.today"/>");
 			
+		
 </script>
 
 
 
 </head>
 
-<body onkeydown="if(event.keyCode == 13){document.getElementById('search').click();}">
-
+<body onload="setfocus();" onkeydown="if(event.keyCode == 13){document.getElementById('search').click();}">
 
 <html:form  styleId="searchForm" action="/search" method="POST" autocomplete="false">
 <%@include file="../common/menu.jsp"%>
@@ -170,13 +201,15 @@ cal2.setTodayText("<bean:message key="calendar.today"/>");
 	                        <html:options name="searchBean" property="fields" labelName="searchBean" labelProperty="fieldLabels" /> 
 	                        </html:select> </td>
 	                      <td align="left"><bean:message key="searchresults.matches"/></td>
-	                      <td align="left"> <html:select indexed="true" name="criteria" property="method"> 
+	                      <td align="left"> 
+	                      
+	                      <html:select indexed="true" name="criteria" property="method"> 
 	                        <html:options name="searchBean" property="methods" labelName="searchBean" labelProperty="methodLabels" /> 
 	                        </html:select> </td>
 	                      <td align="left">&nbsp;</td>
-	                      <td align="left"> <html:text indexed="true" name="criteria" property="query" size="45"/> 
+	                      <td align="left"> <html:text styleId="criteriaquery${criteriaIndex}" indexed="true" name="criteria" property="query" size="45"/> 
 	                      </td>
-	                      <td align="left"><c:if test="${fn:length(searchBean.criteria)<6}"> 
+	                      <td align="left"><c:if test="${fn:length(searchBean.criteria)<25}"> 
 	                        <input type="submit" name="submit.newcriteria.${criteriaIndex}" value="&nbsp;+&nbsp;">
 	                        </c:if> </td>
 	                      <td align="left"><c:if test="${fn:length(searchBean.criteria)>1}"> 
@@ -202,80 +235,56 @@ cal2.setTodayText("<bean:message key="calendar.today"/>");
 	                      <td  nowrap align="left"><html:text styleId="before" name="searchBean" property="before" size="20"/></td>
 	                      <td  nowrap align="left"><a href="javascript:cal2.select(document.forms[0].before,'anchor2','<c:out value="${searchBean.dateFormat}"/>');"><img src="images/cal.gif" width="16" height="16" border="0" alt="Click Here to Pick up the date" name="anchor2" id="anchor2"></a></td> 
 	                      <td  nowrap>(<c:out value="${searchBean.localizedDateFormat}"/>)</td>
+	                      <td  nowrap align="left"><input type="submit" name="submit.search" id="search" value="<bean:message key="searchresults.submit"/>"></td>
+	    				  <td  nowrap align="left"><input type="submit" name="submit.showOptions" id="showOptions" value="<bean:message key="searchresults.options"/>" onclick="showhide(); return(false);"></td>
+	    				  <td  nowrap align="left"><input type="submit" name="submit.reset" id="submit.reset" value="<bean:message key="searchresults.reset"/>"></td>
+					  	  <td  nowrap align="left" width="95%">&nbsp;</td>
 	    				  <td  nowrap align="left" width="95%">&nbsp;</td>
+	    				  
 	                    </tr>
 	                  </table></td>
 	                <td></td>
 	              </tr>
-	              <tr valign="bottom"> 
-	                <td>&nbsp;</td>
-	                <td ><table width="70%" border="0" align="left" cellpadding="0" cellspacing="3">
-	                	<tr>
-	                	  <td nowrap align="right">&nbsp;</td>
-	                	  <td  nowrap align="right" width="10%"><bean:message key="searchresults.attachment"/></td>
-	                	  <td  nowrap align="left">
-		                      <html:select name="searchBean" property="attachment">
-				  				<html:options name="searchBean" property="attachments" labelName="searchBean" labelProperty="attachmentLabels" />
-						      </html:select>
-					  	  </td>
-					  	  
-					  	  <td  nowrap align="right"><bean:message key="searchresults.priority"/></td>
-	                      <td  nowrap align="left">
-		                      <html:select name="searchBean" property="priority">
-				  				<html:options name="searchBean" property="priorities" labelName="searchBean" labelProperty="priorityLabels" />
-						      </html:select>
-					  	  </td>
-					  	  
-					  	  <td  nowrap align="right"><bean:message key="searchresults.flag"/></td>
-	                      <td  nowrap align="left">
-		                      <html:select name="searchBean" property="flag">
-				  				<html:options name="searchBean" property="flags" labelName="searchBean" labelProperty="flagLabels" />
-						      </html:select>
-					  	  </td>
-					  	  
-					  	  <td  nowrap align="left"><input type="submit" name="submit.search" id="search" value="<bean:message key="searchresults.submit"/>"></td>
-	    				  <td  nowrap align="left"><input type="submit" name="submit.showOptions" id="showOptions" value="<bean:message key="searchresults.options"/>" onclick="showhide('options'); return(false);"></td>
-	    				  <td  nowrap align="left"><input type="submit" name="submit.reset" id="submit.reset" value="<bean:message key="searchresults.reset"/>"></td>
-					  	  <td  nowrap align="left" width="95%">&nbsp;</td>
-					  	 </tr></table></td>
-	                <td ></td>
-	              </tr>
+	              
 	            </table></td>
           <td >&nbsp;</td>
         </tr>
   </table></td></tr>
   <tr><td>
-  			<div style="display: none;" id="options">
+  			<div style="display: none;" id="options" >
   			<table class="pagedialog" width="100%" border="0" align="left" cellpadding="0" cellspacing="3"><tr><td width="5%">&nbsp;</td><td> 
 					  	<table width="70%" border="0" align="left" cellpadding="0" cellspacing="3">
 	                	<tr>
+	                	  <td nowrap align="right">&nbsp;</td>
+	                	  <td  nowrap align="right" width="10%"><bean:message key="searchresults.attachment"/>
+	                	  	&nbsp;
+		                      <html:select name="searchBean" property="attachment">
+				  				<html:options name="searchBean" property="attachments" labelName="searchBean" labelProperty="attachmentLabels" />
+						      </html:select>
+					  	  </td>
+					  	  <td  width="10%" nowrap align="right"><bean:message key="searchresults.priority"/>
+	                      		&nbsp;<html:select name="searchBean" property="priority">
+				  						<html:options name="searchBean" property="priorities" labelName="searchBean" labelProperty="priorityLabels" />
+						      			</html:select>
+					  	  </td>
+					  	  <td  width="10%" nowrap align="right"><bean:message key="searchresults.flag"/>
+	                      		&nbsp;<html:select name="searchBean" property="flag">
+				  				<html:options name="searchBean" property="flags" labelName="searchBean" labelProperty="flagLabels" />
+						      </html:select>
+					  	  </td>
 	                	  <td >&nbsp;</td>
-	                	  <td  nowrap align="right"><bean:message key="searchresults.result_per_page"/></td>
-	                      <td  nowrap align="left">
-		                      <html:select name="searchBean" property="pageSize">
+	                	  <td width="10%" nowrap align="right"><bean:message key="searchresults.result_per_page"/>
+	                      &nbsp;<html:select name="searchBean" property="pageSize">
 				  				<html:options name="searchBean" property="pageSizes" labelName="searchBean" labelProperty="pageSizeLabels" />
 						      </html:select>
 					  	  </td>
-					  	  <td  nowrap align="right"><bean:message key="searchresults.max_results"/></td>
-	                      <td  nowrap align="left">
-		                      <html:select name="searchBean" property="maxResult">
-				  				<html:options name="searchBean" property="maxResults" labelName="searchBean" labelProperty="maxResultLabels" />
-						      </html:select>
-					  	  </td>
-					  	  <td  nowrap align="right"><bean:message key="searchresults.language"/></td>
-	                      <td  nowrap align="left">
-		                      <html:select name="searchBean" property="language">
+					  	  <td  width="10%"  nowrap align="right"><bean:message key="searchresults.language"/>
+	                      	&nbsp;<html:select name="searchBean" property="language">
 				  				<html:options name="searchBean" property="languages" labelName="searchBean" labelProperty="languageLabels" />
 						      </html:select>
 					  	  </td>
-					  	  <td  nowrap align="right"><bean:message key="searchresults.type"/></td>
-	                      <td  nowrap align="left">
-		                      <html:select name="searchBean" property="searchType">
-				  				<html:options name="searchBean" property="searchTypes" labelName="searchBean" labelProperty="searchTypeLabels" />
-						      </html:select>
-					  	  </td>
 					  	  
-					  	  <td width="25%" nowrap align="left">&nbsp;</td>
+					  	  <td  width="60%" nowrap align="left">&nbsp;</td>
 					  	 </tr>
 					 	</table>
 					 	</td></tr></table>
@@ -290,7 +299,7 @@ cal2.setTodayText("<bean:message key="calendar.today"/>");
    
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
   <tr class="columnheadings" > 
-  	<logic:iterate id="field" name="searchBean" property="availableFields" indexId="fieldsIndex"> 
+	<logic:iterate id="field" name="searchBean" property="availableFields" indexId="fieldsIndex"> 
 			<c:if test="${field.showConditional==true}">
 				<c:choose>
 					<c:when test='${field.name == "archivedate" && searchBean.dateType=="archivedate"}'>
@@ -348,7 +357,7 @@ cal2.setTodayText("<bean:message key="calendar.today"/>");
  
 <table class="pagetext" width="100%" border="0" cellspacing="1" cellpadding="0">
 <logic:iterate id="searchResults" offset="${searchBean.firstHitIndex}" length="${searchBean.pageSize}" name="searchBean" property="searchResults" indexId="resultsIndex" type="com.stimulus.archiva.presentation.SearchResultBean">         	
-
+	<c:if test="${searchResults.display==true}">
   <tr>  
   <td>
   <logic:iterate id="value" name="searchResults" property="fieldValues" indexId="valueIndex"> 
@@ -441,7 +450,7 @@ cal2.setTodayText("<bean:message key="calendar.today"/>");
   </logic:iterate>
   	
   </tr>
-
+   </c:if>
   </logic:iterate>
 </table>
 <html:hidden styleId="currentPage" name="searchBean" property="page"/>

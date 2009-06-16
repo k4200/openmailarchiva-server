@@ -1,8 +1,6 @@
 <!-- MailArchiva Email Archiving Software 
 	 Copyright Jamie Band 2005
 -->
-<%@ page language="java" import="java.io.*" %>
-<%@ page isErrorPage="true" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="/WEB-INF/tld/c.tld" %>
 <%@ taglib prefix="fmt" uri="/WEB-INF/tld/fmt.tld" %>
@@ -10,46 +8,55 @@
 <%@ taglib uri="/WEB-INF/tld/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/tld/struts-logic.tld" prefix="logic" %>
 <%@ taglib uri="/WEB-INF/tld/struts-bean.tld" prefix="bean" %>
+<%@page isErrorPage="true"%>
 <html>
 <head>
-    <title><bean:message key="errorpage.title"/></title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<link href="common/mailarchiva.css" rel="stylesheet" type="text/css">
-</head>
+<title><bean:message key="config.title"/></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="common/mailarchiva.css" rel="stylesheet" type="text/css">
+
 <body>
+<%@include file="../common/menu.jsp"%>
+
+
+<div class="pagedialog">
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0" >
 
   <tr> 
     <td width="5%" >&nbsp;</td>
-    <td width="95%" align="left"><strong><bean:message key="errorpage.message"/></strong><br><html:errors/></td>
+    <td ><h2><bean:message key="errorpage.title"/></h2></td>
     <td >&nbsp;</td>
   </tr>
  
-</table>
+  <tr> 
+    <td width="5%" >&nbsp;</td>
+    <td width="95%" align="left"><bean:message key="errorpage.message"/><br><html:errors/></td>
+    <td >&nbsp;</td>
+  </tr>
 
 <logic:present name="errors">
-<table class="pagedialog" width="100%" border="0" cellpadding="0" cellspacing="0" >
   <tr> 
     <td colspan="3">&nbsp;</td>
   </tr>
   
   <tr> 
     <td width="5%" >&nbsp;</td>
-    <td width="95%" align="left"><strong>
+    <td width="95%" align="left">
   		<logic:iterate id="error" name="errors">
   			<br>&nbsp;*&nbsp;<bean:write name="error"/>
-  		</logic:iterate></strong>
+  		</logic:iterate>
     </td>
     <td >&nbsp;</td>
   </tr>
-  
-</table>
+
 </logic:present>
 
+ <tr> 
+   <td colspan="3" ><hr></td>
+ </tr>
+ 
 <logic:present name="message">
-<table class="pagetext" width="100%" border="0" cellpadding="0" cellspacing="0" >
   <tr> 
     <td colspan="3">&nbsp;</td>
   </tr>
@@ -58,15 +65,31 @@
   </tr>
   <tr> 
     <td width="5%" >&nbsp;</td>
-    <td width="95%" align="left"><strong>
-    	<c:out value="${message}"/></strong>
+    <td width="95%" align="left">
+    	<c:out value="${message}"/>
     </td>
     <td >&nbsp;</td>
   </tr>
 
-</table>
 </logic:present>
 
+ <tr> 
+   <td colspan="3" >&nbsp;</td>
+ </tr>
+ 
+ <tr> 
+  <td width="5%" >&nbsp;</td>
+   <td ><h3><a href="javascript:history.back()">back</a><h3></td>
+   <td >&nbsp;</td>
+ </tr>
 
+
+ <tr> 
+   <td colspan="3" >&nbsp;</td>
+ </tr>
+ 
+ 
+</table>
+</div>
 </body>
 </html>

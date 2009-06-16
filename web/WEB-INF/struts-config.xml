@@ -2,7 +2,7 @@
 
 <!DOCTYPE struts-config PUBLIC
           "-//Apache Software Foundation//DTD Struts Configuration 1.3//EN"
-          "http://struts.apache.org/dtds/struts-config_1_3.dtd">
+          "struts-config_1_3.dtd">
 
 <struts-config>
 
@@ -15,7 +15,27 @@
 	<form-bean name="archiveRuleBean" type="com.stimulus.archiva.presentation.ArchiveRuleBean"/>
   </form-beans>
 
- 
+   <global-exceptions>
+
+	<exception
+      key="errorpage.friendly.nosuchpage"
+      type="org.apache.struts.chain.commands.InvalidPathException"
+      path="/common/friendlyerror.jsp"/>
+      
+      
+ 	<exception
+      key="global.error"
+      type="java.lang.Exception"
+      path="/common/error.jsp"/>
+      
+    <exception
+      key="global.error"
+      type="java.lang.Exception"
+      path="/common/error.jsp"/>     
+
+   </global-exceptions>
+
+
   <global-forwards>
     <forward name="failure" path="/common/error.jsp"/>
     <forward name="error" path="/common/error.jsp"/>
@@ -23,6 +43,11 @@
   </global-forwards>
 
   <action-mappings>
+  
+  
+  	<action path="/error" type="com.stimulus.struts.BeanAction" name="accountBean" scope="session" validate="false">
+      <forward name="success" path="/common/error.jsp"/>
+    </action>
 
     <!-- SEARCH ACTIONS -->
     
@@ -71,6 +96,7 @@
       <forward name="save" path="/configuration/configurationform.jsp"/>
       <forward name="cancel" path="/configuration/configurationform.jsp"/>
       <forward name="reload" path="/configuration/configurationform.jsp"/>
+      <forward name="downloadlog" path="/downloadlog.do"/>
     </action>
     
      <action path="/recover" type="com.stimulus.struts.BeanAction"
@@ -173,36 +199,37 @@
     <!-- ACCOUNT ACTIONS -->
 
    <action path="/signonform" type="com.stimulus.struts.BeanAction"
-      name="accountBean" scope="session" parameter="*"
+      name="accountBean" scope="session"
       validate="false">
       <forward name="success" path="/account/signonform.jsp"/>
     </action>
 
     <action path="/signon" type="com.stimulus.struts.BeanAction"
-      name="accountBean" scope="session"
+      name="accountBean" scope="request"
       validate="false">
       <forward name="success" path="/search/search.jsp"/>
       <forward name="failure" path="/account/signonform.jsp"/>
     </action>
     
     <action path="/signoff" type="com.stimulus.struts.BeanAction"
-      name="accountBean" scope="session"
+      name="accountBean" scope="request"
       validate="false">
       <forward name="success" path="/account/signonform.jsp"/>
     </action>
     
-    <action path="/viewauditlog" type="com.stimulus.struts.BeanAction"
+    <action path="/viewlog" type="com.stimulus.struts.BeanAction"
       name="configBean" scope="session" parameter="*"
       validate="false" >
-      <forward name="success" path="/configuration/viewauditlog.jsp"/>
+      <forward name="success" path="/configuration/viewlog.jsp"/>
     </action>
-
-    <action path="/viewdebuglog" type="com.stimulus.struts.BeanAction"
-      name="configBean" scope="session" parameter="*"
-      validate="false" >
-      <forward name="success" path="/configuration/viewdebuglog.jsp"/>
+    
+     <action path="/downloadlog" type="com.stimulus.archiva.presentation.DownloadLogBean"
+      name="configBean" scope="session" 
+      validate="false">
+      <forward name="success" path="/configuration/configurationform.jsp"/>
     </action>
   
+   
     
     
 

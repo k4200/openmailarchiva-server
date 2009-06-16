@@ -96,9 +96,42 @@
   	<url-pattern>/axis2-admin/*</url-pattern>
   </servlet-mapping>
 
-  <session-config>
-    <session-timeout>3000</session-timeout>
-  </session-config>
+ <welcome-file-list>
+ 	<welcome-file>/account/signonform.jsp</welcome-file>
+ 	<welcome-file>/axis2-web/index.jsp</welcome-file>
+  </welcome-file-list>
+
+  	<error-page>
+        <error-code>500</error-code>
+        <location>/common/error.jsp</location>
+    </error-page>
+  
+    <error-page>
+        <error-code>403</error-code>
+        <location>/account/signonform.jsp</location>
+    </error-page>
+    <error-page>
+    	<error-code>404</error-code>
+    	<location>/account/signonform.jsp</location>
+    </error-page>
+  
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>
+                Restrict access to JSP pages
+      </web-resource-name>
+      <url-pattern>*.jsp</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <description>
+               With no roles defined, no access granted
+      </description>
+    </auth-constraint>
+  </security-constraint>
+  
+   <session-config>
+      <session-timeout>45</session-timeout>  <!-- 15 minutes -->
+   </session-config>
 
   <taglib>
     <taglib-uri>bean</taglib-uri>
@@ -115,49 +148,6 @@
     <taglib-location>/WEB-INF/tld/struts-html.tld</taglib-location>
   </taglib>
 
-
- <welcome-file-list>
- 	<welcome-file>/account/signonform.jsp</welcome-file>
- 	<welcome-file>/axis2-web/index.jsp</welcome-file>
-  </welcome-file-list>
-
-  	<error-page>
-        <error-code>500</error-code>
-        <location>/common/error.jsp</location>
-    </error-page>
-    
-    <error-page>
-        <error-code>500</error-code>
-        <location>/account/signonform.jsp</location>
-    </error-page>
-    
-    <error-page>
-        <error-code>403</error-code>
-        <location>/account/signonform.jsp</location>
-    </error-page>
-    <error-page>
-    	<error-code>404</error-code>
-    	<location>/axis2-web/Error/error404.jsp</location>
-    </error-page>
-    <error-page>
-    	<error-code>500</error-code>
-    	<location>/axis2-web/Error/error500.jsp</location>
-    </error-page>
-    
-    
-  <security-constraint>
-    <web-resource-collection>
-      <web-resource-name>
-                Restrict access to JSP pages
-      </web-resource-name>
-      <url-pattern>*.jsp</url-pattern>
-    </web-resource-collection>
-    <auth-constraint>
-      <description>
-               With no roles defined, no access granted
-      </description>
-    </auth-constraint>
-  </security-constraint>
 
 </web-app>
 

@@ -44,7 +44,11 @@ div {
 td {
 	font-size: 11px;
 }
-.columnspacing .columnheadertext {
+.columnspacing {
+	font-size: 13px;
+}
+
+.columnheadertext {
 	font-size: 13px;
 }
 
@@ -139,56 +143,10 @@ a.emailaddress:visited { text-decoration: none;  }
 a.emailaddress:hover { text-decoration: underline;  }
 a.emailaddress:active { text-decoration: underline;   }
 
-body,td,div,.p,a {font-family:verdana,sans-serif; font-size: 8pt; margin:0}
-
-#tablist{
-padding: 3px 0;
-margin-left: 0;
-margin-bottom: 0;
-margin-top: 0.1em;
-font: bold 11px Verdana;
-
-}
-
-#tablist li{
-list-style: none;
-display: inline;
-margin: 0;
-}
-
-#tablist li a{
-text-decoration: none;
-padding: 3px 0.5em;
-margin-left: 3px;
-border: 1px solid #778;
-border-bottom: none;
-background: #DDE3ED;
-}
-#tablist li a:link, #tablist li a:visited{
-color: black;
-}
-
-#tablist li a.current{
-	background: #F0F4F6;
-}
-
-#tabcontentcontainer{
-width:100%;
-background: #FFFFFF;;
-margin:0pt 0pt 0pt;
-}
-
-.tabcontent{
-display:none;
-background: #EEF3F8;
-font-size:11px;
-}
+body,td,div,.p,a { font-family:verdana,sans-serif; font-size: 8pt; margin:0 }
 
 body {
 	margin: 0px;
-}
-#tabcontentcontainer td {
-	font-size: 12px;
 }
 
 .pageheading div {
@@ -220,3 +178,103 @@ body {
 	background-repeat: repeat-x;
 	background-color: #C6CFD0;
 }
+
+.tableborder {
+        border-top: 1px solid #000000;
+        border-bottom: 1px solid #000000;
+        border-left: 1px solid #000000;
+        border-right: 1px solid #000000;
+}
+
+.tablehead {
+	background-color: #C6CFD0;
+}
+
+
+.tooltip {
+	 background-color: #fee069;
+	 position:absolute;
+	 visibility:hidden;
+	 padding:1px;
+	 border-style:solid;
+	 border-color:black;
+ 	 border-width:1px;
+	 margin-top:1px;
+}
+
+.input.readonly {
+	background: #fee069;
+}
+
+/* ######### tabs */
+
+.shadetabs{
+padding: 3px 0;
+margin-left: 0;
+margin-top: 1px;
+margin-bottom: 0;
+font: 9px Verdana;
+list-style-type: none;
+text-align: left; /*set to left, center, or right to align the menu as desired*/
+}
+
+.shadetabs li{
+display: inline;
+margin: 0;
+}
+
+.shadetabs li a{
+text-decoration: none;
+position: relative;
+z-index: 1;
+padding: 3px 7px;
+margin-right: 3px;
+border: 1px solid #778;
+color: #2d2b2b;
+background: #E0E7EF url(shade.gif) top left repeat-x;
+}
+
+.shadetabs li a:visited{
+color: #2d2b2b;
+}
+
+.shadetabs li a:hover{
+text-decoration: underline;
+color: #2d2b2b;
+}
+
+.shadetabs li a.selected{ /*selected main tab style */
+position: relative;
+top: 1px;
+}
+
+.shadetabs li a.selected{ /*selected main tab style */
+background-image: url(shadeactive.gif);
+border-bottom-color: white;
+}
+
+.shadetabs li a.selected:hover{ /*selected main tab style */
+text-decoration: none;
+}
+
+.tabcontent{
+display:none;
+background: #E0E7EF;
+font-size:9px;
+}
+
+.tabcontentcontainer{
+width:100%;
+background: #FFFFFF;;
+margin:0pt 0pt 0pt;
+}
+
+@media print {
+.tabcontent {
+display:block !important;
+}
+}
+
+</style>
+
+

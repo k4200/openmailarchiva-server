@@ -70,8 +70,8 @@ function updateParent(dropdown) {
 			</html:select>
 	     </c:if>
 	     <c:if test="${configBean.lookupError!=''}">
-            <c:out value="${configBean.lookupError}" escapeXml="false"/></td>
-         </c:if>
+            <c:out value="${configBean.lookupError}" escapeXml="false"/>
+         </c:if></td>
           <td width="5%">&nbsp;</td>
         </tr>
          <tr> 

@@ -1,0 +1,15 @@
+/struts-bean.tld////*///
+/struts-config_1_1.dtd////*///
+/struts-config_1_2.dtd////*///
+/struts-html.tld////*///
+/struts-layout.tld////*///
+/struts-logic.tld////*///
+/struts-nested.tld////*///
+/struts-tiles.tld////*///
+/c.tld////*///
+/fmt.tld////*///
+/fn.tld////*///
+/permittedTaglibs.tld////*///
+/scriptfree.tld////*///
+/sql.tld////*///
+/x.tld////*///

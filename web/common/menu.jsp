@@ -1,8 +1,16 @@
+
 <%@ taglib uri="/WEB-INF/tld/struts-bean.tld" prefix="bean" %>
+
 <table class="logo" width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr> 
-    <td width="10%" valign="middle"><img align="left" src="<bean:message key="menu.image_left"/>" hspace="0" vspace="0" border="0"></td>
-    <td align="center"></td>
+  <tr>
+    <td width="10%" valign="middle"><html:link page="/search.do"><img align="left" src="<bean:message key="menu.image_left"/>" hspace="0" vspace="0" border="0"></html:link></td>
+    <td width="80%" align="left"></td>
+  	<td width="5%" align="center">
+  	<!--
+  		<a href="http://www.mailarchiva.com"><img align="left" src="<bean:message key="menu.image_right"/>" hspace="0" vspace="0" border="0"></a>
+  		-->
+  	</td>
+  	<td width="5%" align="left"></td>
   </tr>
 </table>
 <table class="menu" width="100%" border="0" cellpadding="0" cellspacing="0">
