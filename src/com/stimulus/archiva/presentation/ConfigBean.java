@@ -30,23 +30,31 @@ import com.stimulus.archiva.authentication.*;
 import com.stimulus.struts.*;
 import com.stimulus.util.Compare;
 import com.stimulus.util.EnumUtil;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
+import com.stimulus.archiva.log.*;
 import java.io.Serializable;
 import java.util.regex.*;
 import java.util.*;
-
+import javax.servlet.http.*;
 import javax.mail.*;
 import java.net.*;
-public class ConfigBean extends BaseBean implements Serializable {
+
+public class ConfigBean extends BaseBean  implements HttpSessionBindingListener,Serializable {
 
   private static final long serialVersionUID = 2275642295115995805L;
-  protected static Logger logger = Logger.getLogger(MessageBean.class.getName());
-  protected static final Logger audit = Logger.getLogger("com.stimulus.archiva.audit");
+  protected static Log logger = LogFactory.getLog(MessageBean.class.getName());
+  protected static final Log audit = LogFactory.getLog("com.stimulus.archiva.audit");
   
+  public static final String IPV4_REGEX = "\\A(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}\\z";
+  public static final String IPV6_HEX4DECCOMPRESSED_REGEX = "\\A((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?) ::((?:[0-9A-Fa-f]{1,4}:)*)(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}\\z";
+  public static final String IPV6_6HEX4DEC_REGEX = "\\A((?:[0-9A-Fa-f]{1,4}:){6,6})(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}\\z";
+  public static final String IPV6_HEXCOMPRESSED_REGEX = "\\A((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)\\z";
+  public static final String IPV6_REGEX = "\\A(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\\z";
+
   protected String lookupPassword = "";
   protected String lookupUsername = "";
   protected String testAuthenticate = "";
-  protected String logLevel = "DEBUG";
+  protected ChainedException.Level logLevel = ChainedException.Level.DEBUG;
   protected String recoveryOutput = "";
   protected boolean recoveryComplete = false;
   protected Config config = null;
@@ -54,15 +62,17 @@ public class ConfigBean extends BaseBean implements Serializable {
   protected String mailboxTestOutput = "";
   protected String passPhrase1;
   protected String passPhrase2;
+  protected String masterLoginPassword1;
+  protected String masterLoginPassword2;
   protected String lookupAttribute;
   protected int lookupIndex;
   protected String lookupValue;
   protected ArrayList<String> ldapAttributes = new ArrayList<String>();
   protected String lookupError;
+  protected String logFile;
   
   public ConfigBean() {
-  		config = new Config();
-  		config.init(null);
+  		
   }
 
   public Config getConfig() {
@@ -179,37 +189,32 @@ public class ConfigBean extends BaseBean implements Serializable {
  
 
   public List<String> getDebugLoggingLevelLabels() {
-	  List<String> loggingLevels = new LinkedList<String>();
-	  loggingLevels.add("config.log_level_all");
-	  loggingLevels.add("config.log_level_debug");
-	  loggingLevels.add("config.log_level_warn");
-	  loggingLevels.add("config.log_level_error");
-	  loggingLevels.add("config.log_level_fatal");
-	  loggingLevels.add("config.log_level_info");
-	  loggingLevels.add("config.log_level_off");
-	  return translateList(Collections.unmodifiableList(loggingLevels));
+	  List<String> logLvl = new ArrayList<String>();
+	  List<String> loggingLevels = EnumUtil.enumToList(ChainedException.Level.values());
+	  for (String logLevel : loggingLevels) {
+		  logLvl.add("config.log_level_"+logLevel.toString().toLowerCase(Locale.ENGLISH));
+	  }
+	  return translateList(Collections.unmodifiableList(logLvl));
   }
 
   public List<String> getDebugLoggingLevels() {
-	  List<String> loggingLevels = new LinkedList<String>();
-	  loggingLevels.add("ALL");
-	  loggingLevels.add("DEBUG");
-	  loggingLevels.add("WARN");
-	  loggingLevels.add("ERROR");
-	  loggingLevels.add("FATAL");
-	  loggingLevels.add("INFO");
-	  loggingLevels.add("OFF");
-	  return Collections.unmodifiableList(loggingLevels);
+	  return EnumUtil.enumToList(ChainedException.Level.values());
   }
   
   public void setDebugLoggingLevel(String level) {
-	  logLevel = level;
+	  logLevel = ChainedException.Level.valueOf(level.toUpperCase(Locale.ENGLISH));
   }
   
   public String getDebugLoggingLevel() {
-	  return logLevel; 
+	  return logLevel.toString().toLowerCase(Locale.ENGLISH);
   }
 
+  
+  public boolean getAllowMasterPasswordEntry() {
+	  MailArchivaPrincipal cp = (MailArchivaPrincipal)ActionContext.getActionContext().getRequest().getUserPrincipal();
+	  return cp.getRole().equals("master") || (cp.getRole().equals("administrator") && config.getAuthentication().isLegacyMasterPassword());
+	  
+  }
   
   public void setArchiveInbound(boolean archiveInbound) { config.getArchiveFilter().setArchiveInbound(archiveInbound); };
 
@@ -441,19 +446,21 @@ public class ConfigBean extends BaseBean implements Serializable {
   }
   
   public boolean getAgentMilterEnable() {
-	  return config.getMilterServerService().getMilterEnable();
+	  return config.getMilterServerService().getEnable();
   }
   
   public void setAgentMilterEnable(boolean enable) {
-	  config.getMilterServerService().setMilterEnable(enable);
+	  config.getMilterServerService().setEnable(enable);
   }
+  
+ 
   
   public void setAgentSMTPEnable(boolean enable) {
 	  config.getSMTPServerService().setSMTPEnable(enable);
   }
   
   public String getAgentMilterPort() {
-	  return Integer.toString(config.getMilterServerService().getMilterPort());
+	  return Integer.toString(config.getMilterServerService().getPort());
   }
   
   public String getAgentMilterAddress() {
@@ -462,7 +469,7 @@ public class ConfigBean extends BaseBean implements Serializable {
   
   public void setAgentMilterPort(String port) {
 	  int portVal = Integer.valueOf(port);
-	  config.getMilterServerService().setMilterPort(portVal);
+	  config.getMilterServerService().setPort(portVal);
 	  
   }
   
@@ -472,53 +479,82 @@ public class ConfigBean extends BaseBean implements Serializable {
   /* volumes */
   
   public List<VolumeBean> getVolumes() {
-  	return VolumeBean.getVolumeBeans(config.getVolumes());
+	  try {
+		  return VolumeBean.getVolumeBeans(config.getVolumes());
+	  } catch (Throwable t) {
+		  System.out.println("error:"+t.getMessage());
+		  t.printStackTrace();
+		  return null;
+	  }
   }
   
   public Volume getMessageStoreVolume(int index) {
 	  	return config.getVolumes().getVolume(index);
   }
 
-  public String indexVolume(int volumeIndex) throws ArchivaException {
+  public String indexVolume(int volumeIndex) {
       logger.debug("indexVolume() {volumeIndex='"+volumeIndex+"'}");
-      MessageService.indexVolume(getMailArchivaPrincipal(),volumeIndex);
+      try {
+    	  MessageService.indexVolume(getMailArchivaPrincipal(),volumeIndex);
+      } catch (Exception e) {
+    	  setSimpleMessage(getMessage("config.error_volume_index")+":"+e.getMessage());
+      }
       return "reload";
   }
 
-  public String closeVolume(int volumeIndex) throws ConfigurationException {
+  public String closeVolume(int volumeIndex) {
       logger.debug("closeVolume()");
-      config.getVolumes().loadAllVolumeInfo();
-      config.getVolumes().closeVolume(volumeIndex);
+      try {
+    	  config.getVolumes().closeVolume(volumeIndex);
+      } catch (Exception e) {
+		  setSimpleMessage(getMessage("config.error_volume_close")+":"+e.getMessage());
+		  return "reload";
+	  }
       setSimpleMessage(getMessage("config.volume_status_change_notification"));
      return "reload";
   }
   
-  public String unmountVolume(int volumeIndex) throws ConfigurationException {
-      logger.debug("unmountVolume()");
-      config.getVolumes().unmountVolume(volumeIndex);
+   public String unmountVolume(int volumeIndex) {
+	  logger.debug("unmountVolume()");
+	  try {
+		  config.getVolumes().unmountVolume(volumeIndex);
+	  } catch (Exception e) {
+		  setSimpleMessage(getMessage("config.error_volume_unmount")+":"+e.getMessage());
+		  return "reload";
+	  }
       setSimpleMessage(getMessage("config.volume_status_change_notification"));
       return "reload";
   }
 
-  public String deleteVolume(int id) throws ConfigurationException {
+  public String deleteVolume(int id) {
     logger.debug("deleteVolume() {volumeIndex='"+id+"'}");
-    config.getVolumes().removeVolume(id);
+    try {
+    	config.getVolumes().removeVolume(id);
+    } catch (Exception e) {
+		  setSimpleMessage(getMessage("config.error_volume_delete")+":"+e.getMessage());
+		  return "reload";
+	}
     setSimpleMessage(getMessage("config.volume_status_change_notification"));
   	return "reload";
   }
-  public String newVolume() throws ConfigurationException {
+  public String newVolume() {
   	logger.debug("newVolume()");
-  	config.getVolumes().addVolume("","",config.getVolumes().getDefaultVolumeMaxSize(),false);
+  	try {
+  		config.getVolumes().newVolume();
+  	 } catch (Exception e) {
+		  setSimpleMessage(getMessage("config.error_volume_create")+":"+e.getMessage());
+		  return "reload";
+	}	
   	setSimpleMessage(getMessage("config.volume_status_change_notification"));
   	return "reload";
   }
 
-  public String prioritizeVolume(int id) throws ConfigurationException {
+  public String prioritizeVolume(int id)  {
   	config.getVolumes().setVolumePriority(id, Volumes.Priority.PRIORITY_HIGHER);
   	setSimpleMessage(getMessage("config.volume_status_change_notification"));
   	return "reload";
   }
-  public String dePrioritizeVolume(int id) throws ConfigurationException {
+  public String dePrioritizeVolume(int id) {
   	config.getVolumes().setVolumePriority(id, Volumes.Priority.PRIORITY_LOWER);
   	setSimpleMessage(getMessage("config.volume_status_change_notification"));
   	return "reload";
@@ -565,8 +601,8 @@ public class ConfigBean extends BaseBean implements Serializable {
     	return config.getADIdentity().getRoleMap(index);
   }
 
-  public List<ADRoleMapBean> getADRoleMaps() {
-      return ADRoleMapBean.getADRoleMapBeans(config.getADIdentity().getRoleMaps());
+  public List<LDAPRoleMapBean> getADRoleMaps() {
+      return LDAPRoleMapBean.getLDAPRoleMapBeans(config.getADIdentity().getRoleMaps());
   }
   
  
@@ -663,6 +699,21 @@ public class ConfigBean extends BaseBean implements Serializable {
       return config.getArchiver().isDefaultPassPhraseModified();
   }
   
+  public void setMasterLoginPassword(String masterLoginPassword) throws ArchivaException  {
+	  if (masterLoginPassword.trim().length()>0)
+    	  masterLoginPassword1=masterLoginPassword;
+      
+  }
+  
+  public void setMasterLoginPasswordAgain(String masterLoginPassword) throws ArchivaException  {
+	  if (masterLoginPassword.trim().length()>0)
+    	  masterLoginPassword2=masterLoginPassword;
+  }
+  
+  public boolean getDefaultMasterLoginPasswordModified() {
+      return config.getAuthentication().isDefaultMasterLoginModified();
+  }
+  
   public String getLookupPassword() {
       return lookupPassword;
   }
@@ -741,26 +792,41 @@ public class ConfigBean extends BaseBean implements Serializable {
  
  
   public String configurationform() {
+	  
+	  try {
+		  
+		  logger.debug("config clone");
+		  config = Config.getConfig().clone(getMailArchivaPrincipal());
+	  		
+	  	} catch (ConfigurationException ce) {
+	 		logger.error("failed to load configuration",ce);
+	 		throw new ChainedRuntimeException(ce.toString(),ce,logger);
+	 	}
+	  	try {
+	  		config.getVolumes().loadAllVolumeInfo();
+	  	} catch (ConfigurationException ce) { 
+	  		logger.error("failed to load volume info:"+ce.getMessage());
+	  	}
 	  logLevel = ConfigurationService.getLoggingLevel();
-  	try {
-  		
-  		Config.getConfig().cloneTo(getMailArchivaPrincipal(),config);
-  		if (getNoWaitingMessagesInNoArchiveQueue()>0) {
+	  
+	  if (getNoWaitingMessagesInNoArchiveQueue()>0) {
 	  		if (getServlet()!=null)
 	  			setSimpleMessage(getMessage("config.no_archive_warning")+" "+getNoWaitingMessagesInNoArchiveQueue()+".");
-  		}
-  	
-  	} catch (ConfigurationException ce) {
- 		logger.error("failed to load configuration",ce);
- 		throw new ChainedRuntimeException(ce.toString(),ce,logger);
- 	}
-	if (getDefaultPassPhraseModified()) {
-			passPhrase1 = passPhrase2 = "modified";
+		}
+
+		if (getDefaultPassPhraseModified()) {
+				passPhrase1 = passPhrase2 = "modified";
 		} else {
 			passPhrase1 = "changeme1";
 			passPhrase2 = "changeme2";
 		}
-  	return "success";
+		if (getDefaultMasterLoginPasswordModified()) {
+			masterLoginPassword1 = masterLoginPassword2 = "modified";
+		} else {
+			masterLoginPassword1 = "admin";
+			masterLoginPassword2 = "admin";
+		}
+	  	return "success";
   }
   
   public String recoverEmails() {
@@ -824,8 +890,10 @@ public class ConfigBean extends BaseBean implements Serializable {
 	  return "reload";
   }
 
+  
   public String testloginform() {
 	  testAuthenticate = "";
+	  config.getConfig().getADIdentity().saveHostsFileEntry();
 	  return "success";
   }
   
@@ -835,6 +903,7 @@ public class ConfigBean extends BaseBean implements Serializable {
       lookupError = "";
       lookupAttribute = "";
 	  lookupValue = "";
+	  config.getConfig().getADIdentity().saveHostsFileEntry();
   }
   public String lookuprolecriterionldapform() {
 	  initLdapLookup();
@@ -846,8 +915,10 @@ public class ConfigBean extends BaseBean implements Serializable {
 	  return "success";
   }
   
+ 
   public String configure() throws ArchivaException
   {
+	 Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
     SubmitButton button = getSubmitButton();
     
     if (button==null | button.action==null)
@@ -856,7 +927,7 @@ public class ConfigBean extends BaseBean implements Serializable {
   	logger.debug("configure() {action ='"+button.action+"', value='"+button.value+"'}");
 
 	  	if (button.action.equals("newvolume")) {
-	  		return newVolume();
+	  		return newVolume(); 
 		} else if (button.action.equals("deletevolume")) {
 	  		return deleteVolume(Integer.parseInt(button.value));
 	  	} else if (button.action.equals("prioritizevolume")) {
@@ -910,7 +981,12 @@ public class ConfigBean extends BaseBean implements Serializable {
 	  		String id = button.value.substring(0,dotpos);
 	  		String cid = button.value.substring(dotpos+1,button.value.length());
 	  		return deleteArchiveRuleClause(Integer.parseInt(id),Integer.parseInt(cid));
-	  	} 
+	  	} else if (button.action.equals("downloadlog")) {
+	  		setLogFile(button.value);
+	  		return "downloadlog";
+	  	} else if (button.action.equals("deletelog")) {
+	  		return deleteLog(button.value);
+	  	}
 	  		
 	  	ActionContext ctx = ActionContext.getActionContext();
 	 
@@ -925,13 +1001,22 @@ public class ConfigBean extends BaseBean implements Serializable {
 	  	if (!error) {
 	  		setSimpleMessage(getMessage("config.saved"));
 	  	}
-	
-	 	ConfigurationService.modifyConfig(getMailArchivaPrincipal(),config);
+	  	
+		
+	  	MailArchivaPrincipal principal = getMailArchivaPrincipal();
+	  	
+	  
+	  	config.saveSettings(principal,true);
+	  	
+	  
+	  	config.loadSettings(principal);
+	  	Config.getConfig().loadSettings(principal);
+	  	Config.getConfig().getServices().reloadConfigAll();
+	  
 	  	MessageService.init(); // initialize cipher keys (for new password)
-
 	  	ConfigurationService.setLoggingLevel(logLevel);
 	 
-      	return save();
+		return save();
   }
   
 	
@@ -941,7 +1026,7 @@ public class ConfigBean extends BaseBean implements Serializable {
 	      ActionContext ctx = ActionContext.getActionContext();
 	      int c = 0;
 	      for (Volume v : config.getVolumes().getVolumes()) {
-	          if (!MessageService.prepareVolume(v)) {
+	          if (!v.isEjected() && !MessageService.prepareVolume(v)) {
 	        	  ctx.addSimpleError(getMessage("config.volume_create_failed")+" "+c+".");
 	        	  success=false;
 	          }
@@ -994,6 +1079,8 @@ public class ConfigBean extends BaseBean implements Serializable {
     	  retError += getMessage("config.sec_ad_68");
       if (error.contains("(6)"))
     	  retError += getMessage("config.sec_ad_6");
+      if (error.contains("Invalid argument"))
+    	  retError += getMessage("config.sec_ad_invalidargument");
       return retError;
   }
   
@@ -1039,8 +1126,21 @@ public class ConfigBean extends BaseBean implements Serializable {
       if (action!=null && Compare.equalsIgnoreCase(action, "save")) {
 	      ActionContext ctx = ActionContext.getActionContext();
 	      
+	      validateRequiredField(masterLoginPassword1, getMessage("config.sec_master_login_passwd_not_entered"));
+	      if (Compare.equalsIgnoreCase(masterLoginPassword1,"admin")) {
+	    	  ctx.addSimpleError(getMessage("config.sec_master_login_passwd_not_entered"));
+	      } else {
+		      if (!Compare.equalsIgnoreCase(masterLoginPassword1,masterLoginPassword2)) 
+		    	  ctx.addSimpleError(getMessage("config.sec_master_login_passwd_not_match"));
+		      else if (!masterLoginPassword1.equalsIgnoreCase("modified")) {
+		    	  config.getAuthentication().setMasterLoginPassword(masterLoginPassword1);
+		    	  masterLoginPassword1 = masterLoginPassword2 = "modified";
+		      }
+	      }
+	      
+	      
 	      validateRequiredField(passPhrase1, getMessage("config.sec_enc_passwd_not_entered"));
-
+	    
 	      if (Compare.equalsIgnoreCase(passPhrase1,"changeme1")) {
 	    	  ctx.addSimpleError(getMessage("config.sec_enc_passwd_not_entered"));
 	      } else {
@@ -1088,11 +1188,14 @@ public class ConfigBean extends BaseBean implements Serializable {
 	      if (this.config.getAuthentication().getAuthMethod()==Authentication.AuthMethod.ACTIVEDIRECTORY) {
 	          validateRequiredField(config.getADIdentity().getKDCAddress(), getMessage("config.sec_kdc_missing"));
 	          validateRequiredField(config.getADIdentity().getLDAPAddress(), getMessage("config.sec_ldap_missing"));
+	          validateRequiredField(config.getADIdentity().getBaseDN(),getMessage("config.sec_ad_base_dn"));
+	          validateRequiredField(config.getADIdentity().getServiceDN(),getMessage("config.sec_ad_service_username_missing"));
+	          validateRequiredField(config.getADIdentity().getServicePassword(),getMessage("config.sec_ad_service_password_missing"));
 	      }
 	      
 	      j = 0;
 	      for (Identity.RoleMap rolemap : config.getADIdentity().getRoleMaps()) {
-	      ADIdentity.ADRoleMap r = (ADIdentity.ADRoleMap)rolemap;
+	      ADIdentity.LDAPRoleMap r = (ADIdentity.LDAPRoleMap)rolemap;
 	          validateRequiredField(r.getRole(), getMessage("config.sec_role_no_select")+" "+j+".");
 	          validateRequiredField(r.getAttribute(), getMessage("config.sec_ldap_no_select")+" "+j+".");
 	          validateRequiredField(r.getRegEx(), getMessage("config.sec_role_match_crit_invalid")+" "+j+".");
@@ -1127,25 +1230,48 @@ public class ConfigBean extends BaseBean implements Serializable {
 	          validateRequiredField(d.getName(), getMessage("config.sec_domain_missing")+" "+j+".");
 	          j++;
 	      }
-	      /*
-	      j = 0;
 	      
-	      for (Roles.Role r : config.getRoles().getRoles()) {
-	    		if (r.equals(Roles.ADMINISTRATOR_ROLE) ||
-	    		    	r.equals(Roles.USER_ROLE) ||
-	    		    	r.equals(Roles.AUDITOR_ROLE) || 
-	    		    	r.equals(Roles.SYSTEM_ROLE)) {
-	    		    	continue;
-	    	    	}
-	    	  validateRequiredField(r.getName(), getMessage("config.role_name_missing")+" "+j+".");
-	    	  for (Criteria criterion : r.getViewFilter().getCriteria()) {
-	    		  validateRequiredField(criterion.getQuery(), getMessage("config.role_view_filter_query_missing")+" "+j+".");
-	    	  }
-	    	  j++;
-	      }*/
+	      j = 0;
+	      MailboxConnection mailbox = config.getMailboxConnections().getConnection();
+	      if (mailbox.getEnabled()) {
+	    	validateRequiredField(mailbox.getServerName(), getMessage("config.mailbox_server_missing"));
+		  	validateRequiredField(mailbox.getUsername(), getMessage("config.mailbox_username_missing"));
+		  	validateRequiredField(mailbox.getPassword(), getMessage("config.mailbox_password_missing"));
+	      }
+		  checkDomainDuplicate(ctx);
+	    
       }
   }
 
+  
+  protected void validateIPAddress(String value, String errorMessage) {
+	  	if (value == null || value.trim().length() < 1) {
+	      ActionContext.getActionContext().addSimpleError(errorMessage);
+	    } else {
+	    	 boolean matched = Pattern.matches(IPV4_REGEX,value) || 
+	    	 				   Pattern.matches(IPV6_HEX4DECCOMPRESSED_REGEX,value) ||
+	    	 				   Pattern.matches(IPV6_6HEX4DEC_REGEX,value) ||
+	    	 				   Pattern.matches(IPV6_HEXCOMPRESSED_REGEX,value) ||
+	    	 				   Pattern.matches(IPV6_REGEX, value);
+	    	 if (!matched) {
+	    		 ActionContext.getActionContext().addSimpleError(errorMessage);
+	    	 }
+	    }
+  }
+  
+  
+  protected void checkDomainDuplicate(ActionContext ctx) {
+	  for (Domains.Domain domaina : config.getDomains().getDomains()) {
+    	  for (Domains.Domain domainb : config.getDomains().getDomains()) {
+    		  if (domaina==domainb) continue; // objects are the same
+    		  if (domaina.getName().equalsIgnoreCase(domainb.getName())) {
+    			  ctx.addSimpleError(getMessage("config.domains_duplication_error"));
+    			  return;
+    		  }
+    	  }
+      }
+  }
+ 
   public class RecoverInfo extends MessageService.Recovery {
 	  
 	  public RecoverInfo() {
@@ -1178,14 +1304,6 @@ public class ConfigBean extends BaseBean implements Serializable {
 
   }
 
-
-  public String getDebugLog() {
-	  return ConfigurationService.getDebugLog();
-  }
-  
-  public String getAuditLog() {
-	  return ConfigurationService.getAuditLog();
-  }
   
   public String getVersion() {
 	  return Config.getConfig().getApplicationVersion();
@@ -1243,7 +1361,8 @@ public class ConfigBean extends BaseBean implements Serializable {
   public List<String> getRoleValues() {
 	  ArrayList<String> roleValues = new ArrayList<String>();
 	  for (Roles.Role role : config.getRoles().getRoles()) {
-		  if (Compare.equalsIgnoreCase(role.getName(),"system"))
+		  if (Compare.equalsIgnoreCase(role.getName(),"system") ||
+			  Compare.equalsIgnoreCase(role.getName(),"master"))
 			  continue;
 		  roleValues.add(role.getName());
 	  }
@@ -1277,6 +1396,95 @@ public class ConfigBean extends BaseBean implements Serializable {
 		addIpAddresses(ipAddresses);
 		return ipAddresses;
 	  }
-	
 
+
+ public boolean getDiskSpaceChecking() {
+		  return config.getVolumes().getDiskSpaceChecking();
+	  }
+	  
+	  public void setDiskSpaceChecking(boolean diskSpaceChecking) {
+		  config.getVolumes().setDiskSpaceChecking(diskSpaceChecking);
+	  }
+	  
+	  public int getMailboxMaxMessages() {
+		  return config.getMailboxConnections().getMaxMessages();
+	  }
+	  
+	  public void setMailboxMaxMessages(int maxMessages) {
+		  this.config.getMailboxConnections().setMaxMessages(maxMessages);
+	  }
+
+	
+      public List<LogFiles.LogFile> getLogFiles() { 
+		  return config.getLogFiles().getLogFiles();
+   	  }
+
+	  public String getLog() {
+		  return ConfigurationService.viewLog(logFile);
+	  }
+	  
+	  public void setLogFile(String logFile) {
+		  this.logFile = logFile;
+	  }
+	  
+	  public String getLogFile() {
+		  return this.logFile;
+	  }
+	  public String deleteLog(String logFile) {
+		  ConfigurationService.deleteLog(logFile);
+		  return "reload";
+	  }
+	
+	  public void valueUnbound(HttpSessionBindingEvent event) {
+		  logger.debug("configBean unbound");
+		  config = null;
+	  }
+	  
+	  public void valueBound(HttpSessionBindingEvent event) {
+		  logger.debug("configBean bound");
+		  config = new Config();	
+	  }
+	  
+	  public int getMaxSearchResults() {
+		  return config.getSearch().getMaxSearchResults();
+	  }
+	  
+	  public void setMaxSearchResults(int maxSearchResults) {
+		  config.getSearch().setMaxSearchResults(maxSearchResults);
+	  }
+	  
+	  public List<String> getMaxSearchResultsList() {
+		  ArrayList<String> list = new ArrayList<String>();
+		  list.add("100");
+		  list.add("500");
+		  list.add("1000");
+		  list.add("10000");
+		  list.add("100000");
+		  list.add("1000000");
+		  list.add("5000000");
+		  return list;
+	  }
+	  public List<String> getMaxSearchResultsLabels() {
+		  ArrayList<String> list = new ArrayList<String>();
+		  list.add("100");
+		  list.add("500");
+		  list.add("1000");
+		  list.add("10,000");
+		  list.add("100,000");
+		  list.add("1,000,000");
+		  list.add("5,000,000");
+		  return list;
+	  }
+	  
+	  
+ public String getTempDir() { return config.getTempDir(); }
+	    public void setTempDir(String tempDir) { config.setTempDir(tempDir); }
+		  
+	    
+	    public boolean getProcessMalformedMessages() { return config.getArchiver().getProcessMalformedMessages(); }
+	    public void setProcessMalformedMessages(boolean processMalformedMessages) {
+	    	config.getArchiver().setProcessMalformedMessages(processMalformedMessages);
+	    }
+		 
 }
+

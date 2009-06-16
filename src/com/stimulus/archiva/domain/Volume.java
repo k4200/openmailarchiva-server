@@ -17,95 +17,98 @@
 package com.stimulus.archiva.domain;
 
 import com.stimulus.util.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.text.DecimalFormat;
-import java.util.*;
 import java.io.*;
-import org.apache.log4j.Logger;
+import java.util.*;
+import org.apache.commons.logging.*;
 import com.stimulus.archiva.exception.ArchivaException;
 import com.stimulus.archiva.exception.ConfigurationException;
 import com.stimulus.archiva.monitor.Event;
 import java.nio.channels.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-  public class Volume implements Comparable<Volume>,Serializable,Props {
+import java.util.concurrent.*;
+public class Volume implements Comparable<Volume>,Serializable,Props, Cloneable
+ {
 
 	  private static final long serialVersionUID = 5447936271470342602L;
 	  
-      protected static Logger logger = Logger.getLogger(Volume.class.getName());
-      public enum Status { CLOSED,ACTIVE,UNUSED,NEW,UNMOUNTED,EJECTED,REMOTE };
+      protected static Log logger = LogFactory.getLog(Volume.class.getName());
+      // EJECTED status is now deprecated, we now use ejected variable instead
+      public enum Status { CLOSED,ACTIVE,UNUSED,NEW,UNMOUNTED,EJECTED };
+     
+      
       protected String 	path;
  	  protected String 	indexPath;
- 	  protected long 	maxSize = 3000;
+ 	  protected long 	maxSize = 307200;
       protected Status	status = Status.NEW;
- 	  protected long    freeIndexSpace 	 = Long.MAX_VALUE;
-	  protected long    freeArchiveSpace = Long.MAX_VALUE;
-	  protected Date	latestArchived = null;
-	  protected Date    earliestArchived = null;
-	  protected Date    earliestSent = null;
-	  protected Date	latestSent = null;
-	  protected Date    earliestReceived = null;
-	  protected Date	latestReceived = null;
-      protected long    usedIndexSpace 	 = -1;
-      protected long    usedArchiveSpace = -1;
-      public 	boolean diskSpaceChecking = true;
+	  protected Date	closedDate = null;
+	  protected Date    createdDate = null;
       protected boolean allowRemoteSearch = false;
+      protected boolean checkClosedVolume = false;
+      
       protected String  id;
       protected String  version;
-
       protected static final String INFO_FILE = "volumeinfo";
       protected static final String volumePathKey 			= "volume.store.path";
       protected static final String volumeNameKey 			= "volume.name";
       protected static final String volumeIndexPathKey 		= "volume.index.path";
       protected static final String volumeMaxSizeKey 		= "volume.max.size";
       protected static final String volumeRemoteSearchKey 	= "volume.remote.search";
+      protected static final String volumeEjectedKey 		= "volume.ejected";
+      protected static final String volumeCheckClosedKey    = "volume.check.closed";
       
       protected static final String defaultVolumePath = Character.toString(File.separatorChar);
       protected static final String defaultVolumeIndexPath = File.separatorChar + "index";
-      protected static final int defaultVolumeMaxSize = 30000;
+      protected static final int defaultVolumeMaxSize = 307200;
       protected static final String defaultVolumeRemoteSearch = "no";
+      protected static final String defaultCheckClosed = "no";
       protected Object diskSpaceLock = new Object();
       protected Object volumeinfoLock = new Object();
       protected boolean currentlyCheckingDiskSpace = false;
-      protected boolean isDiskSpaceChecked = false;
+      
+      public static ConcurrentHashMap<String,Long> usedSpaceCache = new ConcurrentHashMap<String,Long>();
+      
+      
+   
+      //protected SignatureManifest manifest = new SignatureManifest(this);
       
       public Volume() {
-    	  
       }
       
-	  public Volume(String path, String indexPath,  int maxSize, boolean allowRemoteSearch) throws ConfigurationException {
+	  public Volume(String path, String indexPath, long maxSize, boolean allowRemoteSearch) throws ConfigurationException {
 	  	setIndexPath(indexPath);
 	  	setPath(path);
 	  	setMaxSize(maxSize);
 	  	setAllowRemoteSearch(allowRemoteSearch);
-	  	diskSpaceChecking = Config.getConfig().getVolumes().getDiskSpaceChecking();
-	  	if (diskSpaceChecking) {
-		  	try {
-		  		calculateFreeSpace();
-		  	} catch (ArchivaException ae) {
-		  		diskSpaceChecking = false;
-		  	}
-	  	}
 	  }
 
 	  public String getID() {
 		if (id==null) {
-			return DateUtil.convertDatetoString(new Date()); // legacy
-		} else return id;
+			try { load(); } catch (Exception e) {}
+			if (id==null) {
+				return UUID.randomUUID().toString();
+			}
+		} 
+		return id;
 	  }
 	  
 	  public void setID(String id) { this.id = id; }
-	 
+	  public void setMaxSize(long maxSize) { this.maxSize = maxSize; }
 	  public long getMaxSize() { return maxSize; }
 	  public String getIndexPath() { return indexPath; }
 	  
+	  public void incUsedSpace(long indexInc,long storeInc) {
+		  Volume.usedSpaceCache.put(getIndexPath().toLowerCase(),getUsedIndexSpace()+indexInc);
+		  Volume.usedSpaceCache.put(getPath().toLowerCase(),getUsedArchiveSpace()+storeInc);
+	  }
 	  
+	  
+	  public boolean isDiskSpaceChecked() {
+		  return Volume.usedSpaceCache.get(getPath().toLowerCase())!=null;
+	  }
+	  
+	     
 	  public void setIndexPath(String indexPath) { 
 		  if (indexPath.length()>1 && indexPath.lastIndexOf(File.separator)==indexPath.length()-1)
-		  	indexPath = indexPath.substring(0,indexPath.length()-2);
+		  	indexPath = indexPath.substring(0,indexPath.length()-1);
 		   this.indexPath = indexPath.toLowerCase(Locale.ENGLISH); 
 		  
 	  }
@@ -113,173 +116,132 @@ import java.util.concurrent.Executors;
 	  
 	  public void setPath(String path) { 
 		  if (path.length()>1 && path.lastIndexOf(File.separator)==path.length()-1)
-		  	path = path.substring(0,path.length()-2);
+		  	path = path.substring(0,path.length()-1);
 		  this.path = path.toLowerCase(Locale.ENGLISH);
 	  }
-	  public void setMaxSize(long maxSize) { this.maxSize = maxSize; }
-
-	  public long getFreeIndexSpace() { return freeIndexSpace; }
-	  public void setFreeIndexSpace(long freeIndexSpace) { this.freeIndexSpace = freeIndexSpace; }
-  
-	  public long getFreeArchiveSpace() { return freeArchiveSpace; }
-	  public void setFreeArchiveSpace(long freeArchiveSpace) { this.freeArchiveSpace = freeArchiveSpace; }
+	
 	  
-      public void setUsedIndexSpace(long usedIndexSpace) { this.usedIndexSpace = usedIndexSpace; }
-      public long getUsedIndexSpace() { return usedIndexSpace; }
+	  protected long getCachedUsedSpace(String path) {
+		  Long cachedUsedSpace = usedSpaceCache.get(path.toLowerCase());
+		  if (cachedUsedSpace!=null) {
+			  return cachedUsedSpace;
+		  } else {
+			  return -1;
+		  }
+	  }
+	  
+	  public long getFreeIndexSpace() { 
+		  long freeIndexSpace =  getAvailableBytes(new File(getIndexPath()),getUsedIndexSpace()); 
+		  return freeIndexSpace < 0 ? 0 : freeIndexSpace;	  
+	  }
+	 
+	  public long getFreeArchiveSpace() { 
+		  long freeArchiveSpace = getAvailableBytes(new File(getPath()),getUsedArchiveSpace()); 
+		  return freeArchiveSpace < 0 ? 0 : freeArchiveSpace;	  
+	  }
+	 
+      public long getUsedIndexSpace() { return getCachedUsedSpace(getIndexPath()); }
       
-      public void setUsedArchiveSpace(long usedArchiveSpace) { this.usedArchiveSpace = usedArchiveSpace; }
-      public long getUsedArchiveSpace() { return usedArchiveSpace; }
-      
-      
-      public void ensureDiskSpaceCheck() {
-	    	  if (!shouldCheckDiskSpace()) {
-					  logger.debug("skipping disk space check");
-					  return;
-			  }
-    	  	  ExecutorService checkService = Executors.newSingleThreadExecutor();
-	    	  checkService.execute(new DiskCheck(this));
-	    	  checkService.shutdown();
+      public long getUsedArchiveSpace() { return getCachedUsedSpace(getPath()); }
+    
+      protected long getAvailableBytes(File filePath, long usedBytes) {
+    	  long freeSpaceBytes = filePath.getFreeSpace();
+    	  long maxSizeBytes = maxSize * 1024 * 1024;
+    	  long freeSpace2Bytes = maxSizeBytes - usedBytes;
+    	  if (freeSpaceBytes < freeSpace2Bytes)
+    		  return freeSpaceBytes;
+    	  else
+    		  return freeSpace2Bytes;
       }
       
 	  public boolean enoughDiskSpace() {
 		 
-		  synchronized(diskSpaceLock) {
-		
-			  
+	
 			  Volumes volumes = Config.getConfig().getVolumes();
 			  if (volumes==null) {
 				  logger.error("volumes is null");
 				  return true;
 			  }
 			  
-			  
-			  logger.debug("enoughDiskSpace() {usedIndexSpace='"+usedIndexSpace+"',usedArchiveSpace='"+usedArchiveSpace+"',diskSpaceWarnBytes='"+volumes.getDiskSpaceWarnBytes()+"',diskSpaceThresholdBytes='"+volumes.getDiskSpaceThresholdBytes()+"',freeArchiveSpace='"+freeArchiveSpace+"'");
-			  
-			  if (!diskSpaceChecking) {
-				  logger.debug("disk space checking is disabled due to previous error. Check file permissions on volume index and store path {"+toString()+"}");
+			  if (!Config.getConfig().getVolumes().getDiskSpaceChecking()) {
+				  logger.debug("disk space checking is disabled. Check file permissions on volume index and store path {"+toString()+"}");
 			  	  return true;
 		  	  }
-			
-				
-			  if (!isDiskSpaceChecked) {
-				  logger.debug("disk space has not been checked yet. reporting enough disk space.");
+			  
+			  File storePath = new File(getPath());
+			  File indexPath = new File(getIndexPath());
+			  
+			  if (!storePath.exists() || !indexPath.exists()) {
+				  logger.debug("attempt to calculate disk space on non-existant index or store. return true.");
 				  return true;
 			  }
+			
+			  long usedArchiveSpace = getUsedArchiveSpace();
+			  long usedIndexSpace = getUsedArchiveSpace();
+			  
+			  if (!isDiskSpaceChecked()) {
+				  logger.debug("disk space has not been checked yet. assume zero bytes are used.");
+				  usedArchiveSpace = 0;
+				  usedIndexSpace = 0;
+			  }
+			  
+			  long freeArchiveSpace = getAvailableBytes(new File(getPath()),usedArchiveSpace);
+			  long freeIndexSpace =  getAvailableBytes(new File(getIndexPath()),usedIndexSpace);
+			  
+			  //logger.debug("enoughDiskSpace() {usedIndexSpace='"+usedIndexSpace+"',usedArchiveSpace='"+usedArchiveSpace+"',diskSpaceWarnBytes='"+volumes.getDiskSpaceWarnBytes()+"',diskSpaceThresholdBytes='"+volumes.getDiskSpaceThresholdBytes()+"',freeArchiveSpace='"+freeArchiveSpace+"',freeindexSpace='"+freeIndexSpace+"'}");
 			  
 		     // free index space is nearly depleted
           
-		 	 logger.debug("free index space warn check {freeIndexSpace+DISK_SPACE_WARN='"+(freeIndexSpace-volumes.getDiskSpaceWarnBytes())+"<0'}");
+		 	 //logger.debug("free index space warn check {freeIndexSpace+DISK_SPACE_WARN='"+(freeIndexSpace-volumes.getDiskSpaceWarnBytes())+"<0'}");
 		 	 if ((freeIndexSpace-volumes.getDiskSpaceWarnBytes())<=0) {
 		 	     logger.warn("storage space is running low on volume {"+toString()+"}");
-		 	    Event.notifyEvent("storage space is running low on volume index "+getIndexPath()+" ("+(freeIndexSpace/1024/1024)+"mb remaining)",Event.Category.SPACE);
-		 	  }
+		 	    }
 	         
 		 	 // free index space is depleted
 	         
-		 	 logger.debug("free index space threshold check {freeIndexSpace-DISK_SPACE_THRESHOLD='"+(freeIndexSpace-volumes.getDiskSpaceThresholdBytes())+"<0'}");
+		 	// logger.debug("free index space threshold check {freeIndexSpace-DISK_SPACE_THRESHOLD='"+(freeIndexSpace-volumes.getDiskSpaceThresholdBytes())+"<0'}");
 		 	  
 		 	  if ((freeIndexSpace-volumes.getDiskSpaceThresholdBytes())<=0) {
 		 	     logger.warn("there is no storage space left on volume {"+toString()+"}");
-		 	    Event.notifyEvent("there is no storage space left on volume index "+getIndexPath()+" ("+(freeIndexSpace/1024/1024)+"mb remaining)",Event.Category.SPACE);
-		 	     return false;
+		 	    return false;
 		 	  }
 	         // free archive space is nearly depleted
 	             
-	          logger.debug("free archive space warn check {freeArchiveSpace-DISK_SPACE_WARN='"+(freeArchiveSpace-volumes.getDiskSpaceWarnBytes())+"<0'}");
+	          //logger.debug("free archive space warn check {freeArchiveSpace-DISK_SPACE_WARN='"+(freeArchiveSpace-volumes.getDiskSpaceWarnBytes())+"<0'}");
 	          if ((freeArchiveSpace-volumes.getDiskSpaceWarnBytes())<=0) {
 	              logger.warn("storage space is running low on volume {"+toString()+"}");
-	              Event.notifyEvent("storage space is running low on volume store "+getPath()+" ("+(freeArchiveSpace/1024/1024)+"mb remaining)",Event.Category.SPACE);
 	          }
 	          
 	          // free archive is depleted
 	          
-	          logger.debug("free archive space threshold check {freeArchiveSpace-DISK_SPACE_THRESHOLD='"+(freeArchiveSpace-volumes.getDiskSpaceThresholdBytes())+"<0'}");
+	          //logger.debug("free archive space threshold check {freeArchiveSpace-DISK_SPACE_THRESHOLD='"+(freeArchiveSpace-volumes.getDiskSpaceThresholdBytes())+"<0'}");
 		 	  
 		 	 if ((freeArchiveSpace-volumes.getDiskSpaceThresholdBytes())<=0) {
 		 	    logger.warn("there is no storage space left on volume {"+toString()+"}");
-		 	   Event.notifyEvent("there is no storage space left on volume "+getPath()+" ("+(freeArchiveSpace/1024/1024)+"mb remaining)",Event.Category.SPACE);
-		 	    return false;
+		 	   return false;
 		  	 }
-			 	 
-			  boolean sameDrive = (freeIndexSpace==freeArchiveSpace);
-			  long usedSpace = usedArchiveSpace;
-			  
-			  if (sameDrive) {
-			          usedSpace += usedIndexSpace;
-			  }
-			
-	          // max volume size about to be exceeded
-	          
-	          logger.debug("used disk space warn check {(usedSpace+DISK_SPACE_WARN)>=maxSize='"+(usedSpace+volumes.getDiskSpaceWarnBytes())+">"+maxSize * 1024 * 1024+"'}");
-	          if ((usedSpace+volumes.getDiskSpaceWarnBytes())>=maxSize * 1024 * 1024) {
-	             logger.warn("storage space is running low on volume. (max volume size nearly exceeded) {"+toString()+"}");
-	             Event.notifyEvent("storage space is running low on volume store "+getPath()+" ("+((maxSize-usedSpace)/1024/1024)+"mb remaining)",Event.Category.SPACE);
-	          }
-	          
-	          // max volume size is exceeded
-	          
-	          logger.debug("used disk space threshold check {(usedSpace+DISK_SPACE_THRESHOLD)>=maxSize='"+(usedSpace+volumes.getDiskSpaceThresholdBytes())+">"+maxSize * 1024 * 1024 +"'}");
-	          if ((usedSpace+volumes.getDiskSpaceThresholdBytes())>=maxSize * 1024 * 1024) {
-	             logger.warn("there is no storage space left on volume (max volume size exceeded) {"+toString()+"}");
-	             Event.notifyEvent("storage space has run out volume store "+getPath()+" ("+((maxSize-usedSpace)/1024/1024)+"mb remaining)",Event.Category.SPACE);
-	             return false;
-	          }
-	  
-		  }
-			
+		
 	 	  return true;
 
 	  }
 
 	  public Status getStatus() { return status; }
 
-	  public void setStatusNoAssertions(Status newStatus) throws ConfigurationException {
+	  public void setStatusNoAssertions(Status newStatus){
 	     this.status = newStatus;
 	  }
 
-	  public boolean shouldCheckDiskSpace() { 
-		  
-		  if (!diskSpaceChecking) {
-			  logger.debug("skipping disk space check. checking disabled.");
-			  return false;
-		  }
-		  
-		  if (currentlyCheckingDiskSpace) {
-			  logger.debug("skipping disk space check. already busy checking disk space.");
-			  return false;
-		  }
-		  
-		 
-		  if (isDiskSpaceChecked) {
-			  logger.debug("skipping disk space check. already checked.");
-			  return false;
-		  }
-		  return true;
-		  
-	  }
-	  
-	  
-	  public boolean isDiskSpaceChecked() {
-	
-		  return isDiskSpaceChecked;
-	  }
-	  
-	  public void setDiskSpaceChecked(boolean isDiskSpaceChecked) {
-		  this.isDiskSpaceChecked = isDiskSpaceChecked;
-	  }
-	  
 	  public void setStatusForced(Status newStatus) {
 		  status = newStatus;
 	  }
 	  
 	  public void setStatus(Status newStatus) throws ConfigurationException {
-  	   
+  	 
 		  
           if (status==newStatus)
              return;
-        
-        if (newStatus!=Status.EJECTED) {
-	  	    switch(status) {
+        logger.debug("setting volume status {newStatus='"+newStatus+"',"+ toString()+"}");
+        switch(status) {
 	  	    	case CLOSED: 
 	  	    		if (newStatus!=Status.UNMOUNTED)
 	  	    			throw new ConfigurationException("failed to change volume status. it is closed {newstatus='"+status+"'}",logger);
@@ -297,102 +259,25 @@ import java.util.concurrent.Executors;
 	  	    		throw new ConfigurationException("failed to change volume status. it can only be closed {newstatus='"+status+"'}",logger);
 	  	    		break;
 	  	    	default: throw new ConfigurationException("failed to change volume status. internal status is set to invalid value.",logger);
-	  	    }
-        }
+	  	}
+       
         status = newStatus;
 	  }
 
-	  
-	  // method to eliminate spurious sent dates
-	  
-	  public boolean isValidSentDate(Email email) {
-		  Date sentDate = null;
-		  try {
-			  sentDate = email.getSentDate();
-		  } catch (Exception e) {} 
-		 
-		  // there is no sent date
-		  if (sentDate==null)
-			  return false;
-		  
-		  // sent date should never be after archive date
-		  if (sentDate.after(email.getArchiveDate()))
-		      return false;
-		  
-		  
-		  Date receivedDate = email.getReceivedDate();
-		  if (receivedDate!=null) {
-			  // we add 30 minutes to account for minute time differentials
-			  Calendar marginCal = Calendar.getInstance();
-			  marginCal.setTime(email.getReceivedDate());
-			  marginCal.add(Calendar.MINUTE, 30);
-			  // sent date cannot be after received date
-			  if (sentDate.after(marginCal.getTime())) {
-				  return false;
-				  
-			  }
-			  
-			// if the received date is available, sent date cannot be older than received date - 7 days
-			  Calendar oldCal = Calendar.getInstance();
-			  oldCal.setTime(email.getReceivedDate());
-			  oldCal.add(Calendar.DATE, -7);
-			  Date oldDate = oldCal.getTime();
-			  if (sentDate.before(oldDate)) {
-				  return false;
-			  }
-		  }
-		  return true;
-	  }
-	  
-	
-
-	  public Date getEarliestReceived() {
-		  return earliestReceived;
-	  }
-	  
-	  public void setEarliestReceived(Date d) {
-		  this.earliestReceived = d;
-	  }
-	  
-	  public Date getLatestReceived() {
-		  return latestReceived;
-	  }
-	  
-	  public void setLatestReceived(Date d) {
-		  this.latestReceived = d;
-	  }
-	  
-	  public Date getEarliestArchived() {
-	      return earliestArchived;
+	  public Date getCreatedDate() {
+	      return createdDate;
 	  }
 
-	  public Date getLatestArchived() {
-	      return latestArchived;
+	  public Date getClosedDate() {
+	      return closedDate;
 	  }
 
-	  public void setLatestArchived(Date d) {
-	      this.latestArchived = d;
+	  public void setClosedDate(Date d) {
+	      this.closedDate = d;
 	  }
 	  
-	  public void setEarliestArchived(Date d) {
-	      this.earliestArchived = d;
-	  }
-	  
-	  
-	  public void setEarliestSent(Date d) {
-		  this.earliestSent = d;
-	  }
-	  
-	  public Date getEarliestSent() {
-		  return this.earliestSent;
-	  }
-	  
-	  public void setLatestSent(Date d) {
-		  this.latestSent = d;
-	  }
-	  
-	  public Date getLatestSent() {
-		  return this.latestSent;
+	  public void setCreatedDate(Date d) {
+	      this.createdDate = d;
 	  }
 	  
 	  protected void setVersion(String version) {
@@ -410,104 +295,94 @@ import java.util.concurrent.Executors;
 		  return allowRemoteSearch;
 	  }
 
-	  public boolean isRemote() {
-		  return indexPath.startsWith("rmi://");
+	  
+	  public boolean isEjected() { 
+		  return !(new File(getVolumeInfoFileName()).exists());
 	  }
+	
+	/*  public SignatureManifest getManifest() {
+		  return manifest;
+	  }*/
 	  
 	  public int compareTo(Volume v) throws ClassCastException {
 	      int compare = getStatus().compareTo(v.getStatus());
-	      if (v.getEarliestArchived()==null || getEarliestArchived()==null)
+	      if (v.getCreatedDate()==null || getCreatedDate()==null)
 	    	  return compare;
 	      if (compare==0 && getStatus()==Status.CLOSED) // closed
-	          compare = getEarliestArchived().compareTo(v.getEarliestArchived());
+	          compare = getCreatedDate().compareTo(v.getCreatedDate());
 	      return compare;
 	  }
 
 	  public String toString() {
-	      return "volumepath='"+path+"',indexpath='"+indexPath+"',volumestatus='"+status+"',latestArchived='"+latestArchived+"',earliestArchived='"+earliestArchived+"'";
+	      return "volumepath='"+path+"',indexpath='"+indexPath+"',volumestatus='"+status+"',closedDate='"+closedDate+"',createdDate='"+createdDate+"'";
 	  }
 	  
-	   protected synchronized void calculateFreeSpace() throws ArchivaException {
+	 
+	
+	   public void calculateSpace()  throws ArchivaException {
 		   
-		   if (getStatus() != Status.CLOSED && getStatus() != Status.ACTIVE && getStatus() != Status.UNUSED)
+		   logger.debug("calculateSpace() {"+toString()+"}");
+		   
+		   if (!Config.getConfig().getVolumes().getDiskSpaceChecking()) {
+			   logger.debug("skipping disk space check. checking disabled. {"+toString()+"}");
+		   }
+		   
+		   if (getStatus() == Status.EJECTED || getStatus() == Status.UNMOUNTED || getStatus() == Status.NEW) {
+			   logger.debug("skipping disk space check. volume status unmounted/ejected/new. {"+toString()+"}");
 			   return;
+		   }
+		   if (getStatus() == Status.CLOSED && !checkClosedVolume) {
+			   logger.debug("skipping disk space check. checking of closed volume disabled for performance reasons. {"+toString()+"}");
+			   return;
+		   }
 			   
-		   if (!new File(getIndexPath()).exists()) {
-			   logger.debug("cannot determine disk space (volume index path does not exist) {"+toString()+"}");
+		   if (currentlyCheckingDiskSpace) {
+			   logger.debug("skipping disk space check. already checking disk space.");
 			   return;
 		   }
 		   
-           if (!new File(getPath()).exists()) {
-        	   logger.debug("cannot determine disk space (volume store path does not exist) {"+toString()+"}");
-        	   return;
-           }
-           
-           long freeIndexSpace 	 = Long.MAX_VALUE / 2;
-           long freeArchiveSpace = Long.MAX_VALUE / 2;
-           
-           try {
-        	   if (!isRemote())
-        		   freeIndexSpace = new File(getIndexPath()).getUsableSpace();
-	           freeArchiveSpace  = new File(getPath()).getUsableSpace();
-           } catch (Exception e) {
-        	   logger.error("unable to retrieve free space on volume and/or index path. file permissions? {"+toString()+"}",e);
-        	   diskSpaceChecking = false;
-           }
-
-           synchronized(diskSpaceLock) {
-        	   diskSpaceChecking = true;
-        	   setFreeIndexSpace(freeIndexSpace);
-        	   setFreeArchiveSpace(freeArchiveSpace);
-           }
-           
-           logger.debug("available index disk space {freeIndexSpace='"+freeIndexSpace +" bytes',"+toString()+"}");
-           logger.debug("available store disk space {freeArchiveSpace='"+freeArchiveSpace +" bytes',"+toString()+"}");
-           
-	   }
-	   
-	   protected synchronized void calculateUsedSpace() throws ArchivaException {
-		   
-		   if (getStatus() != Status.CLOSED && getStatus() != Status.ACTIVE)
-			   return;
-			   
-		   long totalUsedIndexSpace = 0;
-           if (!isRemote()) {
-        	   	totalUsedIndexSpace += getFileOrDirectorySize(new File(getIndexPath()));
-           }
-           setUsedIndexSpace(totalUsedIndexSpace);
-           
-           long usedArchiveSpace = getFileOrDirectorySize(new File(getPath()));
-		   setUsedArchiveSpace(usedArchiveSpace);
-		   
-           logger.debug("used index disk space {usedIndexSpace='" + usedIndexSpace + "' bytes',"+toString() + "}");
-           logger.debug("used store disk space {usedStoreSpace='" + usedArchiveSpace +"' bytes',"+toString() + "}");
-	   }
-	   
-	   public synchronized void calculateSpace()  throws ArchivaException {
 	       currentlyCheckingDiskSpace = true;
-	       calculateFreeSpace();
-		   calculateUsedSpace();
-		   currentlyCheckingDiskSpace = false;
-		   isDiskSpaceChecked = true;
+		   long totalUsedIndexSpace = 0;
+           totalUsedIndexSpace += getFileOrDirectorySize(new File(getIndexPath()));
+           long usedArchiveSpace = getFileOrDirectorySize(new File(getPath()));
+		   usedSpaceCache.put(getPath(), usedArchiveSpace);
+		   usedSpaceCache.put(getIndexPath(), totalUsedIndexSpace);
+           logger.debug("used index disk space {usedIndexSpace='" + getUsedIndexSpace() + "' bytes',"+toString() + "}");
+           logger.debug("used store disk space {usedStoreSpace='" + getUsedArchiveSpace() +"' bytes',"+toString() + "}");
+           
+
+			if (getStatus() == Status.ACTIVE) 
+				enoughDiskSpace(); // warning
+			
+           currentlyCheckingDiskSpace = false;
+	   }
+	
+	   
+
+	   public static class SizeCounter implements FileFilter
+	   {
+	       private long total = 0;
+	       public SizeCounter(){};
+	       public boolean accept(File pathname) {
+	           if ( pathname.isFile()) {
+	               total+=pathname.length();
+	           } else {
+	        	   try { Thread.sleep(4); } catch (Exception e) {} 
+	               pathname.listFiles(this);
+	           }
+	           return false;
+	       }
+	       public long getTotal()
+	       {
+	           return total;
+	       }
 	   }
 	   
 	   private static long getFileOrDirectorySize(File file) {
-           long size = 0;
-           if(file.isDirectory()) {
-               File[] files = file.listFiles();
-               if(files != null) {
-                   for(int i = 0; i < files.length; i++) {
-                       long tmpSize = getFileOrDirectorySize(files[i]);
-                       if(tmpSize != -1) {
-                           size += tmpSize;
-                       }
-                   }
-                   return size;
-               } else return 0;
-           } else return file.length();
-      }
-	   
-	
+		   SizeCounter counter = new SizeCounter();
+		   file.listFiles(counter);
+		   return counter.getTotal();
+       }
 	   
 	   public boolean isVolumeAccessible() {
 		  return new File(getPath()+File.separator+INFO_FILE).exists();
@@ -516,36 +391,30 @@ import java.util.concurrent.Executors;
 		  protected void writeVolumeInfoLines(RandomAccessFile out) {
 			  try {
 				   logger.debug("writeVolumeInfoLines()");
+				   out.setLength(0);
 				   out.seek(0);
 			       // don't save to ejected volume
-			       if (getStatus()==Volume.Status.EJECTED || getStatus()==Volume.Status.REMOTE)
+			       if (isEjected())
 			    	  return;
-			     
-			       // make a new volume unused
-			       if (getStatus()==Volume.Status.NEW)
+				    
+					// make a new volume unused
+					if (getStatus()==Volume.Status.NEW)
 			    	  setStatus(Volume.Status.UNUSED);
-			
 			    	out.seek(0); //Seek to end of file
 			        out.writeBytes("# Archiva "+Config.getConfig().getApplicationVersion()+" Volume Information\n");
 			        out.writeBytes("# note: this file is crucial - do not delete it!\n");
-			        out.writeBytes("version:2\n");
-			        out.writeBytes("id:"+getID()+"\n");
+			        out.writeBytes("version:3\n");
+			        if (getID()!=null || getID().length()>0) {
+			        	out.writeBytes("id:"+getID()+"\n");
+			        }
 			        if (getStatus()!=null) {
 			        	out.writeBytes("status:"+getStatus()+"\n");
 			        }
-			        if (getEarliestArchived()!=null)
-			        	out.writeBytes("earliestarchived:"+DateUtil.convertDatetoString(getEarliestArchived())+"\n");
-			        if (getLatestArchived()!=null)
-			        	out.writeBytes("latestarchived:"+DateUtil.convertDatetoString(getLatestArchived())+"\n");
-			        if (getEarliestReceived()!=null)
-			        	out.writeBytes("earliestreceived:"+DateUtil.convertDatetoString(getEarliestReceived())+"\n");
-			        if (getLatestReceived()!=null)
-			        	out.writeBytes("latestreceived:"+DateUtil.convertDatetoString(getLatestReceived())+"\n");
-			        if (getEarliestSent()!=null)
-			        	out.writeBytes("earliestsent:"+DateUtil.convertDatetoString(getEarliestSent())+"\n");
-			        if (getLatestSent()!=null)
-			        	out.writeBytes("latestsent:"+DateUtil.convertDatetoString(getLatestSent())+"\n");
-			       
+			        if (getCreatedDate()!=null)
+			        	out.writeBytes("created:"+DateUtil.convertDatetoString(getCreatedDate())+"\n");
+			        if (getClosedDate()!=null)
+			        	out.writeBytes("closed:"+DateUtil.convertDatetoString(getClosedDate())+"\n");
+			        
 		      } catch (IOException io) {
 		    	  if (getStatus()!=Volume.Status.UNMOUNTED)
 		    		  logger.error("failed to write volumeinfo. {"+toString()+"} cause:"+io,io);
@@ -557,34 +426,30 @@ import java.util.concurrent.Executors;
 		  protected void readVolumeInfoLines(RandomAccessFile randomAccessFile) {
 			  logger.debug("readVolumeInfoLines()");
 			  String line;
+			  StringTokenizer st;
 			  try {
 				  randomAccessFile.seek(0);
 				  while (( line = randomAccessFile.readLine()) != null) {
 					
-			               if (line.startsWith("#"))
+			               if (line.startsWith("#") || line.length()<1)
 			                   continue;
-						   StringTokenizer st = new StringTokenizer(line, ":");
+			         	  	try {
+			         	  		st = new StringTokenizer(line, ":");
+			         	  	} catch (NoSuchElementException nse) {
+			         	  		logger.debug("possible volumeinfo corruption. no such element.");
+			         	  		continue;
+			         	  	}
 				       	   String name = st.nextToken();
-				       	   if (name.toLowerCase(Locale.ENGLISH).trim().equals("modified"))
-				                  setLatestArchived(DateUtil.convertStringToDate(st.nextToken().trim()));
-				       	   else if (name.toLowerCase(Locale.ENGLISH).trim().equals("latestarchived"))
-				                  setLatestArchived(DateUtil.convertStringToDate(st.nextToken().trim()));
+				       	  if (name.toLowerCase(Locale.ENGLISH).trim().equals("modified"))
+				                  setClosedDate(DateUtil.convertStringToDate(st.nextToken().trim()));
+				       	  else if (name.toLowerCase(Locale.ENGLISH).trim().equals("latestarchived"))
+				                  setClosedDate(DateUtil.convertStringToDate(st.nextToken().trim()));
+				       	  else if (name.toLowerCase(Locale.ENGLISH).trim().equals("closed"))
+			                  setClosedDate(DateUtil.convertStringToDate(st.nextToken().trim()));
 			              else if (name.toLowerCase(Locale.ENGLISH).trim().equals("created"))
-			              	   setEarliestArchived(DateUtil.convertStringToDate(st.nextToken().trim()));
+			              	   setCreatedDate(DateUtil.convertStringToDate(st.nextToken().trim()));
 			              else if (name.toLowerCase(Locale.ENGLISH).trim().equals("earliestarchived"))
-			              	   setEarliestArchived(DateUtil.convertStringToDate(st.nextToken().trim()));
-			              else if (name.toLowerCase(Locale.ENGLISH).trim().equals("earliest"))
-			           	   setEarliestSent(DateUtil.convertStringToDate(st.nextToken().trim()));
-			              else if (name.toLowerCase(Locale.ENGLISH).trim().equals("earliestsent"))
-			           	   setEarliestSent(DateUtil.convertStringToDate(st.nextToken().trim()));
-			              else if (name.toLowerCase(Locale.ENGLISH).trim().equals("latest"))
-			           	   setLatestSent(DateUtil.convertStringToDate(st.nextToken().trim()));
-			              else if (name.toLowerCase(Locale.ENGLISH).trim().equals("latestsent"))
-			           	   setLatestSent(DateUtil.convertStringToDate(st.nextToken().trim()));
-			              else if (name.toLowerCase(Locale.ENGLISH).trim().equals("earliestreceived"))
-			           	   setEarliestReceived(DateUtil.convertStringToDate(st.nextToken().trim()));
-			              else if (name.toLowerCase(Locale.ENGLISH).trim().equals("latestreceived"))
-			           	   setLatestReceived(DateUtil.convertStringToDate(st.nextToken().trim()));
+			              	   setCreatedDate(DateUtil.convertStringToDate(st.nextToken().trim()));
 			              else if (name.toLowerCase(Locale.ENGLISH).trim().equals("version"))
 			           	   setVersion(st.nextToken().trim());
 			              else if (name.toLowerCase(Locale.ENGLISH).trim().equals("id"))
@@ -597,34 +462,21 @@ import java.util.concurrent.Executors;
 				     	  	    		logger.error("failed to load volume.info: status attribute is set to an illegal value {vol='"+toString()+"'}");
 				     	  	    		logger.error("volume will be set closed (due to error)");
 				           	  }
-				           	  // here we check if the volume remote, if so change the status to remote
-				            	 
-			            	  if (isRemote()) {
-			            		  status = Volume.Status.REMOTE;
-			            	  }
-			            	  
-			            	  // here we make doubly sure that there is not another active volume
-			            	  // if another volume is active, we close the current one and save it.
-			            	  if (status == Volume.Status.ACTIVE) {
-			            		  Volume activeVolume = Config.getConfig().getVolumes().getActiveVolume();
-			            		  if (activeVolume!=null && !this.equals(activeVolume)) {
-			            			      activeVolume.setStatus(Volume.Status.CLOSED);
-			            				  activeVolume.save();
-			            		  }
-			            	  }	  
+				           	 
 		                      setStatusNoAssertions(status);
 			              };
 			              
 			           
 				  }
-				  // to deal with legacy volumeinfo files
-		           if (getVersion()==null) {
-		        	   earliestSent = new Date(0);
-		        	   latestSent = new Date();
-		           }
 		           // we make sure that NEW entries become UNUSED
 			        if (getStatus()==Volume.Status.NEW)
 			            setStatus(Volume.Status.UNUSED);
+			        // make sure that volume closed date is not set, when volume is active
+			        if (getStatus()==Volume.Status.ACTIVE &&
+			        	getClosedDate()!=null) {
+			        	setClosedDate(null);
+			        }
+			        	
 			  } catch (Exception e) {
 				  logger.debug("failed to read volumeinfo {"+toString()+"}",e);
 			  }
@@ -642,145 +494,76 @@ import java.util.concurrent.Executors;
 		  }
 		  
 		  public String formatTotalMessageCount() {
-			  DecimalFormat formatter = new DecimalFormat("#,###,###,###.##");
-			  
-			  long totalMessageCount = 0;
-			  try { 
-				  totalMessageCount = getTotalMessageCount();
-			  } catch (Exception e) { return ""; };
-			  
-			  double mil = totalMessageCount / 1000000.0;
-			  if (mil>=1)
-				  return formatter.format(mil)+"M";
-			  
-			  double k = totalMessageCount / 1000.0;
-			  if (k>=1)
-				  return formatter.format(k)+"K";
-			 
-			  return formatter.format(totalMessageCount);
+			  return FormatUtil.formatCount(getTotalMessageCount());
 		  }
-		  
 		  
 		  public String formatDiskSpace(long bytes) {
-			  double mb = bytes / 1024.0 / 1024.0;
-			  DecimalFormat formatter = new DecimalFormat("#,###,###.##");
-			  double tb = mb / 1024.0 / 1024.0;
-			  if (tb>=1)
-				  return formatter.format(tb)+" TB";
-			  
-			  double gb = mb / 1024.0;
-			  if (gb>=1)
-				  return formatter.format(gb)+" GB";
-			 
-			  return formatter.format(mb)+" MB";
-			  
+			  //return new Long(bytes).toString();
+			 return FormatUtil.formatSpace(bytes);
 		  }
-		  public void setModified(Email email) {
-			  
-			  if (latestArchived==null || email.getArchiveDate().after(latestArchived)) {
-				  
-				  latestArchived = email.getArchiveDate();
-			  }
-			  
-			  if (earliestArchived==null || email.getArchiveDate().before(earliestArchived)) {
-				  earliestArchived = email.getArchiveDate();
-			  }
-			  
+		  
+		  // method to eliminate spurious sent dates
+		  
+		  public boolean isDateValid(Email email) {
 			  Date sentDate = null;
 			  try {
 				  sentDate = email.getSentDate();
 			  } catch (Exception e) {} 
-
-			  if (isValidSentDate(email)) {
+			 
+			  // there is no sent date
+			  if (sentDate==null)
+				  return false;
+			  
+			  // sent date should never be after archive date
+			  if (sentDate.after(email.getArchiveDate()))
+			      return false;
+			  
 			
-				  if (earliestSent==null || sentDate.before(earliestSent)) {
-					  earliestSent = sentDate;
-				  }
-				  if (latestSent==null || sentDate.after(latestSent)) {
-					  latestSent = sentDate;
-				  }
-			  }
-			  
-			  Date receivedDate = null;
-			  receivedDate = email.getReceivedDate();
+			  Date receivedDate = email.getReceivedDate();
 			  if (receivedDate!=null) {
-				  
-				  if (earliestReceived==null || receivedDate.before(earliestReceived)) {
-					  earliestReceived = receivedDate;
+				  // we add 30 minutes to account for minute time differentials
+				  Calendar marginCal = Calendar.getInstance();
+				  marginCal.setTime(receivedDate);
+				  marginCal.add(Calendar.MINUTE, 30);
+				  // sent date cannot be after received date
+				  if (sentDate.after(marginCal.getTime())) {
+					  return false;
+					  
 				  }
+				  /*
+				  // if the received date is available, sent date cannot be older than received date - 7 days
+				  Calendar oldCal = Calendar.getInstance();
+				  String oldOut = oldCal.getTime().toString();
+				  oldCal.setTime(receivedDate);
 				  
-				  if (latestReceived==null || receivedDate.after(latestReceived)) {
-					  latestReceived = receivedDate;
-				  }
+				  oldCal.add(Calendar.DATE, -7);
+				  String newOut = oldCal.getTime().toString();
+				  System.out.println("receiveDate:"+receivedDate);
+				  System.out.println("oldOut:"+oldOut);
+				  System.out.println("newOut:"+newOut);
+				  System.out.println("sentDate:"+sentDate);
+				  Date oldDate = oldCal.getTime();
+				  if (sentDate.before(oldDate)) {
+					  return false;
+				  }*/
+				  
 			  }
+			  return true;
 		  }
-			  
+		  
+		
 		  protected RandomAccessFile getRandomAccessFile(String attr) throws FileNotFoundException {
 			  return new RandomAccessFile(getPath()+File.separator+INFO_FILE, attr);
 		  }
-		  
-		  public void touchModified(Email email) throws ConfigurationException {
-			  synchronized(volumeinfoLock) {
-				  logger.debug("touchModified() {"+email+"}");
-				  RandomAccessFile randomAccessFile = null;
-				  FileLock fileLock = null;
-				  try {
-					  randomAccessFile = getRandomAccessFile("rw");
-					  FileChannel channel = randomAccessFile.getChannel();
-					  try {
-						  fileLock = channel.lock();
-					  } catch (IOException io) {
-						  logger.error("failed to obtain lock to volumeinfo file:"+io.getMessage()+" {"+toString()+"}");
-						  return;
-					  }
-					  // we do not want to read disk space info, as it will overwrite existing info
-					  readVolumeInfoLines(randomAccessFile);
-					  if (email!=null) {
-						  setModified(email);
-					  }
-				  } catch (FileNotFoundException fnfe) {
-					  try {
-						  randomAccessFile = getRandomAccessFile("w");
-					  } catch (FileNotFoundException fnfe2) {
-						  logger.error("failed open volumeinfo file:"+fnfe2.getMessage()+" {"+toString()+"}");
-						  return;
-					  }
-					  FileChannel channel = randomAccessFile.getChannel();
-					  try {
-						  fileLock = channel.lock();
-					  } catch (IOException io) {
-						  logger.error("failed to obtain lock to volumeinfo file:"+io.getMessage()+" {"+toString()+"}");
-						  try { fileLock.release(); } catch (Exception e) {}
-						  return;
-					  }
-				  }
-				  writeVolumeInfoLines(randomAccessFile);
-				
-				  try {
-					  if (fileLock!=null)
-					  	fileLock.release();
-				  } catch (IOException io) {
-					  logger.error("failed to release file lock on volumeinfo file:"+io.getMessage()+" {"+toString()+"}");
-				  }
-				  try {
-					  randomAccessFile.close();
-				  } catch (IOException io) {
-					  logger.error("failed to close volumeinfo file:"+io.getMessage()+" {"+toString()+"}");
-				  }
-			  }
-		  }
-		  
-		   
+		
 		   public void saveSettings(String prefix, Settings prop, String suffix) {
 			   		logger.debug("saving volume settings");
 			   	    prop.setProperty(volumePathKey + suffix,getPath());
 	    			prop.setProperty(volumeIndexPathKey + suffix,getIndexPath());
 	    			prop.setProperty(volumeMaxSizeKey + suffix,Long.toString(getMaxSize()));
-	    			prop.setProperty(volumeRemoteSearchKey +suffix,ConfigUtil.getYesNo(getAllowRemoteSearch()));
-	    			
+	    			prop.setProperty(volumeCheckClosedKey + suffix,ConfigUtil.getYesNo(checkClosedVolume));
 		   }
 			 
-		 	 
 		   public boolean loadSettings(String prefix, Settings prop, String suffix) {
 			    logger.debug("loading volume settings");
 		  		String vp = prop.getProperty(volumePathKey + suffix);
@@ -794,90 +577,142 @@ import java.util.concurrent.Executors;
 		  	    setPath(ConfigUtil.getString(vp,defaultVolumePath));
 		  	    setIndexPath(ConfigUtil.getString(vip,defaultVolumeIndexPath));
 		  	    setMaxSize(ConfigUtil.getInteger(vms,Integer.toString(defaultVolumeMaxSize)));
-		  	    setAllowRemoteSearch(ConfigUtil.getBoolean(vrs, defaultVolumeRemoteSearch));
+		  	   
+		  	    String cc = prop.getProperty(volumeCheckClosedKey + suffix);
+		  	    if (cc!=null) {
+		  	    	checkClosedVolume = ConfigUtil.getBoolean(cc,defaultCheckClosed);
+		  	    }
 		  	    return true;
 		   }
 		   
 
-		  public void load() throws ConfigurationException {	 
+		  public boolean load() throws ConfigurationException {	 
+			  
+			  if (!new File(getVolumeInfoFileName()).exists()) {
+				  setStatusNoAssertions(Status.EJECTED);
+				  return false;
+			  }
+			  
 			  synchronized(volumeinfoLock) {
 				  logger.debug("load() volumeinfo");
 				  RandomAccessFile randomAccessFile = null;
 				  try {
-					  randomAccessFile = getRandomAccessFile("rw");
+					  randomAccessFile = getRandomAccessFile("r");
 				  } catch (FileNotFoundException fnfe) {
 					  logger.debug("failed open volumeinfo file:"+fnfe.getMessage()+" {"+toString()+"}");
-					  return;
-				  }
-				  FileChannel channel = randomAccessFile.getChannel();
-				  FileLock fileLock = null;
-				  try {
-					  fileLock = channel.lock();
-				  } catch(IOException io) {
-					  logger.error("failed to obtain lock to volumeinfo file:"+io.getMessage()+" {"+toString()+"}");
-					  return;
-				  } catch(OverlappingFileLockException ofle) {
-					  logger.error("failed to obtain lock to volumeinfo file:"+ofle.getMessage()+" {"+toString()+"}");
-					  return;
+					  closeVolInfo(randomAccessFile);
+					  return false;
 				  }
 				  readVolumeInfoLines(randomAccessFile);
-				  try {
-					  fileLock.release();
-				  } catch (IOException io) {
-					  logger.error("failed to release the write lock on volumeinfo file:"+io.getMessage()+" {"+toString()+"}");
-				  }
-				 
-				  try {
-					  channel.close();
-					  randomAccessFile.close();
-				  } catch (IOException io) {
-					  logger.error("failed to close volumeinfo file:"+io.getMessage()+" {"+toString()+"}");
-				  }
+				  closeVolInfo(randomAccessFile);
 			  }
+			  return true;
 		  }
 		
 		  // dummy function for utilities backwards compatibility
 		  public void save(boolean overwrite) throws ConfigurationException {
 			  save();
 		  }
+
 		  
-		  public void save()  throws ConfigurationException {
-		
-		  
-			  synchronized(volumeinfoLock) {
-				  logger.debug("save() volumeinfo");
-				  RandomAccessFile randomAccessFile = null;
-				  try {
-					  randomAccessFile = getRandomAccessFile("rw");
-				  } catch (FileNotFoundException fnfe) {
-						 if (getStatus()!=Status.UNMOUNTED) {
-					  		 logger.error("failed open volumeinfo file:"+fnfe.getMessage()+" {"+toString()+"}");
-						 }
-					  return;
-				  }
-				  FileChannel channel = randomAccessFile.getChannel();
-				  FileLock fileLock = null;
-				  try {
-					  fileLock = channel.lock();
-				  } catch(IOException io) {
-					  logger.error("failed to obtain lock to volumeinfo file:"+io.getMessage()+" {"+toString()+"}");
-					  return;
-				  } catch(OverlappingFileLockException ofle) {
-					  logger.error("failed to obtain lock to volumeinfo file:"+ofle.getMessage()+" {"+toString()+"}");
-					  return;
-				  }
-				  writeVolumeInfoLines(randomAccessFile);
-				  try {
-					  fileLock.release();
-				  } catch (IOException io) {
-					  logger.error("failed to release the write lock on volumeinfo file:"+io.getMessage()+" {"+toString()+"}");
-				  }
-				  try {
-					  channel.close();
-					  randomAccessFile.close();
+		  protected void closeVolInfo(RandomAccessFile file) {
+			  if (file!=null) {
+				  try {  
+					  file.close(); 
 				  } catch (IOException io) {
 					  logger.error("failed to close volumeinfo file:"+io.getMessage()+" {"+toString()+"}");
 				  }
+			  }
+		  }
+		  
+		  public void readyFileSystem() throws ConfigurationException {
+			  File indexFile = new File(getIndexPath());
+			  File storeFile = new File(getPath());
+			  
+			  if (!indexFile.exists()) {
+				  boolean createIndexDir = indexFile.mkdirs();
+				  if (!createIndexDir) {
+					  throw new ConfigurationException("unable to create volume index directory:"+getIndexPath(),logger);
+				  }
+			  }
+			  if (!storeFile.exists()) {
+				  boolean createStoreDir = storeFile.mkdirs();
+				  if (!createStoreDir) {
+					 throw new ConfigurationException("unable to create volume store directory:"+getPath(),logger);
+				  }
+			  }
+			 
+			  if (!Config.getFileSystem().checkReadWriteDeleteAccess(getIndexPath())) {
+				  throw new ConfigurationException("there insufficient read/write/delete permissions on volume index:"+getIndexPath(),logger);
+			  }
+			  
+			  if (!Config.getFileSystem().checkReadWriteDeleteAccess(getPath())) {
+				  throw new ConfigurationException("there insufficient read/write/delete permissions on volume store:"+getPath(),logger);
+			  }
+		  }
+		  
+		  public void save()  throws ConfigurationException {
+			  try {
+					  Config.getConfig().getConfigAutoLoadService().block();
+					  if (getStatus()!=Status.NEW && isEjected()) return;
+					  
+					  if (getStatus()==Status.EJECTED)
+						  return;
+					  
+					  if (getStatus()==Status.NEW) {
+						  setStatus(Status.UNUSED);
+						  readyFileSystem();
+						  if (getStatus()==Status.UNUSED) {
+							  try {
+									 calculateSpace();
+								 } catch (Exception e) {
+						            logger.error("failed to retrieve disk space {"+toString()+"}",e);
+						         } 
+						  }				 
+					  }
+				  
+					  synchronized(volumeinfoLock) {
+						  logger.debug("save() volumeinfo");
+						  RandomAccessFile randomAccessFile = null;
+						  try {
+							  randomAccessFile = getRandomAccessFile("rw");
+						  } catch (FileNotFoundException fnfe) {
+							     logger.error("failed to write to volumeinfo:"+fnfe.getMessage(),fnfe);
+							     logger.warn("ensure mailarchiva service is running under account with sufficient privileges");
+							     closeVolInfo(randomAccessFile);
+							  return;
+						  }
+						  logger.debug("open volumeinfo file for write {file='"+getPath()+File.separator+INFO_FILE+"'");
+						  FileChannel channel = randomAccessFile.getChannel();
+						 /* FileLock fileLock = null;
+						  try {
+							  fileLock = channel.lock();
+						  } catch(IOException io) {
+							  logger.error("failed to obtain lock to volumeinfo file:"+io.getMessage()+" {"+toString()+"}");
+							  closeVolInfo(randomAccessFile);
+							  return;
+						  } catch(OverlappingFileLockException ofle) {
+							  logger.error("failed to obtain lock to volumeinfo file:"+ofle.getMessage()+" {"+toString()+"}");
+							  closeVolInfo(randomAccessFile);
+							  return;
+						  }*/
+						  writeVolumeInfoLines(randomAccessFile);
+						  /*
+						  try {
+							  fileLock.release();
+						  } catch (IOException io) {
+							  logger.error("failed to release the write lock on volumeinfo file:"+io.getMessage()+" {"+toString()+"}");
+						  }
+						 */
+						  try {
+							  channel.close();
+						  } catch (IOException io) {
+							  logger.error("failed to close volumeinfo file:"+io.getMessage()+" {"+toString()+"}");
+						  }
+						  closeVolInfo(randomAccessFile);
+					  }
+			  } finally {
+				  Config.getConfig().getConfigAutoLoadService().unblock();
 			  }
 		  }
 	
@@ -922,5 +757,26 @@ import java.util.concurrent.Executors;
 			 int hashcode = getPath().hashCode() + getIndexPath().hashCode();
 			 return hashcode;
 		 }
+		 
 		
+		   
+		   public Volume clone() {
+			   Volume volume = new Volume();
+			   volume.setPath(getPath());
+			   volume.setIndexPath(getIndexPath());
+			   volume.setMaxSize(getMaxSize());
+			   volume.setStatusNoAssertions(getStatus());
+			   volume.setCreatedDate(getCreatedDate());
+			   volume.setClosedDate(getClosedDate());
+			   volume.setAllowRemoteSearch(getAllowRemoteSearch());
+			   volume.setID(getID());
+			   volume.setVersion(getVersion());
+			   return volume;
+		   }
+		   
+		
+		   public String getVolumeInfoFileName() {
+			   return getPath()+File.separator+INFO_FILE;
+		   }
+		  
   }

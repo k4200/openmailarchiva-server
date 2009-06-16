@@ -1,9 +1,8 @@
-
-/* Copyright (C) 2005-2007 Jamie Angus Band 
- * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
+/* Copyright (C) 2005-2009 Jamie Angus Band
+ * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 2 of the License, or (at your option) any later version.
+ * 3 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -18,21 +17,21 @@ import java.util.LinkedList;
 import java.util.List;
 
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 
 
 import com.stimulus.archiva.exception.ConfigurationException;
 
  public abstract class Identity implements java.io.Serializable, Props  {
-	
+
 	 List<RoleMap> roleMaps = new LinkedList<RoleMap>();
-	 
-     protected static Logger logger = Logger.getLogger(Identity.class.getName());
-  
+
+     protected static Log logger = LogFactory.getLog(Identity.class.getName());
+
      public Identity() {
      }
-    
-     
+
+
      public List<RoleMap> getRoleMaps() {
          return roleMaps;
      }
@@ -41,14 +40,14 @@ import com.stimulus.archiva.exception.ConfigurationException;
      	return roleMaps.get(index);
      }
 
-     
+
      public void clearAllRoleMaps() {
       roleMaps.clear();
      }
 
      public abstract void newRoleMap() throws ConfigurationException;
-     
-     
+
+
      public void addRoleMap(RoleMap roleMap) {
        roleMaps.add(roleMap);
      }
@@ -58,25 +57,25 @@ import com.stimulus.archiva.exception.ConfigurationException;
      }
 
      public abstract class RoleMap implements Props {
-    	 
 
-    	 protected String role; 
-    	 
+
+    	 protected String role;
+
     	 public String getRole() {
     		 return role;
     	 }
-    	 
- 
+
+
     	 public void setRole(String role) {
     		 this.role = role;
     	 }
     	 public void setRoleValue(String role) throws ConfigurationException {
     		this.role = role;
     	 }
-    	
-	    
+
+
      }
-       
-     
-    
+
+
+
 }

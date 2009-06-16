@@ -14,9 +14,10 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 package com.stimulus.archiva.exception;
-import java.util.*;
 import java.io.Serializable;
-import org.apache.log4j.*;
+import org.apache.commons.logging.*;
+
+import com.stimulus.archiva.domain.Config;
 import com.stimulus.archiva.monitor.*;
 
 public class ArchivaException extends ChainedException implements Serializable {
@@ -25,32 +26,24 @@ public class ArchivaException extends ChainedException implements Serializable {
   private static final long serialVersionUID = -8753177202907981954L;
 
   
-  public ArchivaException(String message, Logger logger, Level level) {
+  public ArchivaException(String message, Log logger, ChainedException.Level level) {
       super(message, logger,level);
-      if (level==Level.ERROR)
-    	  Event.notifyEvent(message,Event.Category.EXCEPTION);
   }
 
-  public ArchivaException(String message, Throwable cause, Logger logger, Level level) {
+  public ArchivaException(String message, Throwable cause, Log logger, ChainedException.Level level) {
       super(message,cause, logger,level);
-      if (level==Level.ERROR)
-    	  Event.notifyEvent(message,Event.Category.EXCEPTION);
   }
   
   public ArchivaException(String message) {
       super(message);
-      Event.notifyEvent(message,Event.Category.EXCEPTION);
   }
   
-  public ArchivaException(String message, Logger logger) {
-      super(message, logger,Level.ERROR);
-      Event.notifyEvent(message,Event.Category.EXCEPTION);
-     
+  public ArchivaException(String message, Log logger) {
+      super(message, logger,ChainedException.Level.ERROR);
   }
 
-  public ArchivaException(String message, Throwable cause, Logger logger) {
-      super(message,cause, logger,Level.ERROR);
-      Event.notifyEvent(message,Event.Category.EXCEPTION);
+  public ArchivaException(String message, Throwable cause, Log logger) {
+      super(message,cause, logger,ChainedException.Level.ERROR);
   }
  
   

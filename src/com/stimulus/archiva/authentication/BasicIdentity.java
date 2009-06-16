@@ -1,4 +1,20 @@
-package com.stimulus.archiva.authentication;
+
+/* Copyright (C) 2005-2009 Jamie Angus Band
+ * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+ * This program is free software; you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation; either version
+ * 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program;
+ * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ */
+
+ package com.stimulus.archiva.authentication;
 
 import com.stimulus.util.*;
 
@@ -6,7 +22,9 @@ import org.apache.xerces.parsers.DOMParser;
 import org.subethamail.smtp.util.Base64;
 import org.w3c.dom.*;
 import com.stimulus.archiva.exception.*;
+import com.stimulus.archiva.authentication.ADIdentity.ADRoleMap;
 import com.stimulus.archiva.domain.*;
+import com.stimulus.archiva.domain.Identity.RoleMap;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKeyFactory;
@@ -23,27 +41,27 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.KeySpec;
 
 
-public class BasicIdentity extends Identity implements Serializable,Props {
+public class BasicIdentity extends Identity implements Serializable,Props, Cloneable {
 
     private static final long serialVersionUID = 3166260447557364498L;
 	protected static final String basicRoleKey  		= "role";
     protected static final String basicUsernameKey 	= "email";
     protected static final String basicPasswordKey 	= "password";
-    
+
     public BasicIdentity() {
     }
 	 @Override
 	public void newRoleMap() throws ConfigurationException {
 	   	 addRoleMap(new BasicRoleMap(Roles.ADMINISTRATOR_ROLE.getName(),"",""));
 	 }
-	
-	 
+
+
 	 public void addRoleMap(String role, String username, String password) throws ConfigurationException {
 		addRoleMap(new BasicRoleMap(role,username, password));
 	 }
-	 
-	 
-	 
+
+
+
     public Document createDomDocument() {
         try {
             DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -53,13 +71,13 @@ public class BasicIdentity extends Identity implements Serializable,Props {
         }
         return null;
     }
-    
+
     public void writeXmlFile(Document doc, String filename) {
         File f = null;
     	try {
         	// if the disk is full we dont want to end up in a situation where we delete
     		// users.conf file
-        	f = File.createTempFile("users","conf");
+        	f = File.createTempFile("users_conf",".tmp");
             Source source = new DOMSource(doc);
             OutputStream os = new FileOutputStream(f);
             StreamResult result = new StreamResult(os);
@@ -68,23 +86,27 @@ public class BasicIdentity extends Identity implements Serializable,Props {
             xformer.setOutputProperty(OutputKeys.INDENT, "yes");
             xformer.transform(source, result);
             os.close();
+
          } catch (Exception io) {
         	 if (f!=null)
          		f.delete();
         	logger.error("failed to write users.conf:"+io.getMessage(),io);
+        	return;
         }
         File newFile = new File(filename);
         newFile.delete();
         f.renameTo(newFile);
-         
+
     }
-    public void saveSettings(String prefix, Settings prop, String suffix) {	
+    public void saveSettings(String prefix, Settings prop, String suffix) {
+    	saveXMLFile();
     }
-    
-    public boolean loadSettings(String prefix, Settings prop, String suffix) { 
+
+    public boolean loadSettings(String prefix, Settings prop, String suffix) {
+    	loadXMLFile();
     	return true;
     }
-    
+
     public void saveXMLFile() {
     	logger.debug("saving users.conf");
     	Document doc = createDomDocument();
@@ -97,7 +119,7 @@ public class BasicIdentity extends Identity implements Serializable,Props {
 	    	user.setAttribute(basicUsernameKey,brm.getUsername());
 	    	user.setAttribute(basicRoleKey,brm.getRole());
 	    	try {
-	    		String encryptedPassword = encryptPassword(brm.getLoginPassword());
+	    		String encryptedPassword = Crypto.encryptPassword(brm.getLoginPassword());
 	    		user.setAttribute(basicPasswordKey,encryptedPassword);
 	    	} catch (Exception e) {
 	    		logger.error("failed to encrypt basic authentication password",e);
@@ -105,9 +127,9 @@ public class BasicIdentity extends Identity implements Serializable,Props {
 	    	users.appendChild(user);
 	    }
 	    String filename = Config.getFileSystem().getConfigurationPath() + File.separatorChar + "users.conf";
-	    writeXmlFile(doc,filename); 
+	    writeXmlFile(doc,filename);
     }
-  
+
 	 public boolean loadXMLFile() {
 		   logger.debug("loading users.conf");
 		  clearAllRoleMaps();
@@ -135,7 +157,7 @@ public class BasicIdentity extends Identity implements Serializable,Props {
 			      int len = attrs.getLength();
 		          for (int j=0; j<len; j++) {
 		              Attr attr = (Attr)attrs.item(j);
-		              
+
 		              if (Compare.equalsIgnoreCase(attr.getNodeName(),basicUsernameKey))
 		            	  email = attr.getNodeValue();
 		              if (Compare.equalsIgnoreCase(attr.getNodeName(),basicRoleKey))
@@ -145,7 +167,7 @@ public class BasicIdentity extends Identity implements Serializable,Props {
 		      	    		password = attr.getNodeValue();
 		      	    	} else {
 		      	    	  try {
-			      	    		String decryptPassword = decryptPassword(attr.getNodeValue());
+			      	    		String decryptPassword = Crypto.decryptPassword(attr.getNodeValue());
 			      	    		password = decryptPassword;
 			      	    	} catch (Exception e) {
 			      	    		logger.error("failed to encrypt basic authentication password",e);
@@ -163,89 +185,66 @@ public class BasicIdentity extends Identity implements Serializable,Props {
 		       	  } catch (ConfigurationException ce) {
 		       		  logger.error("could not load users in users.conf {fileName='"+filename+"'}.",ce);
 		       		  return false;
-		       	  }  
+		       	  }
 				}
 	      }
 		  return true;
 	 }
-	 
-	
-	 public class BasicRoleMap extends RoleMap implements Props {
+
+
+	 public class BasicRoleMap extends RoleMap implements Props, Cloneable  {
 
 		String loginPassword;
 		String username;
-		
-		public BasicRoleMap(String role, String username, String loginPassword) throws ConfigurationException {
+
+		public BasicRoleMap(String role, String username, String loginPassword) {
 			setRole(role);
 			setUsername(username);
 			this.loginPassword = loginPassword;
 		}
-		
+
 	    public String getLoginPassword() {
 	  	  return loginPassword;
 	    }
-	    
+
 	    public void setLoginPassword(String loginPassword) {
 	  	  	this.loginPassword = loginPassword.trim();
 		  	try {
 			     MessageDigest sha = MessageDigest.getInstance("SHA-1");
 	     		byte[] input = sha.digest(ByteUtil.mergeByteArrays(loginPassword.getBytes("UTF-8"),Config.getConfig().getSalt()));
-	     		this.loginPassword = Base64.encodeToString(input,false); 
-				 
+	     		this.loginPassword = Base64.encodeToString(input,false);
+
 			} catch (Exception e) {
 				logger.error("failed to setPassPhrase:"+e.getMessage(),e);
 			}
 	    }
-	    
+
 	    public void setUsername(String username) {
 	    	this.username = username.trim();
 	    }
-	    
+
 	    public String getUsername() {
 	    	return username;
 	    }
-	    
+
 	    public void saveSettings(String prefix, Settings prop, String suffix) {
-	    	
+
 	    }
 	    public boolean loadSettings(String prefix, Settings prop, String suffix) {
 	    	return true;
 	    }
+
+	    public BasicRoleMap clone() {
+	    	return new BasicRoleMap(role,username,loginPassword);
+	    }
 	}
-    
-	 
-		public String encryptPassword(String password) throws MessageStoreException {
-	 		try {
-	 	    		int iterationCount = 17;  
-	 	    		KeySpec keySpec = new PBEKeySpec(Config.getEncKey().toCharArray(), Config.getConfig().getSalt(), iterationCount);
-	             	Key key = SecretKeyFactory.getInstance(Config.getConfig().getPBEAlgorithm()).generateSecret(keySpec);
-	             	AlgorithmParameterSpec  paramSpec = new PBEParameterSpec(Config.getConfig().getSalt(), iterationCount);
-	             	Cipher cipher = Cipher.getInstance(key.getAlgorithm());
-	             	cipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
-	             	byte[] outputBytes = cipher.doFinal(password.getBytes("UTF-8"));
-	             	return Base64.encodeToString(outputBytes,false);
-	          } catch (java.security.NoSuchAlgorithmException e)	{
-	              throw new MessageStoreException("failed to locate desired encryption algorithm {algorithm='"+Config.getConfig().getPBEAlgorithm()+"'",logger);
-	          } catch (Exception e) {
-	              throw new MessageStoreException(e.toString(),e,logger);
-	          }
-	 	}
-	 	  public String decryptPassword(String password)  throws MessageStoreException {
-	 		 try {
-		    	int iterationCount = 17; 
-		    	KeySpec keySpec = new PBEKeySpec(Config.getEncKey().toCharArray(), Config.getConfig().getSalt(), iterationCount);
-	          	Key key = SecretKeyFactory.getInstance(Config.getConfig().getPBEAlgorithm()).generateSecret(keySpec);
-	          	AlgorithmParameterSpec  paramSpec = new PBEParameterSpec(Config.getConfig().getSalt(), iterationCount);
-	          	Cipher cipher = Cipher.getInstance(key.getAlgorithm());
-	          	cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
-	          	byte[] base64DecodedData = Base64.decodeFast(password);
-	          	byte[] outputBytes = cipher.doFinal(base64DecodedData);
-	          	return new String(outputBytes);
-	       } catch (java.security.NoSuchAlgorithmException e)	{
-	           throw new MessageStoreException("failed to locate desired encryption algorithm {algorithm='"+Config.getConfig().getPBEAlgorithm()+"'",logger);
-	       } catch (Exception e) {
-	           throw new MessageStoreException(e.toString(),e,logger);
-	       }  
-	 	  }
-	 
+
+	 		public BasicIdentity clone() {
+	 			BasicIdentity basicIdentity = new BasicIdentity();
+	 			for (RoleMap roleMap : getRoleMaps()) {
+	 				basicIdentity.addRoleMap(((BasicRoleMap)roleMap).clone());
+	 			}
+	 			return basicIdentity;
+	 		}
+
 }

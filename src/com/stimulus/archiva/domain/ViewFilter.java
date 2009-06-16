@@ -1,8 +1,8 @@
-/* Copyright (C) 2005-2007 Jamie Angus Band 
- * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
+/* Copyright (C) 2005-2009 Jamie Angus Band
+ * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 2 of the License, or (at your option) any later version.
+ * 3 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -12,47 +12,47 @@
  * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
+
 package com.stimulus.archiva.domain;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 import java.util.*;
 
 public class ViewFilter implements java.io.Serializable, Props {
-	
+
 	private static final long serialVersionUID = -219142124332720112L;
-	
+
 	protected ArrayList<Criteria> criteria   = new ArrayList<Criteria>();
-	protected static final Logger logger = Logger.getLogger(ViewFilter.class.getName());
+	protected static final Log logger = LogFactory.getLog(ViewFilter.class.getName());
 	protected static final String viewCriteriaFieldKey 			= "field";
 	protected static final String viewCriteriaMethodKey 		= "method";
 	protected static final String viewCriteriaQueryKey 			= "query";
 	protected static final String viewCriteriaOperatorKey 		= "operator";
-	
+
 	protected String defaultViewCriteriaField = "from";
 	protected String defaultViewCriteriaMethod = "all";
 	protected String defaultViewCriteriaQuery  = "%email%";
 	protected String defaultViewCriteriaOperator = "and";
-	
+
 
     public void clearCriteria() {
     	criteria.clear();
     }
-    
+
     public void addCriteria(Criteria crit) {
     	logger.debug("addCriteria()");
     	criteria.add(crit);
     }
     public void newCriteria() {
-          logger.debug("newCriteria()");
           criteria.add(new Criteria("subject"));
     }
-    
+
     public List<Criteria> getCriteria() {
-    	
+
     	return criteria;
     }
-    
+
     public void deleteCriteria(int id) {
-      logger.debug("deleteToCriteria() {index='"+id+"'}");  
+      logger.debug("deleteToCriteria() {index='"+id+"'}");
     	criteria.remove(criteria.get(id));
 
     }
@@ -73,10 +73,10 @@ public class ViewFilter implements java.io.Serializable, Props {
 	       	c++;
     	}
    }
-   
+
    public boolean loadSettings(String prefix, Settings prop, String suffix) {
 	   logger.debug("loading view filter");
-	   
+
 	    int c = 1;
 	    criteria.clear();
 	    do {
@@ -84,15 +84,30 @@ public class ViewFilter implements java.io.Serializable, Props {
 	    	String cm = prop.getProperty(prefix + viewCriteriaMethodKey + "." + c );
 	    	String cq = prop.getProperty(prefix + viewCriteriaQueryKey + "." + c );
 	    	String co =  prop.getProperty(prefix + viewCriteriaOperatorKey + "." + c );
-	    	
+
 	    	if (cf == null && cm == null && cq == null && co == null)
 	  	    	return true;
-	    	
+
 	    	Criteria.Method method = Criteria.Method.valueOf(cm.toUpperCase(Locale.ENGLISH));
 	    	Criteria.Operator operator = Criteria.Operator.valueOf(co.toUpperCase(Locale.ENGLISH));
 	    	Criteria crit = new Criteria(cf,method,cq,operator);
-	    	criteria.add(crit);   
+	    	criteria.add(crit);
 	    	c++;
 	    } while (true);
    }
+   public Object clone() {
+	   ViewFilter vf = new ViewFilter();
+	   ArrayList<Criteria> destCriteria   = new ArrayList<Criteria>();
+	   for (Criteria crit : criteria) {
+		   	Criteria.Method method = crit.getMethod();
+	    	Criteria.Operator operator = crit.getOperator();
+	    	String query = new String(crit.getQuery());
+	    	String field = new String(crit.getField());
+	    	Criteria destCrit = new Criteria(field,method,query,operator);
+	    	destCriteria.add(destCrit);
+	   }
+	   vf.criteria = destCriteria;
+	   return vf;
+   }
+
 }

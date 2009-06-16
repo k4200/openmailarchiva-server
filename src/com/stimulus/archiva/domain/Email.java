@@ -1,9 +1,8 @@
-
-/* Copyright (C) 2005-2007 Jamie Angus Band 
- * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
+/* Copyright (C) 2005-2009 Jamie Angus Band
+ * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 2 of the License, or (at your option) any later version.
+ * 3 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -19,17 +18,17 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.io.*;
-
+import org.apache.commons.logging.*;
 import javax.mail.*;
 import javax.mail.internet.*;
-import org.apache.log4j.*;
+import org.apache.commons.logging.*;
 import com.stimulus.util.*;
 import com.stimulus.archiva.domain.fields.*;
 
 public class Email extends MimeMessage implements Serializable  {
-  
+
   private static final long serialVersionUID = 742813048326535L;
-  protected static Logger logger = Logger.getLogger(EmailField.class.getName());
+  protected static Log logger = LogFactory.getLog(EmailField.class.getName());
   protected static Session session;
   protected byte[] compressedOriginal;
   protected int size;
@@ -38,20 +37,20 @@ public class Email extends MimeMessage implements Serializable  {
   public enum DisplayMode { ALL, EMAIL_ONLY, NAME_ONLY };
   protected LinkedHashMap<String,EmailFieldValue> applicationFields = new LinkedHashMap<String,EmailFieldValue>();
   protected EmailID emailId;
-  
+
   static
   {
 	  Properties system_properties = System.getProperties();
 	  session = Session.getDefaultInstance(system_properties,null);
 	  setSession(session);
   };
-  
+
   public static Session getSession() { return session; }
-  
+
   public static void setSession(Session newSession) {
 	 session = newSession;
   }
-  
+
   public Email() {
 	  super(session);
   }
@@ -60,7 +59,7 @@ public class Email extends MimeMessage implements Serializable  {
 	  this.emailId = emailId;
 	  compileApplicationFields();
   }
-  
+
 /*
   public Email(InputStream is, boolean headersOnly) throws MessagingException
   {
@@ -81,7 +80,7 @@ public class Email extends MimeMessage implements Serializable  {
   {
   	super(session);
   }*/
-  
+
   private void clearContent() {
   	 size = content.length;
   	 content=null;
@@ -90,14 +89,14 @@ public class Email extends MimeMessage implements Serializable  {
   public LinkedHashMap<String,EmailFieldValue> getFields() {
 	  return applicationFields;
   }
-  
+
   public static String[] getAvailableFields() {
 	  return new String [] {"to","bcc","cc","from","size","flag","priority","subject","deliveredto","attach"};
   }
-  
+
   public void compileApplicationFields() throws MessagingException {
 	  applicationFields.clear();
-	  
+
 	 // if (getFromAddress(DisplayMode.ALL).length()<1)
 	//	  throw new MessagingException("badly formed message");
 	  putField("from", getFromAddress(DisplayMode.ALL));
@@ -106,39 +105,40 @@ public class Email extends MimeMessage implements Serializable  {
 	  putField("cc", getRecipientAddresses(Message.RecipientType.CC,DisplayMode.ALL));
 	  putField("flag", getFlagsStr());
 	  putField("priority",Integer.toString(getPriorityID()));
-	  String subject = getSubject(); 
+	  putField("sensitivity",getSensitivity());
+	  String subject = getSubject();
 	  if (subject.length()>0)
 		  putField("subject",subject);
 	  else
 		  putField("subject","<no subject>");
 	  addHeaderToField("deliveredto","Delivered-To");
-	  putField("attach", hasAttachment() ? "1" : "0");  
-	
+	  putField("attach", hasAttachment() ? "1" : "0");
+
 	  updateOriginalSize();
-	  
+
 	  try {
 		  Date sentDate = getSentDate();
 		  if (sentDate!=null)
 			  putField("sentdate","d"+DateUtil.convertDatetoString(sentDate));
 	  } catch (Exception e) {
 		  logger.error("failed to set sent date on message. using current date.");
-	  }  
-	
+	  }
+
 	  try {
 		  Date archiveDate = getArchiveDate();
 		  if (archiveDate!=null)
 			  putField("archivedate","d"+DateUtil.convertDatetoString(archiveDate)); // fix this
 	  } catch (Exception e) {
 		  logger.error("failed to set archive date on message. using current date.");
-	  }  
-	  
+	  }
+
 	  try {
 		  Date receivedDate = getReceivedDate();
 		  if (receivedDate!=null)
 			  putField("receiveddate","d"+DateUtil.convertDatetoString(receivedDate)); // fix this
 	  } catch (Exception e) {
 		  logger.error("failed to set received date on message. using current date.");
-	  }  
+	  }
 
 	/*  try {
 		  Date receiveDate = getReceivedDate();
@@ -147,9 +147,9 @@ public class Email extends MimeMessage implements Serializable  {
 	  } catch (Exception e) {
 		  logger.error("failed to set archive date on message. using current date.");
 	  }  */
-	
+
   }
- 
+
   protected void updateOriginalSize() { // bytes
 	  double sz = -1;
 	  try {
@@ -159,22 +159,22 @@ public class Email extends MimeMessage implements Serializable  {
 			  try {
 				  sz = Double.parseDouble(size[0]);
 			  } catch (NumberFormatException fe) {
-				  sz = Integer.parseInt(size[0]); 
+				  sz = Integer.parseInt(size[0]);
 			  } catch (Exception e) {}
-		  } 
+		  }
 		  this.removeHeader("X-MailArchiva-Message-Size");
 	  } catch (Exception e) {}
-		  
+
 	  try {
 		if (sz==-1)
-			sz = getSize(); 
+			sz = getSize();
 	  } catch (Exception me) {
 		  sz = 0;
 	  }
 	  DecimalFormat df = new DecimalFormat("0.##");
 	  putField("size",df.format(sz / 1024.0));
   }
-  
+
   protected void addHeaderToField(String specialHeaderName, String headerName) {
 	  try {
 		  String[] headerValue = getHeader(headerName);
@@ -184,47 +184,51 @@ public class Email extends MimeMessage implements Serializable  {
 				  buffer.append(headerValue[i]);
 				  buffer.append(",");
 			  }
-			  putField(specialHeaderName,buffer.toString());
+			  String header = buffer.toString();
+			  if (header.endsWith(Character.toString(',')))
+		            header = header.substring(0,header.length()-1);
+
+			  putField(specialHeaderName,header);
 		  }
 	  } catch (Exception e) { }
   }
-  
-	
+
+
   protected String getAddresses(Address[] recipients, DisplayMode displayMode) {
 	  if (recipients == null)
 		  return "";
 	  StringBuffer result = new StringBuffer();
 
-	  
+
 	  for (int i=0;i<recipients.length; i++) {
 		  if (recipients[i] instanceof InternetAddress) {
 			  InternetAddress address = (InternetAddress)recipients[i];
 			  switch (displayMode) {
-			  	case ALL: if (address.getPersonal() != null) 
+			  	case ALL: if (address.getPersonal() != null)
 			  					result.append(address.getPersonal());
 	  					  result.append(" <");
 	  					  result.append(DecodingUtil.decodeWord(address.getAddress()));
 	  					  result.append(">");
 	  					  break;
 			  	case EMAIL_ONLY: result.append(DecodingUtil.decodeWord(address.getAddress())); break;
-			  	case NAME_ONLY: if (address.getPersonal() != null) 
+			  	case NAME_ONLY: if (address.getPersonal() != null)
 			  							result.append(DecodingUtil.decodeWord(address.getPersonal()));
-			  						else 
-			  							result.append(DecodingUtil.decodeWord(address.getAddress())); 
+			  						else
+			  							result.append(DecodingUtil.decodeWord(address.getAddress()));
 			  					break;
 			  }
 		  } else if (recipients[i] instanceof NewsAddress) {
 			  result.append("newsgroup:");
 			  result.append(((NewsAddress)recipients[i]).getNewsgroup());
-		
+
 		  } else
 			  result.append(DecodingUtil.decodeWord(recipients[i].toString()));
-		  if (i<recipients.length-1) 
+		  if (i<recipients.length-1)
 			  result.append(", ");
 	  }
 	  return result.toString().trim();
   }
-  
+
   protected String getRecipientAddresses(Message.RecipientType recipientType, DisplayMode displayMode) {
 	  Address[] recipients = null;
 	  try {
@@ -232,7 +236,7 @@ public class Email extends MimeMessage implements Serializable  {
 	  } catch (Exception e) { return ""; }
 	  return getAddresses(recipients,displayMode);
   }
- 
+
   protected String getFromAddress(DisplayMode displayMode) {
 	  Address[] from = null;
 	  try {
@@ -240,7 +244,7 @@ public class Email extends MimeMessage implements Serializable  {
 	  } catch (Exception e) { return ""; }
 	  return getAddresses(from, displayMode);
   }
- 
+
 
   protected int getPriorityID() {
       try {
@@ -267,12 +271,25 @@ public class Email extends MimeMessage implements Serializable  {
       }
       return 3;
   }
- 
+
+
+  public String getSensitivity() {
+	  try {
+          String sensitivities[] = getHeader("Sensitivity");
+          if (sensitivities!=null && sensitivities.length>0) {
+        	  return sensitivities[0];
+          }
+	  } catch (javax.mail.MessagingException me) {
+          logger.debug("failed to retrieve sensitivity {"+toString()+"}",me);
+      }
+	  return null;
+  }
+
   protected String getIHeaders(boolean journal,boolean showHidden) throws MessagingException, IOException {
 	  StringBuffer headerOut = new StringBuffer();
       Enumeration headers = null;
       headers = getAllHeaders();
-      
+
       while (headers.hasMoreElements()) {
           Header header = (Header)headers.nextElement();
 		  headerOut.append(header.getName());
@@ -282,7 +299,7 @@ public class Email extends MimeMessage implements Serializable  {
       }
       return headerOut.toString();
   }
-  
+
   public String getInternetHeaders(boolean showHidden) throws MessagingException, IOException {
       return getIHeaders(true,showHidden);
   }
@@ -295,7 +312,7 @@ public class Email extends MimeMessage implements Serializable  {
   public void setEmailID(EmailID emailId) {
 	  this.emailId = emailId;
   }
-  
+
   public EmailID getEmailID() {
 	  return emailId;
   }
@@ -308,8 +325,8 @@ public class Email extends MimeMessage implements Serializable  {
 			  return super.getSubject();
       } catch (Exception e) { return ""; }
   }
-  
-  protected boolean hasAttachment() 
+
+  protected boolean hasAttachment()
   {
 
 	  try {
@@ -318,29 +335,26 @@ public class Email extends MimeMessage implements Serializable  {
 		  return result;
 	  } catch (Exception e) {
 		  logger.error("failed to determine if message has attachment {"+toString()+"}",e);
-		 
+
 	  }
 	  logger.debug("hasAttachment() {result='false'}");
 	  return false;
 	  //logger.debug("message attachment discovery {attach='"+hasAttachment+"',"+toString());
   }
 
-  
+
   protected boolean hasAttachment(Part p) throws MessagingException, IOException {
-	 
+
 	  if (p.getDisposition()!=null && Compare.equalsIgnoreCase(p.getDisposition(),Part.ATTACHMENT)) {
 		  logger.debug("hasAttachment() attachment disposition.");
 		  return true;
 	  }
-			/*  
 	  if (p.getFileName()!=null) {
-		  if (p.getDisposition()!=null || Compare.equalsIgnoreCase(p.getDisposition(),Part.ATTACHMENT)) { 
-	    	logger.debug("hasAttachment() filename specified.");
+		  logger.debug("hasAttachment() filename specified.");
 	    	return true;
-		  }
-	  }*/
-	  
-	  try {	 
+	  }
+
+	  try {
 			 if (p.isMimeType("multipart/*")) {
 			     Multipart mp = (Multipart)p.getContent();
 			     for (int i = 0; i < mp.getCount(); i++) {
@@ -356,10 +370,10 @@ public class Email extends MimeMessage implements Serializable  {
 	  }
 	  return false;
   }
-	
+
   public String toString() {
       StringBuffer outStr = new StringBuffer(); //= emailId.toString();
-      
+
       if (getEmailId()!=null) {
     	  outStr.append(getEmailId().toString());
     	  outStr.append(",");
@@ -367,13 +381,13 @@ public class Email extends MimeMessage implements Serializable  {
       for (Iterator it=getFields().values().iterator(); it.hasNext(); ) {
  	        EmailFieldValue efv = (EmailFieldValue)it.next();
  	        outStr.append(efv);
- 	        outStr.append(","); 	  
+ 	        outStr.append(",");
  	  }
-      outStr.setLength(outStr.length()-1); 
+      outStr.setLength(outStr.length()-1);
       return outStr.toString();
   }
   public EmailID getEmailId() { return emailId; }
-  
+
   protected String getFlagsStr() {
 	  List<String> flags = getFlagList();
 	  StringBuffer allFlags = new StringBuffer();
@@ -383,14 +397,14 @@ public class Email extends MimeMessage implements Serializable  {
 	  }
 	  return allFlags.toString().trim();
   }
-  
+
   protected List<String> getFlagList() {
 	  List<String> flagList = new LinkedList<String>();
 	  try {
           Flags flags = getFlags();
           Flags.Flag[] sf = flags.getSystemFlags();
           for (int i = 0; i < sf.length; i++) {
-    
+
          	if (sf[i] == Flags.Flag.DELETED)
          		flagList.add("deleted");
          	else if (sf[i] == Flags.Flag.SEEN)
@@ -410,30 +424,30 @@ public class Email extends MimeMessage implements Serializable  {
       return flagList;
    }
 
-  
-	  
+
+
 	  protected void putField(String field, String value) {
-		
-			if (value==null || value.length()<1 || field==null) 
+
+			if (value==null || value.length()<1 || field==null)
 				return;
 			field = field.trim().toLowerCase(Locale.ENGLISH);
-			
+
 			EmailFields emailFields = Config.getConfig().getEmailFields();
 			if (emailFields.get(field)==null) // field not supported
 				return;
-			
+
 			EmailFieldValue existingValue = (EmailFieldValue)applicationFields.get(field);
-			if (existingValue==null) 
+			if (existingValue==null)
 				applicationFields.put(field,new EmailFieldValue(emailFields.get(field),value));
 			else {
 				String oldValue = existingValue.getValue();
 				if (oldValue!=null && oldValue.indexOf(value)==-1)
-					applicationFields.put(field,new EmailFieldValue(emailFields.get(field),oldValue + ", " + value));   	
+					applicationFields.put(field,new EmailFieldValue(emailFields.get(field),oldValue + ", " + value));
 			}
-		
+
 	}
-	
-	 
+
+
    public Date getArchiveDate() {
 	  try {
 		   String[] header = getHeader("X-MailArchiva-Archive-Date");
@@ -444,20 +458,20 @@ public class Email extends MimeMessage implements Serializable  {
 			   try {
 				   return DateUtil.convertStringToDate(uniqueid);
 			   } catch (Exception e) {}
-			   
-		   } 
+
+		   }
 	  } catch (Exception me) {
 		  logger.debug("getArchiveDate(). unable to parse archive date ",me);
 	  }
 	  return new Date();
    }
-   
-	
-public Date getReceivedDate() {
+
+
+   public Date getReceivedDate() {
 	   MailDateFormat mdf = new MailDateFormat();
-	  
+
 	   try {
-		   
+
 		 /*  Enumeration e = getAllHeaders();
 		   while (e.hasMoreElements()) {
 			   Header h = (Header)e.nextElement();
@@ -479,5 +493,5 @@ public Date getReceivedDate() {
 		   logger.debug("getReceivedDate(). unable to parse received date", re);
 	   }
 	   return null;
-   }	
+   }
 }

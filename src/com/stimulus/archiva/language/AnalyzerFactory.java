@@ -15,7 +15,7 @@
  */
 
 package com.stimulus.archiva.language;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 import org.apache.lucene.analysis.*;
 import com.stimulus.archiva.domain.*;
 import com.stimulus.archiva.search.*;
@@ -32,7 +32,7 @@ public class AnalyzerFactory implements Serializable {
 
 	public enum Operation { INDEX, SEARCH };
 	
-    protected static final Logger logger = Logger.getLogger(AnalyzerFactory.class.getName());
+    protected static final Log logger = LogFactory.getLog(AnalyzerFactory.class.getName());
     
     public static Analyzer getAnalyzer(String language, Operation operation) {
     	

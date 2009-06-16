@@ -16,19 +16,21 @@
 
 
 package com.stimulus.archiva.presentation;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 import org.apache.struts.actions.DownloadAction;
 import org.apache.struts.action.*;
 
 import com.stimulus.archiva.domain.Config;
 
+import javax.mail.internet.MimeUtility;
 import javax.servlet.http.*;
 import java.io.*;
+import java.net.URLEncoder;
 
 
 public class DownloadBean extends DownloadAction implements Serializable {
 
-    protected static final Logger logger = Logger.getLogger(DownloadBean.class.getName());
+    protected static final Log logger = LogFactory.getLog(DownloadBean.class.getName());
     private static final long serialVersionUID = -7626204841615451485L;
     
     @Override
@@ -44,8 +46,18 @@ public class DownloadBean extends DownloadAction implements Serializable {
     	String filePath = Config.getFileSystem().getViewPath() + File.separatorChar + fileName;
         File file = new File(filePath);
         logger.debug("download attachment {fileName='"+file.getPath()+"'");
-        response.setHeader("Content-disposition", 
-                           "attachment; filename=" + fileName.replace(' ','_'));
+        String agent = request.getHeader("USER-AGENT");
+        if (null != agent && -1 != agent.indexOf("MSIE"))  {
+        	String codedfilename = URLEncoder.encode(fileName, "UTF8");
+        	response.setContentType("application/x-download");
+        	response.setHeader("Content-Disposition","attachment;filename=" + codedfilename);
+        } else if (null != agent && -1 != agent.indexOf("Mozilla")) {    
+        	String codedfilename = MimeUtility.encodeText(fileName, "UTF8", "B");
+        	response.setContentType("application/x-download");
+        	response.setHeader("Content-Disposition","attachment;filename=" + codedfilename);
+        } else {
+        	response.setHeader("Content-Disposition","attachment;filename=" + fileName);
+        }
         String contentType = "application/download";
         response.setContentLength((int)file.length());
         Config.getFileSystem().getTempFiles().markForDeletion(file);

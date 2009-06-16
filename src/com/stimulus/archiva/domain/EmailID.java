@@ -1,9 +1,9 @@
 
-/* Copyright (C) 2005-2007 Jamie Angus Band 
- * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
+/* Copyright (C) 2005-2009 Jamie Angus Band
+ * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 2 of the License, or (at your option) any later version.
+ * 3 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -16,26 +16,20 @@
 package com.stimulus.archiva.domain;
 
 import javax.mail.*;
-import java.util.concurrent.locks.*;
 import com.stimulus.util.*;
-
 import javax.mail.internet.*;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.security.*;
 import java.util.*;
-
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 import java.io.*;
 
 public class EmailID implements Serializable {
-	private static volatile SynchronizedDateFormat format = new SynchronizedDateFormat("yyyyMMddHHmmssSS");
+
 	private static String hexits = "0123456789abcdef";
 	private static final long serialVersionUID = 3048326535L;
-	protected static Logger logger = Logger.getLogger(EmailID.class.getName());
+	protected static Log logger = LogFactory.getLog(EmailID.class.getName());
     protected String uniqueId = null;
     protected Volume volume = null;
     public EmailID() {}
@@ -44,21 +38,21 @@ public class EmailID implements Serializable {
         uniqueId = generateUniqueID(email);
         this.volume = volume;
     }
-    
+
     protected EmailID(Volume volume, String uniqueId) {
         this.uniqueId = uniqueId;
         this.volume = volume;
     }
-    
+
 
     public static EmailID getEmailID(Volume volume,String uniqueID) {
     	return new EmailID(volume,uniqueID);
     }
-    
-    public static EmailID getEmailID(Volume volume, Email email) {
+
+    public static EmailID createEmailID(Volume volume, Email email) {
     	return new EmailID(volume,email);
     }
-    
+
     protected EmailID(String uniqueId) {
         this.uniqueId = uniqueId;
     }
@@ -75,17 +69,53 @@ public class EmailID implements Serializable {
     public Volume getVolume() {
     	return volume;
     }
-    
+
     public void setVolume(Volume volume) {
     	this.volume = volume;
     }
-    
 
     public static synchronized String generateUniqueID(Email email)
     {
-    	String uuid =  UUID.randomUUID().toString().replaceAll("-","");
-    	return uuid;
+    	try
+	  	{
+    		MimeMessage raw = email;
+    		// we need a backup plan here
+    		if (raw==null) {
+    			return DateUtil.convertDatetoString(new Date());
+    		}
+    		Enumeration<Header> headers = raw.getAllHeaders();
+    		LinkedList<String> orderedHeaders = new LinkedList<String>();
+    		while (headers.hasMoreElements()) {
+    			Header header = headers.nextElement();
+
+    			if (Compare.equalsIgnoreCase(header.getName(), "Date") ||
+					Compare.equalsIgnoreCase(header.getName(), "CC") ||
+					Compare.equalsIgnoreCase(header.getName(), "BCC") ||
+					Compare.equalsIgnoreCase(header.getName(), "Subject") ||
+					Compare.equalsIgnoreCase(header.getName(), "To") ||
+					Compare.equalsIgnoreCase(header.getName(), "From"))
+    					orderedHeaders.add(header.getName()+header.getValue());
+
+    		}
+    		Collections.sort(orderedHeaders);
+    		StringBuffer allHeaders = new StringBuffer();
+    		for (String header: orderedHeaders)
+    			allHeaders.append(header);
+    		MessageDigest sha = MessageDigest.getInstance("SHA-1");
+    		byte[] bytes = allHeaders.toString().getBytes();
+    		InputStream is = new ByteArrayInputStream(bytes);
+    		DigestInputStream dis = new DigestInputStream(is,sha);
+    		while (dis.read()!=-1);
+    		dis.close();
+		    byte[] digest = sha.digest();
+	  	  	return toHex(digest);
+	  	} catch (Exception e)
+	  	{
+	  		logger.error("failed to generate a uniqueid for a message");
+	  		return null;
+	  	}
     }
+
     private static String toHex(byte[] block) {
 		StringBuffer buf = new StringBuffer();
 
@@ -95,31 +125,31 @@ public class EmailID implements Serializable {
 		}
 		return buf + "";
 	}
-    
-    
+
+
 
     @Override
 	public String toString() {
         return "uniqueId='"+uniqueId+"', " + volume;
     }
-    
+
     public static class NullOutputStream extends OutputStream
 	{
 		@Override
 		public void write (byte [] b) throws IOException {}
-		
+
 		@Override
 		public void write (byte [] b, int off, int len) throws IOException {}
-			
+
 		@Override
 		public void write (int b) throws IOException {}
-			
-	
+
+
 		@Override
 		public void flush () throws IOException {}
-			
+
 		@Override
 		public void close () throws IOException {}
-		
+
 	}
 }

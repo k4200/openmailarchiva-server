@@ -1,5 +1,6 @@
 
-/* Copyright (C) 2005-2007 Jamie Angus Band 
+
+/* Copyright (C) 2005-2007 Jamie Angus Band
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
@@ -19,25 +20,35 @@ import com.stimulus.archiva.exception.*;
 
 import java.io.Serializable;
 import java.util.*;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 import com.stimulus.archiva.domain.*;
 import com.stimulus.archiva.domain.fields.*;
 
 public class SearchResultBean implements Serializable {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -837802320118584736L;
 	protected Search.Result searchResult;
-	protected static Logger logger = Logger.getLogger(SearchResultBean.class.getName());
+	protected static Log logger = LogFactory.getLog(SearchResultBean.class.getName());
 	protected Locale locale;
-	
+	protected boolean display = false;
+
+
+	public SearchResultBean() {
+		display = false;
+	}
 	public SearchResultBean(Search.Result searchResult, Locale locale) {
 		this.searchResult = searchResult;
 		this.locale = locale;
+		this.display = true;
 	}
-	
+
+	public boolean getDisplay() {
+		return display;
+	}
+
 	 public List<DisplayField> getFieldValues() {
 		 ArrayList<DisplayField>  list = new ArrayList<DisplayField>();
 		 EmailFields emailFields = Config.getConfig().getEmailFields();
@@ -47,29 +58,29 @@ public class SearchResultBean implements Serializable {
 					 EmailFieldValue efv = searchResult.getFieldValue(field.getName());
 					 list.add(DisplayField.getDisplayField(efv , locale,false));
 				 } catch (MessageSearchException mse) {
-					 logger.debug("failed to retrieve field value from message: "+mse.getMessage()); 
+					 logger.debug("failed to retrieve field value from message: "+mse.getMessage());
 				 }
 			 }
 		 }
 		 return list;
 	 }
-	 
+
 	public String getUniqueID() {
-		try { 
+		try {
 			return searchResult.getEmailId().getUniqueID();
 		} catch (MessageSearchException mse) {
 			logger.debug("failed to retrieve unique message id: "+mse.getMessage(),mse);
 			return null;
 		}
 	}
-	
-	
+
+
 	public boolean getMessageExist() {
 		try {
 			EmailID emailID = searchResult.getEmailId();
 			Volume volume = emailID.getVolume();
 			return (volume!=null);
-				
+
 			/*if (volume!=null) {
 				Archiver archiver = Config.getConfig().getArchiver();
 				boolean exists = archiver.isMessageExist(emailID);
@@ -85,7 +96,7 @@ public class SearchResultBean implements Serializable {
 		}
 		return false;
 	}
-	
+
 	public String getVolumeID() {
 		try {
 			EmailID emailID = searchResult.getEmailId();
@@ -100,17 +111,25 @@ public class SearchResultBean implements Serializable {
 		}
 		//return searchResult.getEmailId().getVolume().getID();
 	}
-	
 
 
-    public static List<SearchResultBean> getSearchResultBeans(List<Search.Result> results,Locale locale) {
-		List<SearchResultBean> searchResultBeans = new LinkedList<SearchResultBean>();
-		  int size = 0;
-		  for (Search.Result result: results) {
-			  searchResultBeans.add(new SearchResultBean(result,locale));
-			  if (size>1000) break;
+
+    public static synchronized List<SearchResultBean> getSearchResultBeans(List<Search.Result> results,Locale locale) {
+		  List<SearchResultBean> searchResultBeans = new LinkedList<SearchResultBean>();
+		  try {
+			  for (Search.Result result: results) {
+				  searchResultBeans.add(new SearchResultBean(result,locale));
+			  }
+			  while (searchResultBeans.size()<Config.getConfig().getSearch().getMaxSearchResults()) {
+				  searchResultBeans.add(new SearchResultBean());
+			  }
+		  } catch (java.util.ConcurrentModificationException ce) {
+			  	// bit of a hack to say the least
+
+			  try { Thread.sleep(50); } catch (Exception e) {}
+			  return getSearchResultBeans(results,locale);
 		  }
 		  return searchResultBeans;
 	}
-    
+
 }

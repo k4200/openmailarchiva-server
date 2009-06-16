@@ -1,5 +1,6 @@
 
-/* Copyright (C) 2005-2007 Jamie Angus Band 
+
+/* Copyright (C) 2005-2007 Jamie Angus Band
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
@@ -18,7 +19,7 @@ package com.stimulus.archiva.presentation;
 import java.io.Serializable;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 import org.apache.struts.upload.FormFile;
 import com.stimulus.archiva.domain.*;
 import com.stimulus.archiva.domain.fields.EmailField;
@@ -34,10 +35,10 @@ import java.io.*;
 public class MessageBean extends BaseBean implements Serializable {
 
   private static final long serialVersionUID = 1624887450703706628L;
-  protected static final Logger logger = Logger.getLogger(MessageBean.class.getName());
+  protected static final Log logger = LogFactory.getLog(MessageBean.class.getName());
   protected static MessageService messageService = null;
 
-  protected static final Logger audit = Logger.getLogger("com.stimulus.archiva.audit");
+  protected static final Log audit = LogFactory.getLog("com.stimulus.archiva.audit");
 
   protected FormFile 			file;
   protected String 				fileName;
@@ -49,20 +50,20 @@ public class MessageBean extends BaseBean implements Serializable {
   protected String      		attachment = null;
   protected MessageExtraction 	messageExtraction = null;
   protected final Lock 			lock = new ReentrantLock();
-  protected final Condition 	extracted  = lock.newCondition(); 
+  protected final Condition 	extracted  = lock.newCondition();
   protected String				volumeID = null;
   protected int					resultsIndex = 0;
-  
+
   /* Constructors */
 
   public MessageBean() {
-	 
+
   }
 
   public void setVolumeID(String volumeID) {
 	  logger.debug("setVolumeID(){volumeID='"+volumeID+"'}");
 	  this.volumeID = volumeID;
-	  
+
   }
   public void setMessageID(String messageId) {
   	logger.debug("setMessageID(){messageID='"+messageId+"'}");
@@ -94,11 +95,11 @@ public class MessageBean extends BaseBean implements Serializable {
 	  		return "reload";
 	  }
 	  Email email = null;
-	  
-	
-	  try { 
+
+
+	  try {
 		  email = new Email(null,messageExtraction.getAttachment(attachment).getInputStream());
-	  	 logger.debug("retrieved message attachment successfully {"+email+"}");	
+	  	 logger.debug("retrieved message attachment successfully {"+email+"}");
 	  } catch(Exception me) {
 	  		String errorStr = "failed to retrieve the requested message attachment.";
 			ActionContext.getActionContext().setSimpleMessage(errorStr);
@@ -107,7 +108,7 @@ public class MessageBean extends BaseBean implements Serializable {
 	  }
 	  viewMessage(email,false);
 	  return "success";
-	  
+
   }
   public String viewmail()
   {
@@ -119,7 +120,7 @@ public class MessageBean extends BaseBean implements Serializable {
   	}
   	Email email = null;
   	try {
-  
+
   		email = MessageService.getMessageByID(volumeID,messageId,false);
   		logger.debug("retrieved message successfully {"+email+"}");
   	} catch(Exception me) {
@@ -129,7 +130,7 @@ public class MessageBean extends BaseBean implements Serializable {
 		return "reload";
   	}
   	viewMessage(email,true);
-  	
+
   	return "success";
   }
 
@@ -151,21 +152,21 @@ public class MessageBean extends BaseBean implements Serializable {
 	  	       lock.unlock();
 	  	    }
 	  	} catch (Exception e) {
-	  		
+
 	  	    logger.error("failed to extract message",e);
 	  	}
   }
-  
+
   public void waitForExtraction() {
 	 lock.lock();
      try {
-       while (messageExtraction == null) 
+       while (messageExtraction == null)
     	   extracted.await();
      } catch (Exception e) {} finally {
        lock.unlock();
      }
   }
-  
+
   public List getAttachments() {
 	waitForExtraction();
     List attachments =  null;
@@ -183,7 +184,7 @@ public class MessageBean extends BaseBean implements Serializable {
   public String getOriginalMessageFilePath() throws ArchivaException {
 	 return getMessageExtraction().getFilePath();
   }
-  
+
   public String getOriginalMessageFileName() throws ArchivaException {
 	  return getMessageExtraction().getFileName();
   }
@@ -194,11 +195,11 @@ public class MessageBean extends BaseBean implements Serializable {
   public String getOriginalMessageURL() throws ArchivaException {
 	  return getMessageExtraction().getFileURL();
   }
-  
+
   public String getView() throws ArchivaException {
 	  return getMessageExtraction().getViewURL();
   }
-  
+
   public void setAttachment(String attachment) {
       this.attachment = attachment;
   }
@@ -206,20 +207,20 @@ public class MessageBean extends BaseBean implements Serializable {
   public String getAttachment() {
       return attachment;
   }
-  
+
   public String getAttachmentFilePath() {
 	  return getMessageExtraction().getAttachment(attachment).getFilePath();
   }
-  
+
   public String getMessageId() {
 	  return messageId;
   }
-  
+
   public String getVolumeID() {
 	  return volumeID;
   }
-  
-  
+
+
   public MessageExtraction getMessageExtraction() {
 	  waitForExtraction();
 	  return messageExtraction;
@@ -243,32 +244,32 @@ public class MessageBean extends BaseBean implements Serializable {
   	}
   }*/
 
-  
+
 	 public List<EmailField> getFields() {
 		 ArrayList<EmailField>  list = new ArrayList<EmailField>();
 		 EmailFields emailFields = Config.getConfig().getEmailFields();
 		 Iterator i = emailFields.getAvailableFields().values().iterator();
 		 while (i.hasNext()) {
 			 EmailField ef = (EmailField)i.next();
-			 
+
 			 // we dont allow end-users to view bcc or delivered-to flags
 			  if (ef.getName().equals("bcc") && getMailArchivaPrincipal().getRole().equals("user"))
 				  continue;
 			  if (ef.getName().equals("deliveredto") && getMailArchivaPrincipal().getRole().equals("user"))
 				  continue;
-			  
+
 			  if (ef.getViewEmail()==EmailField.AllowViewMail.VIEWMAIL) {
-				 list.add(ef);	
+				 list.add(ef);
 			  }
 		 }
 		 return list;
 	 }
-	 
-	  
+
+
 	 public List<DisplayField> getFieldValues() {
 		 ArrayList<DisplayField>  list = new ArrayList<DisplayField>();
 		 for (EmailFieldValue efv : email.getFields().values()) {
-			 
+
 //			 we dont allow end-users to view bcc or delivered-to flags
 			  if (efv.getField().getName().equals("bcc") && getMailArchivaPrincipal().getRole().equals("user"))
 				  continue;
@@ -276,15 +277,15 @@ public class MessageBean extends BaseBean implements Serializable {
 				  continue;
 			  if (efv.getField().getName().equals("recipient") && getMailArchivaPrincipal().getRole().equals("user"))
 				  continue;
-			  
+
 			 if (efv.getField().getViewEmail()==EmailField.AllowViewMail.VIEWMAIL) {
 				 list.add(DisplayField.getDisplayField(efv, getLocale(),true));
 			 }
 		 }
 		 return list;
 	 }
-    
-   
+
+
     public String getInternetHeaders() {
     	String headers = "";
         try {
@@ -295,13 +296,13 @@ public class MessageBean extends BaseBean implements Serializable {
         	logger.error("failed to retrieve internet headers from email {"+email.toString()+"}");
         }
     	return EscapeUtil.forHTML(headers).replace("\n","<br>");
-    
+
     }
-    
+
     protected Email getEmail() {
     	return email;
     }
-    
+
     public String nextMessage() {
     	Search search = getSearch();
     	List<Search.Result> results = search.getResults();
@@ -316,8 +317,8 @@ public class MessageBean extends BaseBean implements Serializable {
     	}
     	return viewmail();
     }
-    
-    public String previousMessage() { 
+
+    public String previousMessage() {
     	Search search = getSearch();
     	List<Search.Result> results = search.getResults();
     	resultsIndex -= 1;
@@ -331,37 +332,37 @@ public class MessageBean extends BaseBean implements Serializable {
     	}
     	return viewmail();
     }
-    
+
     private Search getSearch() {
   	  SearchBean searchBean = (SearchBean)ActionContext.getActionContext().getSessionMap().get("searchBean");
   	  return searchBean.getSearch();
     }
-    
+
     public String viewaction() throws ArchivaException {
       SubmitButton button = getSubmitButton();
-      
+
       if (button==null | button.action==null)
           return "success";
-      
+
     	logger.debug("viewaction() {action ='"+button.action+"', value='"+button.value+"'}");
-        
+
     	if (button.action.equals("next")) {
 	  		return nextMessage();
     	} else if (button.action.equals("previous")) {
 	  		return previousMessage();
     	}
-	  		
+
     	return "success";
     }
-    
+
     public void setResultsIndex(int index) {
     	this.resultsIndex = index;
     }
-    
-    public int getResultsIndex() { 
+
+    public int getResultsIndex() {
     	return resultsIndex;
     }
-    
+
     public int getResultsSize() {
     	Search search = getSearch();
     	return search.getResultSize();

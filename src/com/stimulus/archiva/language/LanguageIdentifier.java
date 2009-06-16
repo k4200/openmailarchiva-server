@@ -33,7 +33,7 @@ package com.stimulus.archiva.language;
 import java.io.*;
 import java.util.*;
 import com.stimulus.archiva.language.NGramProfile.NGramEntry;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 
 
 public class LanguageIdentifier implements Serializable {
@@ -47,7 +47,7 @@ private final static int MINIMUM_SAMPLE_LENGTH = 300;
 	 
   private final static int DEFAULT_ANALYSIS_LENGTH = 1500;    // 0 means full content
   
-  protected static final Logger logger = Logger.getLogger(LanguageIdentifier.class.getName());
+  protected static final Log logger = LogFactory.getLog(LanguageIdentifier.class.getName());
     
   private ArrayList languages = new ArrayList();
 

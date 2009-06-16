@@ -9,6 +9,10 @@
 
 ;--------------------------------
 
+
+
+!define RELEASE_DIR "\dev\mailarchiva\release"
+
 !macro BIMAGE IMAGE PARMS
 	Push $0
 	GetTempFileName $0
@@ -19,8 +23,6 @@
 !macroend
 
 
-!define JRE_VERSION "1.6"
-
 !Macro "CreateURL" "URLFile" "URLSite" "URLDesc"
   WriteINIStr "$INSTDIR\${URLFile}.url" "InternetShortcut" "URL" "${URLSite}"
   SetShellVarContext "all"
@@ -29,11 +31,13 @@
 !macroend
 
 
+
+
 ; The name of the installer
-Name "MailArchiva Server v1.3.1"
+Name "MailArchiva Open Source Edition Server v1.9"
 
 ; The file to write
-OutFile "Out\serversetup.exe"
+OutFile "${RELEASE_DIR}\work2\serversetup.exe"
 
 ; The default installation directory
 InstallDir $PROGRAMFILES\MailArchiva
@@ -54,29 +58,18 @@ XPStyle on
 ShowUninstDetails nevershow
 ShowInstDetails nevershow
 AddBrandingImage left 135 0
-LicenseData license_open_source_edition.rtf
+LicenseData mailarchiva_opensource_license_agreement.rtf
 
 Function .onInit
 			
-	Push "${JRE_VERSION}"
-	Call DetectJRE  
-	Pop $5	  ; DetectJRE's return value
-	StrCmp $5 "0"  nojava
-  	StrCmp $5 "-1" nojava
-  	goto finished
- 
- nojava:
-	MessageBox MB_OK "The Java Runtime Environment (JRE) 1.6 or higher is required. Please install it and re-run setup."
-	Quit
- finished:
+
   ReadRegStr $R0 HKLM \
    "Software\Microsoft\Windows\CurrentVersion\Uninstall\MailArchivaServer" \
    "UninstallString"
    StrCmp $R0 "" ok
   
    MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
-   "A version of Mail Archiva Server is already installed. $\n$\nClick `OK` to remove the \
-   previous version or `Cancel` to cancel this upgrade." \
+   "During this upgrade process, your MailArchiva configuration and data will be preserved. Click `OK` to remove the existing version of MailArchiva or `Cancel` to cancel the upgrade." \
    IDOK uninst
    Abort
    
@@ -102,7 +95,7 @@ FunctionEnd
 
 
 Function .onGUIInit
-   !insertmacro BIMAGE "banner.bmp" /RESIZETOFIT
+   !insertmacro BIMAGE "${RELEASE_DIR}\opensource\server\windows\banner.bmp" /RESIZETOFIT
 
    
  FunctionEnd
@@ -130,12 +123,13 @@ Section "MailArchiva Server .WAR (required)"
   SetShellVarContext all
   RMDir /r /REBOOTOK "$INSTDIR\Server\"
   SetOutPath $INSTDIR
-  File "banner.bmp"
+  File "${RELEASE_DIR}\opensource\server\windows\banner.bmp"
   ; Set output path to the installation directory.
-  SetOutPath $INSTDIR\Server\webapps
+  SetOutPath $INSTDIR\Server
   ; Put file there
-  File "MailArchiva.war"
-   ZipDLL::extractall 'MailArchiva.war' '$INSTDIR\Server\webapps\mailarchiva'
+  File "${RELEASE_DIR}\work2\mailArchiva.war"
+  ;Delete "$INSTDIR\Server\webapps\MailArchiva.war" 
+  ZipDLL::extractall '$INSTDIR\Server\MailArchiva.war' '$INSTDIR\Server\webapps\mailarchiva'
   CopyFiles $INSTDIR\server.conf $INSTDIR\Server\webapps\mailarchiva\WEB-INF\conf\server.conf 
   CopyFiles $INSTDIR\users.conf $INSTDIR\Server\webapps\mailarchiva\WEB-INF\conf\users.conf
   ; Write the installation path into the registry
@@ -149,19 +143,44 @@ Section "MailArchiva Server .WAR (required)"
   CreateDirectory "$SMPROGRAMS\MailArchiva"
   CreateShortCut "$SMPROGRAMS\MailArchiva\MailArchiva Console Login.lnk" "http://localhost:8090/mailarchiva" 
   CreateShortCut "$SMPROGRAMS\MailArchiva\MailArchiva Service Manager.lnk" "$INSTDIR\Server\bin\MailArchivaServerW.exe" "//MS//MailArchivaServer"
-  CreateShortCut "$SMSTARTUP\MailArchiva Server.lnk" "$INSTDIR\Server\bin\MailArchivaServerW.exe" "//MS//MailArchivaServer"
   !insertmacro "CreateURL" "Upgrade to Enterprise Edition" "http://www.mailarchiva.com/enterprise" "Upgrade to MailArchiva Enterprise Edition"
   !insertmacro "CreateURL" "Visit MailArchiva Website" "http://www.mailarchiva.com" "Visit MailArchiva Website"
+  CreateShortCut "$SMPROGRAMS\Startup\MailArchiva.lnk" "$INSTDIR\Server\bin\MailArchivaServerW.exe" "//MS//MailArchivaServer"
+  RMDir /r "$INSTDIR\server\work\Catalina"
+  CopyFiles $INSTDIR\jre\bin\msvcr71.dll $SYSDIR
+  !insertmacro "CreateURL" "Visit MailArchiva Website" "http://www.mailarchiva.com" "Visit MailArchiva Website"
   ExecShell "open" "http://www.mailarchiva.com/register.php?name=$R4&company=$R5&email=$R6&tel=$R7&mailboxes=$R8"
-  
 SectionEnd
 
 
 Section "Application Server (optional)"
 SetShellVarContext all
-SetOutPath '$INSTDIR\'
-File /r "server\"
-nsExec::Exec /TIMEOUT=0 '$INSTDIR\Server\bin\MailArchivaServer.exe //IS//MailArchivaServer  --JvmMs=128 --JvmMx=1024  --Startup=auto --DisplayName="MailArchiva Server" --Install="$INSTDIR\Server\bin\MailArchivaServer.exe" --Classpath="$5\lib\classes.zip;$INSTDIR\Server\bin\bootstrap.jar" --Jvm=auto  --StartMode=jvm --JvmOptions="-Dcatalina.home=$INSTDIR\Server;-Djava.endorsed.dirs=$INSTDIR\Server\common\endorsed;-Djava.io.tmpdir=$INSTDIR\Server\temp;-Dfile.encoding=UTF-8" --StartClass=org.apache.catalina.startup.Bootstrap --StartParams=start --StopMode=jvm --StopClass=org.apache.catalina.startup.Bootstrap --StopParams=stop --LogPath="$INSTDIR\Server\logs" --LogLevel=INFO'
+SetOutPath '$INSTDIR\Server'
+File /r "${RELEASE_DIR}\work\mailarchiva\server\"
+SetOutPath '$INSTDIR\jre'
+File /r "${RELEASE_DIR}\work\mailarchiva\jre\"
+SetOutPath '$INSTDIR\jre64'
+File /r "${RELEASE_DIR}\work\mailarchiva\jre64\"
+System::Call "kernel32::GetCurrentProcess() i .s"
+System::Call "kernel32::IsWow64Process(i s, *i .r0)"
+IntCmp $0 0 thirtytwobit sixtyfourbit sixtyfourbit
+sixtyfourbit:
+SetOutPath '$INSTDIR\Server\bin'
+File /oname=mailarchivaserver.exe "${RELEASE_DIR}\work\mailarchiva\server\bin\mailarchivaserver64.exe"
+File /oname=mailarchivaserverw.exe "${RELEASE_DIR}\work\mailarchiva\server\bin\mailarchivaserverw64.exe"
+nsExec::Exec /TIMEOUT=0 '"$INSTDIR\Server\bin\MailArchivaServer.exe" //IS//MailArchivaServer --Jvm="$INSTDIR\jre64\bin\server\jvm.dll" --Description "MailArchiva Open Source Edition Server http:/www.mailarchiva.com"  --JvmMs=256 --JvmMx=768  --Startup=auto --DisplayName="MailArchiva Server" --Install="$INSTDIR\Server\bin\MailArchivaServer.exe" --Classpath="$INSTDIR\Server\bin\bootstrap.jar" --StartMode=jvm --JvmOptions="-Dcatalina.home=$INSTDIR\Server;-Djava.endorsed.dirs=$INSTDIR\Server\endorsed;-Djava.io.tmpdir=$INSTDIR\Server\temp;-Dfile.encoding=UTF-8;-XX:PermSize=96M;-XX:MaxPermSize=96M" --StartClass=org.apache.catalina.startup.Bootstrap --StartParams=start --StopMode=jvm --StopClass=org.apache.catalina.startup.Bootstrap --StopParams=stop --LogPath="$INSTDIR\Server\logs" --LogLevel=INFO'
+Push "PATH"
+Push "$INSTDIR\jre64\bin"
+Call AddToPath
+goto install
+thirtytwobit:
+SetOutPath '$INSTDIR\Server\bin'
+File /oname=mailarchivaserver.exe "${RELEASE_DIR}\work\mailarchiva\server\bin\mailarchivaserver32.exe"
+File /oname=mailarchivaserverw.exe "${RELEASE_DIR}\work\mailarchiva\server\bin\mailarchivaserverw32.exe"
+nsExec::Exec /TIMEOUT=0 '"$INSTDIR\Server\bin\MailArchivaServer.exe" //IS//MailArchivaServer --Jvm="$INSTDIR\jre\bin\client\jvm.dll" --Description "MailArchiva Open Source Server http:/www.mailarchiva.com"  --JvmMs=256 --JvmMx=768  --Startup=auto --DisplayName="MailArchiva Server" --Install="$INSTDIR\Server\bin\MailArchivaServer.exe" --Classpath="$INSTDIR\Server\bin\bootstrap.jar" --StartMode=jvm --JvmOptions="-Dcatalina.home=$INSTDIR\Server;-Djava.endorsed.dirs=$INSTDIR\Server\endorsed;-Djava.io.tmpdir=$INSTDIR\Server\temp;-Dfile.encoding=UTF-8;-XX:PermSize=96M;-XX:MaxPermSize=96M" --StartClass=org.apache.catalina.startup.Bootstrap --StartParams=start --StopMode=jvm --StopClass=org.apache.catalina.startup.Bootstrap --StopParams=stop --LogPath="$INSTDIR\Server\logs" --LogLevel=INFO'
+Push "PATH"
+Push "$INSTDIR\jre\bin"
+install:
 Sleep 500
 Exec '"$INSTDIR\Server\bin\MailArchivaServerW" //MS//MailArchivaServer'
 SectionEnd
@@ -169,44 +188,6 @@ SectionEnd
 
 
 
- Function registrationPage
-
-   GetTempFileName $R0
-   File /oname=$R0 registrationinfo.ini
-retryx:
-   InstallOptions::dialog $R0
-   Pop $R1
-   StrCmp $R1 "cancel" done
-   StrCmp $R1 "back" done
-   StrCmp $R1 "success" validate
-   error: MessageBox MB_OK|MB_ICONSTOP "An error occurred:$\r$\n$R1"
-   
-   validate:
-    
-   ; full name
-   ReadINIStr $R4 $R0 "Field 3" "State"
-   StrCmp $R4 "" errorx
-   ; company
-   ReadINIStr $R5 $R0 "Field 5" "State"
-   StrCmp $R5 "" errorx
-   ; email
-   ReadINIStr $R6 $R0 "Field 7" "State"
-   StrCmp $R6 "" errorx
-   ; telephone
-   ReadINIStr $R7 $R0 "Field 9" "State"
-   StrCmp $R7 "" errorx
-   ; mailboxes
-   ReadINIStr $R8 $R0 "Field 11" "State"
-   StrCmp $R8 "" errorx
-   Return
-   
-   errorx:
-   MessageBox MB_OK|MB_ICONSTOP "Cannot proceed with installation. All fields must be completed."
-   Goto retryx
-   done:
- FunctionEnd
- 
- 
  # Uses $0
  Function openLinkNewWindow
    Push $3 
@@ -246,22 +227,22 @@ FunctionEnd
 ; Uninstaller
 
 Function un.uninstImage
-	!insertmacro BIMAGE "banner.bmp" /RESIZETOFIT
+	!insertmacro BIMAGE "${RELEASE_DIR}\opensource\server\windows\banner.bmp" /RESIZETOFIT
 FunctionEnd
 
 Section "Uninstall"
   SetShellVarContext all
    CopyFiles /SILENT $INSTDIR\Server\webapps\mailarchiva\WEB-INF\conf\server.conf $INSTDIR
-  CopyFiles /SILENT $INSTDIR\Server\webapps\mailarchiva\WEB-INF\conf\users.conf $INSTDIR
-  
+   CopyFiles /SILENT $INSTDIR\Server\webapps\mailarchiva\WEB-INF\conf\users.conf $INSTDIR
+   nsExec::Exec /TIMEOUT=0 '$INSTDIR\Server\bin\MailarchivaServerW.exe //MQ//MailArchivaServer'
+
   services::IsServiceInstalled 'MailArchivaServer'
   Pop $0
   ;MessageBox MB_OK|MB_ICONSTOP "out:$0"
   StrCmp $0 'No' servicenotinstalled
   nsExec::Exec /TIMEOUT=0 '$INSTDIR\Server\bin\MailArchivaServer.exe //SS//MailArchivaServer'
-  Sleep 1000
-  nsExec::Exec /TIMEOUT=0 '$INSTDIR\Server\bin\MailArchivaserver.exe //DS//MailArchivaServer'
-  Sleep 1000
+  Sleep 3000
+  nsExec::Exec /TIMEOUT=0 '$INSTDIR\Server\bin\MailArchivaServer.exe //DS//MailArchivaServer'
   servicenotinstalled:
   ; Remove registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MailArchivaServer"
@@ -278,81 +259,285 @@ Section "Uninstall"
   ; Remove directories used  
   RMDir /r /REBOOTOK "$INSTDIR\Server"
   Delete "$SMSTARTUP\MailArchiva Server.lnk" 
+  Push "PATH"
+  Push $INSTDIR\jre\bin
+  Call un.RemoveFromPath
 
   MessageBox MB_OK "A backup of your server configuration has been placed in $INSTDIR."
 
 SectionEnd
 
-; Returns: 0 - JRE not found. -1 - JRE found but too old. Otherwise - Path to JAVA EXE
+
+; based upon a script of "Written by KiCHiK 2003-01-18 05:57:02"
+;----------------------------------------
+!verbose 3
+!include "WinMessages.NSH"
+!verbose 4
+;====================================================
+; get_NT_environment 
+;     Returns: the selected environment
+;     Output : head of the stack
+;====================================================
+
+;----------------------------------------------------
+!define NT_current_env 'HKCU "Environment"'
+!define NT_all_env     'HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"'
+;====================================================
+; IsNT - Returns 1 if the current system is NT, 0
+;        otherwise.
+;     Output: head of the stack
+;====================================================
+!macro IsNT UN
+Function ${UN}IsNT
+  Push $0
+  ReadRegStr $0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
+  StrCmp $0 "" 0 IsNT_yes
+  ; we are not NT.
+  Pop $0
+  Push 0
+  Return
  
-; DetectJRE. Version requested is on the stack.
-; Returns (on stack)	"0" on failure (java too old or not installed), otherwise path to java interpreter
-; Stack value will be overwritten!
- 
-Function DetectJRE
-  Exch $0	; Get version requested  
-		; Now the previous value of $0 is on the stack, and the asked for version of JDK is in $0
-  Push $1	; $1 = Java version string (ie 1.5.0)
-  Push $2	; $2 = Javahome
-  Push $3	; $3 and $4 are used for checking the major/minor version of java
-  Push $4
-  ;MessageBox MB_OK "Detecting JRE"
-  ReadRegStr $1 HKLM "SOFTWARE\JavaSoft\Java Runtime Environment" "CurrentVersion"
-  ;MessageBox MB_OK "Read : $1"
-  StrCmp $1 "" DetectTry2
-  ReadRegStr $2 HKLM "SOFTWARE\JavaSoft\Java Runtime Environment\$1" "JavaHome"
-  ;MessageBox MB_OK "Read 3: $2"
-  StrCmp $2 "" DetectTry2
-  Goto GetJRE
- 
-DetectTry2:
-  ReadRegStr $1 HKLM "SOFTWARE\JavaSoft\Java Development Kit" "CurrentVersion"
-  ;MessageBox MB_OK "Detect Read : $1"
-  StrCmp $1 "" NoFound
-  ReadRegStr $2 HKLM "SOFTWARE\JavaSoft\Java Runtime Environment\$1" "JavaHome"
-  ;MessageBox MB_OK "Detect Read 3: $2"
-  StrCmp $2 "" NoFound
- 
-GetJRE:
-; $0 = version requested. $1 = version found. $2 = javaHome
-  ; MessageBox MB_OK "Getting JRE"
-  IfFileExists "$2\bin\java.exe" 0 NoFound
-  StrCpy $3 $0 1			; Get major version. Example: $1 = 1.5.0, now $3 = 1
-  StrCpy $4 $1 1			; $3 = major version requested, $4 = major version found
-  ; MessageBox MB_OK "Want $3 , found $4"
-  IntCmp $4 $3 0 FoundOld FoundNew
-  StrCpy $3 $0 1 2
-  StrCpy $4 $1 1 2			; Same as above. $3 is minor version requested, $4 is minor version installed
-  ; MessageBox MB_OK "Want $3 , found $4" 
-  IntCmp $4 $3 FoundNew FoundOld FoundNew
- 
-NoFound:
- ; MessageBox MB_OK "JRE not found"
-  Push "0"
-  Goto DetectJREEnd
- 
-FoundOld:
-; MessageBox MB_OK "JRE too old: $3 is older than $4"
-;  Push ${TEMP2}
-  Push "-1"
-  Goto DetectJREEnd  
-FoundNew:
- ; MessageBox MB_OK "JRE is new: $3 is newer than $4"
- ; java
-  Push $2
-;  Push "OK"
-;  Return
-   Goto DetectJREEnd
-DetectJREEnd:
-	; Top of stack is return value, then r4,r3,r2,r1
-	Exch	; => r4,rv,r3,r2,r1,r0
-	Pop $4	; => rv,r3,r2,r1r,r0
-	Exch	; => r3,rv,r2,r1,r0
-	Pop $3	; => rv,r2,r1,r0
-	Exch 	; => r2,rv,r1,r0
-	Pop $2	; => rv,r1,r0
-	Exch	; => r1,rv,r0
-	Pop $1	; => rv,r0
-	Exch	; => r0,rv
-	Pop $0	; => rv 
+  IsNT_yes:
+    ; NT!!!
+    Pop $0
+    Push 1
 FunctionEnd
+!macroend
+!insertmacro IsNT ""
+!insertmacro IsNT "un."
+;====================================================
+; AddToPath - Adds the given dir to the search path.
+;        Input - head of the stack
+;        Note - Win9x systems requires reboot
+;====================================================
+Function AddToPath
+   Exch $0
+   Push $1
+   Push $2
+  
+   Call IsNT
+   Pop $1
+   StrCmp $1 1 AddToPath_NT
+      ; Not on NT
+      StrCpy $1 $WINDIR 2
+      FileOpen $1 "$1\autoexec.bat" a
+      FileSeek $1 0 END
+      GetFullPathName /SHORT $0 $0
+      FileWrite $1 "$\r$\nSET PATH=%PATH%;$0$\r$\n"
+      FileClose $1
+      Goto AddToPath_done
+ 
+   AddToPath_NT:
+      Push $4
+      Push "all"
+      Pop  $4
+      AddToPath_NT_selection_done:
+      StrCmp $4 "current" read_path_NT_current
+         ReadRegStr $1 ${NT_all_env} "PATH"
+         Goto read_path_NT_resume
+      read_path_NT_current:
+         ReadRegStr $1 ${NT_current_env} "PATH"
+      read_path_NT_resume:
+      StrCpy $2 $0
+      StrCmp $1 "" AddToPath_NTdoIt
+         StrCpy $2 "$1;$0"
+      AddToPath_NTdoIt:
+         StrCmp $4 "current" write_path_NT_current
+            ClearErrors
+            WriteRegExpandStr ${NT_all_env} "PATH" $2
+            IfErrors 0 write_path_NT_resume
+            MessageBox MB_YESNO|MB_ICONQUESTION "The path could not be set for all users$\r$\nShould I try for the current user?" \
+               IDNO write_path_NT_failed
+            ; change selection
+            StrCpy $4 "current"
+            Goto AddToPath_NT_selection_done
+         write_path_NT_current:
+            ClearErrors
+            WriteRegExpandStr ${NT_current_env} "PATH" $2
+            IfErrors 0 write_path_NT_resume
+            MessageBox MB_OK|MB_ICONINFORMATION "The path could not be set for the current user."
+            Goto write_path_NT_failed
+         write_path_NT_resume:
+         SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
+         DetailPrint "added path for user ($4), $0"
+         write_path_NT_failed:
+      
+      Pop $4
+   AddToPath_done:
+   Pop $2
+   Pop $1
+   Pop $0
+FunctionEnd
+ 
+;====================================================
+; RemoveFromPath - Remove a given dir from the path
+;     Input: head of the stack
+;====================================================
+Function un.RemoveFromPath
+   Exch $0
+   Push $1
+   Push $2
+   Push $3
+   Push $4
+   
+   Call un.IsNT
+   Pop $1
+   StrCmp $1 1 unRemoveFromPath_NT
+      ; Not on NT
+      StrCpy $1 $WINDIR 2
+      FileOpen $1 "$1\autoexec.bat" r
+      GetTempFileName $4
+      FileOpen $2 $4 w
+      GetFullPathName /SHORT $0 $0
+      StrCpy $0 "SET PATH=%PATH%;$0"
+      SetRebootFlag true
+      Goto unRemoveFromPath_dosLoop
+     
+      unRemoveFromPath_dosLoop:
+         FileRead $1 $3
+         StrCmp $3 "$0$\r$\n" unRemoveFromPath_dosLoop
+         StrCmp $3 "$0$\n" unRemoveFromPath_dosLoop
+         StrCmp $3 "$0" unRemoveFromPath_dosLoop
+         StrCmp $3 "" unRemoveFromPath_dosLoopEnd
+         FileWrite $2 $3
+         Goto unRemoveFromPath_dosLoop
+ 
+      unRemoveFromPath_dosLoopEnd:
+         FileClose $2
+         FileClose $1
+         StrCpy $1 $WINDIR 2
+         Delete "$1\autoexec.bat"
+         CopyFiles /SILENT $4 "$1\autoexec.bat"
+         Delete $4
+         Goto unRemoveFromPath_done
+ 
+   unRemoveFromPath_NT:
+      StrLen $2 $0
+      Push "all"
+      Pop  $4
+ 
+      StrCmp $4 "current" un_read_path_NT_current
+         ReadRegStr $1 ${NT_all_env} "PATH"
+         Goto un_read_path_NT_resume
+      un_read_path_NT_current:
+         ReadRegStr $1 ${NT_current_env} "PATH"
+      un_read_path_NT_resume:
+ 
+      Push $1
+      Push $0
+      Call un.StrStr ; Find $0 in $1
+      Pop $0 ; pos of our dir
+      IntCmp $0 -1 unRemoveFromPath_done
+         ; else, it is in path
+         StrCpy $3 $1 $0 ; $3 now has the part of the path before our dir
+         IntOp $2 $2 + $0 ; $2 now contains the pos after our dir in the path (';')
+         IntOp $2 $2 + 1 ; $2 now containts the pos after our dir and the semicolon.
+         StrLen $0 $1
+         StrCpy $1 $1 $0 $2
+         StrCpy $3 "$3$1"
+ 
+         StrCmp $4 "current" un_write_path_NT_current
+            WriteRegExpandStr ${NT_all_env} "PATH" $3
+            Goto un_write_path_NT_resume
+         un_write_path_NT_current:
+            WriteRegExpandStr ${NT_current_env} "PATH" $3
+         un_write_path_NT_resume:
+         SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
+   unRemoveFromPath_done:
+   Pop $4
+   Pop $3
+   Pop $2
+   Pop $1
+   Pop $0
+FunctionEnd
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Uninstall sutff
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ 
+ 
+;====================================================
+; StrStr - Finds a given string in another given string.
+;               Returns -1 if not found and the pos if found.
+;          Input: head of the stack - string to find
+;                      second in the stack - string to find in
+;          Output: head of the stack
+;====================================================
+Function un.StrStr
+  Push $0
+  Exch
+  Pop $0 ; $0 now have the string to find
+  Push $1
+  Exch 2
+  Pop $1 ; $1 now have the string to find in
+  Exch
+  Push $2
+  Push $3
+  Push $4
+  Push $5
+ 
+  StrCpy $2 -1
+  StrLen $3 $0
+  StrLen $4 $1
+  IntOp $4 $4 - $3
+ 
+  unStrStr_loop:
+    IntOp $2 $2 + 1
+    IntCmp $2 $4 0 0 unStrStrReturn_notFound
+    StrCpy $5 $1 $3 $2
+    StrCmp $5 $0 unStrStr_done unStrStr_loop
+ 
+  unStrStrReturn_notFound:
+    StrCpy $2 -1
+ 
+  unStrStr_done:
+    Pop $5
+    Pop $4
+    Pop $3
+    Exch $2
+    Exch 2
+    Pop $0
+    Pop $1
+FunctionEnd
+;====================================================
+
+Function .onInstSuccess
+	MessageBox MB_OK  "Note! The default web console login username and password is 'admin'. Visit http://knowledge.mailarchiva.com for tuning instructions."
+FunctionEnd
+
+ Function registrationPage
+
+   GetTempFileName $R0
+   File /oname=$R0 registrationinfo.ini
+retryx:
+   InstallOptions::dialog $R0
+   Pop $R1
+   StrCmp $R1 "cancel" done
+   StrCmp $R1 "back" done
+   StrCmp $R1 "success" validate
+   error: MessageBox MB_OK|MB_ICONSTOP "An error occurred:$\r$\n$R1"
+   
+   validate:
+    
+   ; full name
+   ReadINIStr $R4 $R0 "Field 3" "State"
+   StrCmp $R4 "" errorx
+   ; company
+   ReadINIStr $R5 $R0 "Field 5" "State"
+   StrCmp $R5 "" errorx
+   ; email
+   ReadINIStr $R6 $R0 "Field 7" "State"
+   StrCmp $R6 "" errorx
+   ; telephone
+   ReadINIStr $R7 $R0 "Field 9" "State"
+   StrCmp $R7 "" errorx
+   ; mailboxes
+   ReadINIStr $R8 $R0 "Field 11" "State"
+   StrCmp $R8 "" errorx
+   Return
+   
+   errorx:
+   MessageBox MB_OK|MB_ICONSTOP "Cannot proceed with installation. All fields must be completed."
+   Goto retryx
+   done:
+ FunctionEnd
+ 

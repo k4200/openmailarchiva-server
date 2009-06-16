@@ -1,48 +1,47 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+/* Copyright (C) 2005-2009 Jamie Angus Band
+ * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+ * This program is free software; you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation; either version
+ * 3 of the License, or (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU General Public License along with this program;
+ * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
+
 package com.stimulus.archiva.language;
 
 import java.io.*;
 import java.util.*;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 import org.apache.lucene.analysis.Token;
 
 /**
  * This class runs a ngram analysis over submitted text, results might be used
  * for automatic language identifiaction.
- * 
+ *
  * The similarity calculation is at experimental level. You have been warned.
- * 
+ *
  * Methods are provided to build new NGramProfiles profiles.
- * 
+ *
  * @author Sami Siren
  * @author Jerome Charron - http://frutch.free.fr/
  */
 public class NGramProfile {
 
-	protected static final Logger logger = Logger.getLogger(NGramProfile.class.getName());
-    
+	protected static final Log logger = LogFactory.getLog(NGramProfile.class.getName());
+
 
   /** The minimum length allowed for a ngram. */
   final static int ABSOLUTE_MIN_NGRAM_LENGTH = 1;
 
   /** The maximum length allowed for a ngram. */
   final static int ABSOLUTE_MAX_NGRAM_LENGTH = 4;
-    
+
   /** The default min length of ngram */
   final static int DEFAULT_MIN_NGRAM_LENGTH = 3;
 
@@ -57,10 +56,10 @@ public class NGramProfile {
 
   /** separator char */
   static final char SEPARATOR = '_';
-  /** The String form of the separator char */  
+  /** The String form of the separator char */
   private final static String SEP_CHARSEQ = new String(new char[] { SEPARATOR });
 
-  
+
   /** The profile's name */
   private String name = null;
 
@@ -81,11 +80,11 @@ public class NGramProfile {
 
   /** A StringBuffer used during analysis */
   private QuickStringBuffer word = new QuickStringBuffer();
-  
-    
+
+
   /**
    * Construct a new ngram profile
-   * 
+   *
    * @param name is the name of the profile
    * @param minlen is the min length of ngram sequences
    * @param maxlen is the max length of ngram sequences
@@ -104,10 +103,10 @@ public class NGramProfile {
   public String getName() {
     return name;
   }
-  
+
   /**
    * Add ngrams from a token to this profile
-   * 
+   *
    * @param t is the Token to be added
    */
   public void add(Token t) {
@@ -118,7 +117,7 @@ public class NGramProfile {
 
   /**
    * Add ngrams from a single word to this profile
-   * 
+   *
    * @param word is the word to add
    */
   public void add(StringBuffer word) {
@@ -139,7 +138,7 @@ public class NGramProfile {
         }
     }
   }
-  
+
   /**
    * Add ngrams from a single word in this profile
    *
@@ -159,7 +158,7 @@ public class NGramProfile {
 
   /**
    * Analyze a piece of text
-   * 
+   *
    * @param text the text to be analyzed
    */
   public void analyze(StringBuffer text) {
@@ -202,7 +201,7 @@ public class NGramProfile {
       add(word.subSequence(i, i + n));
     }
   }
-    
+
   /**
    * Normalize the profile (calculates the ngrams frequencies)
    */
@@ -220,7 +219,7 @@ public class NGramProfile {
         ngramcounts[e.size()] += e.count;
       }
     }
-    
+
     i = ngrams.values().iterator();
     while (i.hasNext()) {
       e = (NGramEntry) i.next();
@@ -230,7 +229,7 @@ public class NGramProfile {
 
   /**
    * Return a sorted list of ngrams (sort done by 1. frequency 2. sequence)
-   * 
+   *
    * @return sorted vector of ngrams
    */
   public synchronized List getSorted() {
@@ -246,7 +245,7 @@ public class NGramProfile {
     }
     return sorted;
   }
-  
+
   // Inherited JavaDoc
   @Override
 public synchronized String toString() {
@@ -267,13 +266,13 @@ public synchronized String toString() {
 
   /**
    * Calculate a score how well NGramProfiles match each other
-   * 
+   *
    * @param another
    *          ngram profile to compare against
    * @return similarity 0=exact match
    */
   public float getSimilarity(NGramProfile another) {
-      
+
     float sum = 0;
 
     try {
@@ -335,7 +334,7 @@ public synchronized String toString() {
 
   /**
    * Create a new Language profile from (preferably quite large) text file
-   * 
+   *
    * @param name is thename of profile
    * @param is is the stream to read
    * @param encoding is the encoding of stream
@@ -365,7 +364,7 @@ public synchronized String toString() {
   /**
    * Writes NGramProfile content into OutputStream, content is outputted with
    * UTF-8 encoding
-   * 
+   *
    * @param os the Stream to output to
    * @throws IOException
    */
@@ -376,7 +375,7 @@ public synchronized String toString() {
               " for Nutch Language Identification\n").getBytes());
 
     // And then each ngram
-    
+
     // First dispatch ngrams in many lists depending on their size
     // (one list for each size, in order to store MAX_SIZE ngrams for each
     // size of ngram)
@@ -405,7 +404,7 @@ public synchronized String toString() {
     os.flush();
   }
 
-  
+
   /**
    * Inner class that describes a NGram
    */
@@ -423,8 +422,8 @@ public synchronized String toString() {
     /** The frequency of this ngram in its profile */
     private float frequency = 0.0F;
 
-    
-    /** 
+
+    /**
      * Constructs a new NGramEntry
      * @param seq is the sequence of characters of the ngram
      */
@@ -432,7 +431,7 @@ public synchronized String toString() {
       this.seq = seq;
     }
 
-    /** 
+    /**
      * Constructs a new NGramEntry
      * @param seq is the sequence of characters of the ngram
      * @param count is the number of occurences of this ngram
@@ -442,7 +441,7 @@ public synchronized String toString() {
       this.count = count;
     }
 
-    
+
     /**
      * Returns the number of occurences of this ngram in its profile
      * @return the number of occurences of this ngram in its profile
@@ -450,7 +449,7 @@ public synchronized String toString() {
     public int getCount() {
       return count;
     }
-    
+
     /**
      * Returns the frequency of this ngram in its profile
      * @return the frequency of this ngram in its profile
@@ -474,7 +473,7 @@ public synchronized String toString() {
     public int size() {
         return seq.length();
     }
-    
+
     // Inherited JavaDoc
     public int compareTo(Object o) {
       NGramEntry ngram = (NGramEntry) o;
@@ -520,11 +519,11 @@ public synchronized String toString() {
 	public int hashCode() {
         return seq.hashCode();
     }
-    
+
     // Inherited JavaDoc
     @Override
 	public boolean equals(Object obj) {
-        
+
         NGramEntry ngram = null;
         try {
             ngram = (NGramEntry) obj;
@@ -536,7 +535,7 @@ public synchronized String toString() {
 
   }
 
-  
+
   private class QuickStringBuffer implements CharSequence {
 
     private char value[];
@@ -551,7 +550,7 @@ public synchronized String toString() {
       this.value = value;
       count = value.length;
     }
-    
+
     QuickStringBuffer(int length) {
       value = new char[length];
     }
@@ -572,7 +571,7 @@ public synchronized String toString() {
       } else if (minimumCapacity > newCapacity) {
           newCapacity = minimumCapacity;
       }
-	
+
       char newValue[] = new char[newCapacity];
       System.arraycopy(value, 0, newValue, 0, count);
       value = newValue;
@@ -614,12 +613,12 @@ public synchronized String toString() {
     public CharSequence subSequence(int start, int end) {
       return new String(value, start, end - start);
     }
-        
+
     @Override
 	public String toString() {
       return new String(this.value);
     }
   }
-  
-  
+
+
 }

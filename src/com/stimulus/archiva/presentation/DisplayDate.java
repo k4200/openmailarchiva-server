@@ -1,8 +1,8 @@
-/* Copyright (C) 2005-2007 Jamie Angus Band 
- * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
+/* Copyright (C) 2005-2009 Jamie Angus Band
+ * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 2 of the License, or (at your option) any later version.
+ * 3 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -16,6 +16,7 @@
 package com.stimulus.archiva.presentation;
 
 import com.stimulus.util.*;
+
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.util.Date;
@@ -23,11 +24,11 @@ import java.util.Locale;
 import com.stimulus.archiva.domain.fields.EmailFieldValue;
 import java.util.*;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 
 public class DisplayDate extends DisplayField implements Serializable {
 
-	protected static Logger logger = Logger.getLogger(DomainBean.class.getName());
+	protected static Log logger = LogFactory.getLog(DisplayDate.class.getName());
 	private static final long serialVersionUID = 5168479608715082055L;
 	Locale locale;
 
@@ -35,14 +36,12 @@ public class DisplayDate extends DisplayField implements Serializable {
 		super(efv);
 		this.locale = locale;
 	}
-	
+
 	@Override
 	public String getDisplay() {
 		if (efv.getValue()==null || efv.getValue().length()<1)
 			return "";
-		DateFormat formatter = null;
-		
-		formatter = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT,locale);
+
 		String dateStr = efv.getValue().substring(1,efv.getValue().length()-1);
 		Date sent;
 		try {
@@ -51,20 +50,10 @@ public class DisplayDate extends DisplayField implements Serializable {
 			logger.error("failed to convert string to date. "+e.getMessage(),e);
 			sent = new Date();
 		}
-		return formatter.format(sent) + getZoneOffset(sent);
+		return DateUtil.getShortDate(sent,locale);
 	}
-	
-	 public String getZoneOffset(Date date) {
-    	 String dateStr;
-         Calendar cal = Calendar.getInstance(locale);
- 		 cal.setTime(date);
- 		 int offset = cal.get(Calendar.ZONE_OFFSET)/(60*60*1000);
- 		 if (offset>-1)
- 			 dateStr =" (+"+offset+"h)";
- 		 else
- 			dateStr =" (-"+offset+"h)";
- 		 return dateStr;
-    }
-	
+
+
+
 
 }

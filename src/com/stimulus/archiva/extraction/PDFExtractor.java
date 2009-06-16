@@ -1,9 +1,10 @@
 
-/* Copyright (C) 2005-2007 Jamie Angus Band 
- * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
+
+/* Copyright (C) 2005-2009 Jamie Angus Band
+ * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 2 of the License, or (at your option) any later version.
+ * 3 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -19,30 +20,35 @@ package com.stimulus.archiva.extraction;
 
 import java.io.File;
 import java.io.FileReader;
-import org.apache.log4j.*;
-import org.pdfbox.encryption.DocumentEncryption;
-import org.pdfbox.pdfparser.PDFParser;
-import org.pdfbox.pdmodel.PDDocument;
-import org.pdfbox.util.PDFTextStripper;
-import com.stimulus.archiva.exception.ExtractionException;
+import java.io.Reader;
+
+import org.apache.commons.logging.*;
+import org.apache.pdfbox.encryption.DocumentEncryption;
+import org.apache.pdfbox.pdfparser.PDFParser;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.util.PDFTextStripper;
+import com.stimulus.archiva.exception.*;
 import java.io.*;
 import com.stimulus.util.*;
 import java.nio.charset.Charset;
+import com.stimulus.archiva.index.*;
+
 public class PDFExtractor implements TextExtractor, Serializable
 {
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -7182261400513351604L;
-	protected static final Logger logger = Logger.getLogger(Extractor.class.getName());
+	protected static final Log logger = LogFactory.getLog(Extractor.class.getName());
 
  public PDFExtractor() {
  }
 
- public Reader getText(InputStream is,TempFiles tempFiles,Charset charset) throws ExtractionException  {
+ public Reader getText(InputStream is,Charset charset,IndexInfo indexInfo) throws ExtractionException  {
      logger.debug("extracting pdf file");
 	 File file = null;
      PDDocument document = null;
+     Writer output = null;
      try {
     	 PDFParser parser = new PDFParser(is);
 	     parser.parse();
@@ -51,17 +57,15 @@ public class PDFExtractor implements TextExtractor, Serializable
 	         DocumentEncryption decryptor = new DocumentEncryption(document);
 	         if (logger.isDebugEnabled()) {
 	             logger.debug("pdf document appears to be encrypted (will attempt decryption)");
-	     		
+
 	         }
 	         decryptor.decryptDocument("");
 	     }
-	     file = File.createTempFile("extract", ".tmp");
-	     tempFiles.markForDeletion(file);
-	  	 Writer output = null;
+	     file = File.createTempFile("extract_pdf", ".tmp");
+	     indexInfo.addDeleteFile(file);
 	     output = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
 	     PDFTextStripper stripper = new PDFTextStripper();
 	  	 stripper.writeText(document, output);
-	  	 output.close();
 	  	/*logger.debug("PDF extraction completed");
 	  	 BufferedReader reader;
 	  	 try {
@@ -74,22 +78,26 @@ public class PDFExtractor implements TextExtractor, Serializable
 	  	 } catch(Exception e) {
 	  		 logger.error("failed to open txt file",e);
 	  	 }*/
-     } catch (Exception e) {
-         throw new ExtractionException("failed to extract pdf (probable password protected document)",e,logger,Level.DEBUG);
+     } catch (Throwable e) {
+         throw new ExtractionException("failed to extract pdf (probable password protected document)",e,logger,ChainedException.Level.DEBUG);
      } finally {
     	 try {
-	    	 if(document != null)
+	    	 if (document != null)
 	 	        document.close();
+		  	 if (output !=null)
+		  		 output.close();
     	 } catch (IOException io) {}
      }
      try {
-    	 	logger.debug("returning extracted PDF data");
-	        return new FileReader(file);
+	 	logger.debug("returning extracted PDF data");
+	 	Reader outReader = new FileReader(file);
+	    indexInfo.addReader(outReader);
+	    return outReader;
      } catch(Exception ex) {
-        throw new ExtractionException("failed to extract text from powerpoint document",ex,logger,Level.DEBUG);
+        throw new ExtractionException("failed to extract text from powerpoint document",ex,logger,ChainedException.Level.DEBUG);
      }
  }
- 
+
 }
 
 

@@ -1,9 +1,9 @@
 
-/* Copyright (C) 2005-2007 Jamie Angus Band 
- * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
+/* Copyright (C) 2005-2009 Jamie Angus Band
+ * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 2 of the License, or (at your option) any later version.
+ * 3 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -14,47 +14,66 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-
 package com.stimulus.archiva.service;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 import com.stimulus.util.*;
 import com.stimulus.archiva.authentication.*;
 import com.stimulus.archiva.domain.*;
 import com.stimulus.archiva.exception.*;
 import com.stimulus.archiva.security.realm.*;
+import com.stimulus.archiva.log.*;
 import javax.activation.*;
 import java.text.DateFormat;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.io.*;
-
 import javax.mail.*;
 import javax.mail.Message.RecipientType;
 import javax.mail.internet.*;
-
-import org.apache.log4j.Level;
 import com.stimulus.archiva.incoming.*;
 import com.stimulus.archiva.security.*;
+import org.apache.log4j.*;
 
 public class ConfigurationService implements Serializable {
 
 	private static final long serialVersionUID = -7518836928932742067L;
-	protected static final Logger logger = Logger.getLogger(ConfigurationService.class);
+	protected static final Log logger = LogFactory.getLog(ConfigurationService.class);
 	protected static Config config = null;
 	protected static DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
 
 
-  public static void modifyConfig(MailArchivaPrincipal principal, Config newConfig) throws ConfigurationException {
-	  Config.getConfig().modify(principal,newConfig);
-  }
-  
   public static ArrayList<ADRealm.AttributeValue> getLDAPAttributeValues(Config config,Identity identity, String username, String password) throws ArchivaException {
       ADRealm ar = new ADRealm();
       return ar.getADAttributes(config,(ADIdentity)identity,username,password);
   }
-  
-  
+  public static List<LogFiles.LogFile> getLogFiles() {
+	  return Config.getConfig().getLogFiles().getLogFiles();
+  }
+
+  public static String viewLog(String logFile) {
+	  return Config.getConfig().getLogFiles().viewLog(logFile);
+  }
+  /*
+  public static void sendLog(String logFile) {
+	  Config.getConfig().getLogFiles().sendLog(logFile);
+  }*/
+
+  public static File exportLog(String logFile) throws ArchivaException {
+	  return Config.getConfig().getLogFiles().exportLog(logFile);
+  }
+  public static void setLoggingLevel(ChainedException.Level level) {
+	  Config.getConfig().getLogFiles().setLoggingLevel(level);
+  }
+
+  public static ChainedException.Level getLoggingLevel() {
+	  return Config.getConfig().getLogFiles().getLoggingLevel();
+  }
+
+  public static void deleteLog(String logFile) {
+	  Config.getConfig().getLogFiles().deleteLog(logFile);
+  }
+
   public static MailArchivaPrincipal authenticate(String username, String password) {
 	    ADRealm ar = new ADRealm();
 	    MailArchivaPrincipal cgp = null;
@@ -65,7 +84,7 @@ public class ConfigurationService implements Serializable {
 	          return null;
 	      }
   }
-  
+
   public static String testAuthenticate(Config config, String username, String password)  {
       ADRealm ar = new ADRealm();
       //Principal p = ar.authenticate(username,password);
@@ -81,89 +100,19 @@ public class ConfigurationService implements Serializable {
       } catch (ArchivaException ae) {
           return "Authentication failed. "+ae.getMessage()+".";
       }
-  } 
-  
-  public static String getDebugLog() {
-	  return Tail.tail(Config.getFileSystem().getDebugLogPath(),300, 200000);
   }
-  
-  public static String getAuditLog() {
-	  return Tail.tail(Config.getFileSystem().getAuditLogPath(),300, 200000);
-  }
-  
-  private static String readFile(String filename) {
-	  String s = "";
-	  FileInputStream in = null;
-	  try {
-		  	File file = new File(filename);
-		  		byte[] buffer = new byte[(int) file.length()];
-		  		in = new FileInputStream(file);
-		  		in.read(buffer);
-		  		s = new String(buffer);
-		  		in.close();
-	  } catch (FileNotFoundException fnfx) {
-		  logger.error("failed to locate log file. "+fnfx.getMessage()+" {filename='"+filename+"'}");
-	  } catch (IOException iox) {
-		  	logger.error("io exception occurred while reading log file. "+iox.getMessage()+" {filename='"+filename+"'}");
-			  } finally {
-				  if (in != null) {
-				  try
-				  {
-					  in.close();
-				  } catch (IOException ignore) {}
-		      }
-	 }
-     return s;
-  }
-  
-  public static void setLoggingLevel(String level) {
-	  Logger logger = Logger.getLogger("com.stimulus");
-	  if (logger==null) {
-		  logger.error("failed set logging level. failed to obtain logger for com.stimulus.archiva.");
-		  return;
-	  }
-	  Level newLevel = Level.toLevel(level);
-	  Level oldLevel = logger.getLevel();
-	  if (oldLevel==null) {
-		  logger.error("the standard log4j.properties file has been modified. therefore logging cannot be controlled in the server console.");
-		  return;
-	  }
-	
-	  logger.setLevel(newLevel);
-	  String logfilename = Config.getFileSystem().getClassesPath()+File.separator+"log4j.properties";
-	  String logsource = readFile(logfilename);
-	  logsource = logsource.replaceAll("log4j.logger.com.stimulus="+oldLevel.toString(),"log4j.logger.com.stimulus="+newLevel.toString());
-	  logsource = logsource.replaceAll("log4j.logger.com.stimulus="+oldLevel.toString().toUpperCase(Locale.ENGLISH),"log4j.logger.com.stimulus="+newLevel.toString());
-	  File file = new File(logfilename);
-	  try {
-		  FileWriter out = new FileWriter(file);
-		  out.write(logsource);
-		  out.close();
-	  } catch (Exception e) { 
-		  logger.error("failed to write new log file. "+e.getMessage()+" {filename='"+logfilename+"'");
-	  }
-  }
-  
-  public static String getLoggingLevel() {
-	  Logger logger = Logger.getLogger("com.stimulus");
-	  if (logger!=null || logger.getLevel()!=null)
-		  return logger.getLevel().toString().toUpperCase(Locale.ENGLISH);
-	  else {	  
-		  logger.error("the standard log4j.properties file has been modified. therefore logging cannot be controlled in the server console.");
-		  return "OFF";
-	  }
-  }
-  
-  public static void testMailboxConnection(MailboxConnection connection, IAPTestStatus testStatus) {
-	  IAPService service = new IAPService(null);
+
+    public static void testMailboxConnection(MailboxConnection connection, IAPTestStatus testStatus) {
+	  IAPService service = new IAPService();
 	  service.testConnection(connection,testStatus);
   }
-  
-  
+
+
   public static abstract class IAPTestStatus implements IAPRunnable.IAPTestCallback {
-	  
 	  public abstract void statusUpdate(String result);
   }
-  
+
+
+
 }
 

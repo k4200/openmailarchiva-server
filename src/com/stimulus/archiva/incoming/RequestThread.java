@@ -1,8 +1,8 @@
-/* Copyright (C) 2005-2007 Jamie Angus Band 
- * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
+/* Copyright (C) 2005-2009 Jamie Angus Band
+ * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 2 of the License, or (at your option) any later version.
+ * 3 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -12,22 +12,23 @@
  * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
+
 package com.stimulus.archiva.incoming;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 import java.nio.channels.*;
 import com.stimulus.archiva.domain.*;
 
 public class RequestThread extends Thread
 {
 	protected RequestQueue queue;
-    protected static Logger logger = Logger.getLogger(RequestThread.class);
+    protected static Log logger = LogFactory.getLog(RequestThread.class);
     protected boolean running;
-    protected boolean processing = false;
+    protected volatile boolean processing = false;
     protected int threadNumber;
     protected RequestHandler requestHandler;
     protected FetchMessageCallback callback;
-    
+
     public RequestThread( RequestQueue queue, int threadNumber, String requestHandlerClassName, FetchMessageCallback callback )
     {
     	setName("request"+threadNumber);
@@ -42,11 +43,14 @@ public class RequestThread extends Thread
         }
     }
 
-    public boolean isProcessing() {
+    public synchronized boolean isProcessing() {
         return this.processing;
     }
 
-   
+    protected synchronized void setProcessing(boolean processing) {
+    	this.processing = processing;
+    }
+
     public void killThread() {
         this.running = false;
     }
@@ -59,9 +63,9 @@ public class RequestThread extends Thread
             	Object o = queue.getNextObject();
                 if( running )  {
                     SocketChannel socket = ( SocketChannel)o;
-                    this.processing = true;
+                    setProcessing(true);
                     this.requestHandler.handleRequest( socket, callback );
-                    this.processing = false;
+                    setProcessing(false);
                 }
             } catch( Exception e ) {
             	logger.error("exception occured while attempting to handle request",e);

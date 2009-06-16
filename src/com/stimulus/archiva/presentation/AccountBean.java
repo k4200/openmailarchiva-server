@@ -18,7 +18,7 @@ package com.stimulus.archiva.presentation;
 
 import java.io.Serializable;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 
 import com.stimulus.struts.ActionContext;
 import com.stimulus.struts.BaseBean;
@@ -26,8 +26,8 @@ import com.stimulus.struts.BaseBean;
 public class AccountBean extends BaseBean  implements Serializable {
 
 	private static final long serialVersionUID = -6557623393822264395L;
-	protected static final Logger logger = Logger.getLogger(MessageBean.class.getName());
-    protected static final Logger audit = Logger.getLogger("com.stimulus.archiva.audit");
+	protected static final Log logger = LogFactory.getLog(MessageBean.class.getName());
+    protected static final Log audit = LogFactory.getLog("com.stimulus.archiva.audit");
     
     
     public AccountBean() {}
@@ -37,6 +37,12 @@ public class AccountBean extends BaseBean  implements Serializable {
 	    clear();
 	    return "success";
 	  }
+	  
+	public String signonform() {
+		    ActionContext.getActionContext().getRequest().getSession().invalidate();
+		    clear();
+		    return "success";
+	}
 	
 }
 

@@ -18,13 +18,13 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.List;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 
 public class Agent implements Props {
 
 	 protected static final String allowedIPKey  = "agent.allowed.ipaddress";
  	 protected LinkedList<String> allowIPAddress = new LinkedList<String>();
- 	 protected static Logger logger = Logger.getLogger(Agent.class.getName());
+ 	 protected static Log logger = LogFactory.getLog(Agent.class.getName());
  	 
     public void addAllowedIPAddress(String ipAddress) {
     	allowIPAddress.add(ipAddress);

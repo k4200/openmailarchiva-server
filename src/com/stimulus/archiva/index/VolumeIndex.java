@@ -1,8 +1,8 @@
-/* Copyright (C) 2005-2007 Jamie Angus Band 
- * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
+/* Copyright (C) 2005-2009 Jamie Angus Band
+ * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 2 of the License, or (at your option) any later version.
+ * 3 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -12,14 +12,14 @@
  * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
+
 package com.stimulus.archiva.index;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import javax.mail.MessagingException;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.*;
 import org.apache.lucene.store.FSDirectory;
@@ -28,26 +28,33 @@ import com.stimulus.archiva.domain.Email;
 import com.stimulus.archiva.domain.EmailID;
 import com.stimulus.archiva.domain.Indexer;
 import com.stimulus.archiva.domain.Volume;
-import com.stimulus.archiva.exception.ExtractionException;
-import com.stimulus.archiva.exception.MessageSearchException;
+import com.stimulus.archiva.exception.*;
 import com.stimulus.archiva.language.AnalyzerFactory;
 import com.stimulus.archiva.search.*;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.store.AlreadyClosedException;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class VolumeIndex extends Thread {
-	
-		 protected static final Logger logger = Logger.getLogger(VolumeIndex.class.getName());
+
+		 protected static final Log logger = LogFactory.getLog(VolumeIndex.class.getName());
 		 public static final int indexOpenTime = 2000;
 	   	 IndexWriter writer = null;
 	   	 Volume volume;
-	   	 Timer closeIndexTimer = new Timer();
-		 Object indexLock = new Object();
+	   	  protected static ScheduledExecutorService scheduler;
+		 protected static ScheduledFuture<?> scheduledTask;
+
+		 ReentrantLock indexLock = new ReentrantLock();
 		 ArchivaAnalyzer analyzer 	= new ArchivaAnalyzer();
 		 Indexer indexer = null;
 		 File indexLogFile;
 		 PrintStream indexLogOut;
-		 
+
 	  	  public VolumeIndex(Indexer indexer, Volume volume) {
 	  		  logger.debug("creating new volume index {"+volume+"}");
 	  		  this.volume = volume;
@@ -65,7 +72,7 @@ public class VolumeIndex extends Thread {
 	  		  }
 	  		  startup();
 	  	  }
-		
+
 	  	protected File getIndexLogFile(Volume volume) {
 	  		 try {
 	  			  String indexpath = volume.getIndexPath();
@@ -80,162 +87,214 @@ public class VolumeIndex extends Thread {
 	  			  return null;
 	  		  }
 	  	}
+
  		public void deleteMessage(EmailID emailID) throws MessageSearchException {
 			  if (emailID == null)
 		            throw new MessageSearchException("assertion failure: null emailID",logger);
-		  logger.debug("delete message {'"+emailID+"'}");
-		  Volume volume = emailID.getVolume();
-		  File indexDir = new File(volume.getIndexPath());
-		  if (!indexDir.exists())
-			  throw new MessageSearchException("could not delete email from index. volume does not exist. {'"+emailID+"}",logger);
-		  synchronized(indexLock) {
-			  IndexReader indexReader = null;
+			  logger.debug("delete message {'"+emailID+"'}");
 			  try {
-				  indexReader = IndexReader.open(indexDir);
-			  } catch (IOException e ) {
-				  throw new MessageSearchException("failed to open index to delete email",e,logger);
+				  boolean isLocked = indexLock.tryLock(10,TimeUnit.MINUTES);
+				  if (!isLocked) {
+					  throw new MessageSearchException("failed to delete email from index. could not acquire lock on index",logger);
+				  }
+				  openIndex();
+				  try {
+					  writer.deleteDocuments(new Term("uid",emailID.getUniqueID()));
+				  } catch (Exception e) {
+					  throw new MessageSearchException("failed to delete email from index.",e,logger);
+				  }
+			  } catch (InterruptedException ie) {
+				  throw new MessageSearchException("failed to delete email from index. interrupted.",logger);
+			  } finally {
+				  indexLock.unlock();
 			  }
-			  try {
-				  indexReader.deleteDocuments(new Term("uid",emailID.getUniqueID()));
-				  indexReader.close();
-			  } catch (Exception e) {
-				  throw new MessageSearchException("failed to delete email from index.",e,logger);
-			  }
-		  }
 		}
-		
+
 		  protected void openIndex() throws MessageSearchException {
 			 Exception lastError = null;
-			 synchronized(indexLock) {
+			 try {
+				boolean isLocked = indexLock.tryLock(10,TimeUnit.MINUTES);
+				  if (!isLocked) {
+					  throw new MessageSearchException("failed to open index. could not acquire lock on index.",logger);
+				}
 		    	if (writer==null) {
 		    		logger.debug("openIndex() index will be opened. it is currently closed.");
 		    	} else {
 		    		logger.debug("openIndex() did not bother opening index. it is already open.");
-		    		return; 
+		    		return;
 		    	}
 		    	logger.debug("opening index for write {"+volume+"}");
 				indexer.prepareIndex(volume);
 				logger.debug("opening search index for write {indexpath='"+volume.getIndexPath()+"'}");
-				try {
-						writer = new IndexWriter(FSDirectory.getDirectory(volume.getIndexPath()),false, analyzer);
-						writer.setMaxFieldLength(50000);
-						if (logger.isDebugEnabled() && indexLogOut!=null) {
-							writer.setInfoStream(indexLogOut);
-						}
-				} catch (IOException io) {
-					lastError = io;
-					throw new MessageSearchException("failed to open index writer. you must delete the file write.lock in the index directory. {location='"+volume.getIndexPath()+"'}",lastError,logger);
-					
-				}
-			 }
+				boolean writelock;
+				int attempt = 0;
+				int maxattempt = 10;
+
+				do {
+					writelock = false;
+					try {
+							FSDirectory fsDirectory = FSDirectory.getDirectory(volume.getIndexPath());
+							writer = new IndexWriter(fsDirectory,analyzer,new IndexWriter.MaxFieldLength(50000));
+							if (logger.isDebugEnabled() && indexLogOut!=null) {
+								writer.setInfoStream(indexLogOut);
+							}
+					} catch (LockObtainFailedException lobfe) {
+							logger.debug("write lock on index. will reopen in 50ms.");
+							try { Thread.sleep(50); } catch (Exception e) {}
+							attempt++;
+							writelock = true;
+					} catch (CorruptIndexException cie) {
+						throw new MessageSearchException("index appears to be corrupt. please reindex the active volume."+cie.getMessage(),logger);
+					} catch (IOException io) {
+						throw new MessageSearchException("failed to write document to index:"+io.getMessage(),logger);
+					}
+			   } while (writelock && attempt<maxattempt);
+			   if (attempt>=10000)
+				 throw new MessageSearchException("failed to open index writer {location='"+volume.getIndexPath()+"'}",lastError,logger);
+			} catch (InterruptedException ie) {
+				 throw new MessageSearchException("failed to open index. interrupted.",logger);
+			} finally {
+				  indexLock.unlock();
+			}
 		}
-		
+
 		public void indexMessage(Email message) throws MessageSearchException  {
-      
+
 			long s = (new Date()).getTime();
 			if (message == null)
 			    throw new MessageSearchException("assertion failure: null message",logger);
 			logger.debug("indexing message {"+message+"}");
-			
+
 			Document doc = new Document();
 			try {
-			 
+
 			   DocumentIndex docIndex = new DocumentIndex(indexer);
-			   docIndex.write(message,doc);  
 			   String language = doc.get("lang");
 			   if (language==null)
 				   language = indexer.getIndexLanguage();
-		   		synchronized (indexLock) {
+			   IndexInfo indexInfo = new IndexInfo();
+
+			   docIndex.write(message,doc,indexInfo);
+			    try {
+					boolean isLocked = indexLock.tryLock(10,TimeUnit.MINUTES);
+					  if (!isLocked) {
+						  throw new MessageSearchException("failed to write email to index. could not acquire lock on index.",logger);
+					}
 		   			openIndex();
 		   			writer.addDocument(doc,AnalyzerFactory.getAnalyzer(language,AnalyzerFactory.Operation.INDEX));
-		   		}
+			    } catch (InterruptedException ie) {
+					 throw new MessageSearchException("failed to write email to index. interrupted.",logger);
+				} finally {
+					  indexLock.unlock();
+					  indexInfo.cleanup();
+				}
 		   		doc = null;
+
 			   logger.debug("message indexed successfully {"+message+",language='"+language+"'}");
-			} catch (MessagingException me)
-			{
-			   throw new MessageSearchException("failed to decode message during indexing",me,logger, Level.DEBUG);
+			} catch (MessagingException me) {
+			   throw new MessageSearchException("failed to decode message during indexing",me,logger, ChainedException.Level.DEBUG);
 			} catch (IOException me) {
-			    throw new MessageSearchException("failed to index message {"+message+"}",me,logger, Level.DEBUG);
+			    throw new MessageSearchException("failed to index message {"+message+"}",me,logger, ChainedException.Level.DEBUG);
 			} catch (ExtractionException ee)
 			{
 				// we will want to continue indexing
-			   //throw new MessageSearchException("failed to decode attachments in message {"+message+"}",ee,logger, Level.DEBUG);
+			   //throw new MessageSearchException("failed to decode attachments in message {"+message+"}",ee,logger, ChainedException.Level.DEBUG);
 			} catch (AlreadyClosedException ace) {
 				indexMessage(message);
-			} catch (Exception e) {
-			    throw new MessageSearchException("failed to index message",e,logger, Level.DEBUG);
+			} catch (Throwable e) {
+			    throw new MessageSearchException("failed to index message",e,logger, ChainedException.Level.DEBUG);
 			}
 			logger.debug("indexing message end {"+message+"}");
-			
+
 			long e = (new Date()).getTime();
 		    logger.debug("indexing time {time='"+(e-s)+"'}");
 		}
-			
+
 		protected void closeIndex() {
-		
-			   synchronized(indexLock) {
-			        if (writer==null)
-			        		return;
-			        try {
-			        	writer.close();
-					    logger.debug("writer closed");
-					} catch (Exception io) {
-						logger.error("failed to close index writer:"+io.getMessage(),io);
-	
-					}
-			        writer = null;
-			   	}
+	 		try {
+	 			 boolean isLocked = indexLock.tryLock(10,TimeUnit.MINUTES);
+				 if (!isLocked) {
+					 logger.error("failed to close index. could not acquire lock on index.");
+					  return;
+				 }
+		         if (writer==null)
+		        		return;
+		         try {
+		        	writer.close();
+				    logger.debug("writer closed");
+				 } catch (Exception io) {
+					logger.error("failed to close index writer:"+io.getMessage(),io);
+
+				 }
+				 writer = null;
+	 		} catch (InterruptedException ie) {
+				 logger.error("failed to close index. interrupted.");
+			} finally {
+				  indexLock.unlock();
+			}
 	   	}
-	
+
 		  public void deleteIndex() throws MessageSearchException {
-			  logger.debug("delete index {indexpath='"+volume.getIndexPath()+"'}");
-			  	synchronized(indexLock) {
-					try {
+			  	 logger.debug("delete index {indexpath='"+volume.getIndexPath()+"'}");
+		  		 try {
+		 			 boolean isLocked = indexLock.tryLock(10,TimeUnit.MINUTES);
+					 if (!isLocked) {
+						 throw new MessageSearchException("failed to close index. could not acquire lock on index.",logger);
+					 }
+					 try {
 						  writer = new IndexWriter(FSDirectory.getDirectory(volume.getIndexPath()),false, analyzer,true);
-					} catch (Exception cie) {
+					 } catch (Exception cie) {
 						 logger.error("failed to delete index {index='"+volume.getIndexPath()+"'}",cie);
 						 return;
-					}
-					try {
-					  writer.close();
-	              	} catch (Exception e) {
+					 }
+					 try {
+					   writer.close();
+	              	 } catch (Exception e) {
 	              		logger.error("failed to delete index {index='"+volume.getIndexPath()+"'}",e);
-	              	}
-	              	MessageIndex.volumeIndexes.remove(this);
-			  	}
+	              	 }
+	              	 MessageIndex.volumeIndexes.remove(this);
+		  		} catch (InterruptedException ie) {
+					 throw new MessageSearchException("failed to delete email from index. interrupted.",logger);
+				} finally {
+					  indexLock.unlock();
+				}
 		  }
-		
+
 		  public void startup() {
 			logger.debug("volumeindex is starting up");
 			File lockFile = new File(volume.getIndexPath()+File.separatorChar + "write.lock");
 			if (lockFile.exists()) {
 				logger.warn("The server lock file already exists. Either another indexer is running or the server was not shutdown correctly.");
-				logger.warn("deleting lock file");
-				lockFile.delete();	
+				logger.warn("If it is the latter, the lock file must be manually deleted at "+lockFile.getAbsolutePath());
+				logger.warn("index lock file detected. the server was shutdown incorrectly. automatically deleting lock file.");
+				logger.warn("indexer is configured to deal with only one indexer process.");
+				logger.warn("if you are running more than one indexer, your index could be subject to corruption.");
+				lockFile.delete();
 			}
-			closeIndexTimer.scheduleAtFixedRate(new TimerTask() {
+			scheduler = Executors.newScheduledThreadPool(1);
+			scheduledTask = scheduler.scheduleWithFixedDelay(new TimerTask() {
 	            @Override
 				public void run() {
 	             	closeIndex();
 	            }
-	        }, indexOpenTime, indexOpenTime);
+	        }, indexOpenTime, indexOpenTime,TimeUnit.MILLISECONDS);
 			Runtime.getRuntime().addShutdownHook(this);
-			
+
 		  }
-		  
+
 		  public void shutdown() {
 			  logger.debug("volumeindex is shutting down");
-			  closeIndexTimer.cancel();
+			  scheduler.shutdownNow();
 		      closeIndex();
 		  }
-		  
+
 		  @Override
 		public void run() {
 			  closeIndex();
 		  }
-		  
-	 
+
+
 }
 
-	
+
 

@@ -1,44 +1,61 @@
+/* Copyright (C) 2005-2009 Jamie Angus Band
+ * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+ * This program is free software; you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation; either version
+ * 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program;
+ * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ */
+
 package com.stimulus.archiva.incoming;
 
 import java.net.*;
 import java.nio.channels.*;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 import com.stimulus.archiva.domain.*;
 
 
 public class Server extends Thread {
-	
+
     protected ServerSocketChannel serverSocketChannel;
     protected boolean running;
     protected int port;
     protected int backlog;
     protected String ipAddress;
     protected RequestQueue requestQueue;
-    protected static Logger logger = Logger.getLogger(Server.class);
+    protected static Log logger = LogFactory.getLog(Server.class);
     protected static int MAX_BIND_ATTEMPTS = 20;
-  
+
     public Server( 		   String ipAddress,
-    					   int port, 
+    					   int port,
                            int backlog,
                            String requestHandlerClassName,
                            FetchMessageCallback callback,
                            int maxQueueLength,
                            int minThreads,
-                           int maxThreads ) {
+                           int maxThreads,
+                           String serverName) {
     	this.ipAddress = ipAddress;
         this.port = port;
         this.backlog = backlog;
-    	setName("server "+requestHandlerClassName);
+    	setName(serverName);
 		setDaemon(true);
-        this.requestQueue = new RequestQueue( requestHandlerClassName,
+        this.requestQueue = new RequestQueue( serverName,
+        									  requestHandlerClassName,
         									  callback,
                                               maxQueueLength,
                                               minThreads,
-                                              maxThreads );
+                                              maxThreads);
     }
 
     public int getPort() { return port; }
-    
+
     public void startup() {
     	int attempts = 0;
 		while (attempts < MAX_BIND_ATTEMPTS) {
@@ -65,30 +82,29 @@ public class Server extends Thread {
 	        attempts++;
 		}
     }
-    
-    @Override
-	protected void finalize() throws Throwable {
-    	interrupt();
-    	shutdown();
-    }
+
 
     public void prepareShutdown() {
-    	this.running = false;
-    }
-    
-    public void shutdown() {
-        try {
-            this.running = false;
-            if (serverSocketChannel!=null && serverSocketChannel.isOpen()) {
-            	this.serverSocketChannel.close();
-            	this.serverSocketChannel = null;
-            }
-        }
-        catch( Exception e ) {
-        }
+    	if (isAlive()) {
+    		this.running = false;
+    	}
     }
 
-   
+    public void shutdown() {
+    	if (isAlive()) {
+	        try {
+	            this.running = false;
+	            if (serverSocketChannel!=null && serverSocketChannel.isOpen()) {
+	            	this.serverSocketChannel.close();
+	            	this.serverSocketChannel = null;
+	            }
+	        }
+	        catch( Exception e ) {
+	        }
+    	}
+    }
+
+
     @Override
 	public void run()
     {
@@ -96,11 +112,12 @@ public class Server extends Thread {
         this.running = true;
         while( running ) {
             try {
-            	
+
                 SocketChannel s = serverSocketChannel.accept();
                 InetAddress addr = s.socket().getInetAddress();
                 logger.debug("received a new connection {hostaddress='"+addr.getHostAddress()+"',hostname='"+addr.getHostName()+"'");
                 this.requestQueue.add( s );
+            } catch (java.nio.channels.AsynchronousCloseException se) {
             } catch( SocketException se ) {
                 if( this.running ) {
                 	logger.error("server socket exception occured while processing requests",se);
@@ -110,9 +127,9 @@ public class Server extends Thread {
             }
         }
         logger.debug("shutting down the request queue");
-      
+
         this.requestQueue.shutdown();
     }
-    
-   
+
+
 }
