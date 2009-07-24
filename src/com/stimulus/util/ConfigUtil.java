@@ -1,8 +1,15 @@
 package com.stimulus.util;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.util.Locale;
 
 import org.apache.commons.logging.*;
+
+import com.stimulus.archiva.exception.ArchivaException;
 
 public class ConfigUtil {
 
@@ -27,6 +34,18 @@ public class ConfigUtil {
     		return i;
     	try {
     		i = Integer.parseInt(str);
+    	} catch (Exception e) {
+    		logger.error("failed to parse configuration value {str='"+str+"'}");
+    	}
+    	return i;
+    }
+    
+    public static float getFloat(String str, String defaultValue) {
+    	float i = Float.parseFloat(defaultValue);
+    	if (str==null)
+    		return i;
+    	try {
+    		i = Float.parseFloat(str);
     	} catch (Exception e) {
     		logger.error("failed to parse configuration value {str='"+str+"'}");
     	}
@@ -94,5 +113,21 @@ public class ConfigUtil {
   		return b;
   	}
   
-  	
+    public static void copyFile(File in, File out)   throws ArchivaException 
+    { 
+ 	   FileChannel inChannel = null;
+ 	   FileChannel outChannel = null;
+ 	   try {
+	    	   logger.debug("copyFile {source='"+in.getAbsolutePath()+"',dest='"+out.getAbsolutePath()+"'}");
+	           inChannel = new FileInputStream(in).getChannel();
+	           outChannel = new FileOutputStream(out).getChannel();
+	           inChannel.transferTo(0, inChannel.size(),outChannel);
+	       } catch (IOException io) {
+            throw new ArchivaException("failed to copy file:"+io.getMessage(),io,logger);
+        } finally {
+            if (inChannel != null) try { inChannel.close(); } catch (Exception e) {} 
+            if (outChannel != null) try {  outChannel.close(); } catch (Exception e) {} 
+        }
+    }
+
 }

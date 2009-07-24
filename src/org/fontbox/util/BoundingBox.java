@@ -179,7 +179,8 @@ public class BoundingBox
      *
      * @return This object as a string.
      */
-    public String toString()
+    @Override
+	public String toString()
     {
         return "[" + getLowerLeftX() + "," + getLowerLeftY() + "," +
                      getUpperRightX() + "," + getUpperRightY() +"]";

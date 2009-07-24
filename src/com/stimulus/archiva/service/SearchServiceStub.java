@@ -1,29 +1,19 @@
 
-
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+/**
+ * SearchServiceStub.java
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ * This file was auto-generated from WSDL
+ * by the Apache Axis2 version: 1.4  Built on : Apr 26, 2008 (06:24:30 EDT)
  */
-
         package com.stimulus.archiva.service;
 
-
+        
 
         /*
         *  SearchServiceStub java implementation
         */
 
-
+        
         public class SearchServiceStub extends org.apache.axis2.client.Stub
         {
         protected org.apache.axis2.description.AxisOperation[] _operations;
@@ -40,11 +30,11 @@
             if (counter > 99999){
                 counter = 0;
             }
-            counter = counter + 1;
+            counter = counter + 1; 
             return Long.toString(System.currentTimeMillis()) + "_" + counter;
         }
 
-
+    
     private void populateAxisService() throws org.apache.axis2.AxisFault {
 
      //creating the Service with a unique name
@@ -55,28 +45,28 @@
         org.apache.axis2.description.AxisOperation __operation;
 
         _operations = new org.apache.axis2.description.AxisOperation[1];
-
+        
                    __operation = new org.apache.axis2.description.OutInAxisOperation();
-
+                
 
             __operation.setName(new javax.xml.namespace.QName("http://service.archiva.stimulus.com", "searchMessage"));
 	    _service.addOperation(__operation);
+	    
 
-
-
-
+	    
+	    
             _operations[0]=__operation;
-
-
+            
+        
         }
 
     //populates the faults
     private void populateFaults(){
-
+         
               faultExceptionNameMap.put( new javax.xml.namespace.QName("http://service.archiva.stimulus.com","ArchivaException"),"com.stimulus.archiva.service.ArchivaExceptionException0");
               faultExceptionClassNameMap.put(new javax.xml.namespace.QName("http://service.archiva.stimulus.com","ArchivaException"),"com.stimulus.archiva.service.ArchivaExceptionException0");
               faultMessageMap.put( new javax.xml.namespace.QName("http://service.archiva.stimulus.com","ArchivaException"),"com.stimulus.archiva.service.SearchServiceStub$ArchivaExceptionE");
-
+           
 
 
     }
@@ -103,33 +93,33 @@
          populateFaults();
 
         _serviceClient = new org.apache.axis2.client.ServiceClient(configurationContext,_service);
-
-
+        
+	
         configurationContext = _serviceClient.getServiceContext().getConfigurationContext();
 
         _serviceClient.getOptions().setTo(new org.apache.axis2.addressing.EndpointReference(
                 targetEndpoint));
         _serviceClient.getOptions().setUseSeparateListener(useSeparateListener);
-
-
+        
+    
     }
 
     /**
      * Default Constructor
      */
     public SearchServiceStub(org.apache.axis2.context.ConfigurationContext configurationContext) throws org.apache.axis2.AxisFault {
-
+        
                     this(configurationContext,"http://192.168.0.5:8090/mailarchiva/services/SearchService.SearchServiceHttpSoap11Endpoint" );
-
+                
     }
 
     /**
      * Default Constructor
      */
     public SearchServiceStub() throws org.apache.axis2.AxisFault {
-
+        
                     this("http://192.168.0.5:8090/mailarchiva/services/SearchService.SearchServiceHttpSoap11Endpoint" );
-
+                
     }
 
     /**
@@ -141,26 +131,26 @@
 
 
 
-
+        
                     /**
                      * Auto generated method signature
-                     *
+                     * 
                      * @see com.stimulus.archiva.service.SearchService#searchMessage
                      * @param searchMessage1
-
-                     * @throws com.stimulus.archiva.service.ArchivaExceptionException0 :
+                    
+                     * @throws com.stimulus.archiva.service.ArchivaExceptionException0 : 
                      */
 
-
+                    
 
                             public  void searchMessage(
 
                             com.stimulus.archiva.service.SearchServiceStub.SearchMessage searchMessage1)
-
+                        
 
                     throws java.rmi.RemoteException
-
-
+                    
+                    
                         ,com.stimulus.archiva.service.ArchivaExceptionException0{
               org.apache.axis2.context.MessageContext _messageContext = null;
               try{
@@ -168,25 +158,25 @@
               _operationClient.getOptions().setAction("urn:searchMessage");
               _operationClient.getOptions().setExceptionToBeThrownOnSOAPFault(true);
 
-
-
+              
+              
                   addPropertyToOperationClient(_operationClient,org.apache.axis2.description.WSDL2Constants.ATTR_WHTTP_QUERY_PARAMETER_SEPARATOR,"&");
-
+              
 
               // create a message context
               _messageContext = new org.apache.axis2.context.MessageContext();
 
-
+              
 
               // create SOAP envelope with that payload
               org.apache.axiom.soap.SOAPEnvelope env = null;
-
-
+                    
+                                                    
                                                     env = toEnvelope(getFactory(_operationClient.getOptions().getSoapVersionURI()),
                                                     searchMessage1,
                                                     optimizeContent(new javax.xml.namespace.QName("http://service.archiva.stimulus.com",
                                                     "searchMessage")));
-
+                                                
         //adding SOAP soap_headers
          _serviceClient.addHeadersToEnvelope(env);
         // set the message context with that soap envelope
@@ -198,9 +188,9 @@
         //execute the operation client
         _operationClient.execute(true);
 
-
+         
                 return;
-
+            
          }catch(org.apache.axis2.AxisFault f){
 
             org.apache.axiom.om.OMElement faultElt = f.getDetail();
@@ -219,11 +209,11 @@
                         java.lang.reflect.Method m = exceptionClass.getMethod("setFaultMessage",
                                    new java.lang.Class[]{messageClass});
                         m.invoke(ex,new java.lang.Object[]{messageObject});
-
+                        
                         if (ex instanceof com.stimulus.archiva.service.ArchivaExceptionException0){
                           throw (com.stimulus.archiva.service.ArchivaExceptionException0)ex;
                         }
-
+                        
 
                         throw new java.rmi.RemoteException(ex.getMessage(), ex);
                     }catch(java.lang.ClassCastException e){
@@ -255,13 +245,13 @@
                 _messageContext.getTransportOut().getSender().cleanup(_messageContext);
             }
         }
-
+            
                 /**
                 * Auto generated method signature for Asynchronous Invocations
-                *
+                * 
                 * @see com.stimulus.archiva.service.SearchService#startsearchMessage
                     * @param searchMessage1
-
+                
                 */
                 public  void startsearchMessage(
 
@@ -275,25 +265,25 @@
              _operationClient.getOptions().setAction("urn:searchMessage");
              _operationClient.getOptions().setExceptionToBeThrownOnSOAPFault(true);
 
-
-
+              
+              
                   addPropertyToOperationClient(_operationClient,org.apache.axis2.description.WSDL2Constants.ATTR_WHTTP_QUERY_PARAMETER_SEPARATOR,"&");
-
+              
 
 
               // create SOAP envelope with that payload
               org.apache.axiom.soap.SOAPEnvelope env=null;
               final org.apache.axis2.context.MessageContext _messageContext = new org.apache.axis2.context.MessageContext();
 
-
+                    
                                     //Style is Doc.
-
-
+                                    
+                                                    
                                                     env = toEnvelope(getFactory(_operationClient.getOptions().getSoapVersionURI()),
                                                     searchMessage1,
                                                     optimizeContent(new javax.xml.namespace.QName("http://service.archiva.stimulus.com",
                                                     "searchMessage")));
-
+                                                
         // adding SOAP soap_headers
          _serviceClient.addHeadersToEnvelope(env);
         // create message context with that soap envelope
@@ -303,9 +293,9 @@
         _operationClient.addMessageContext(_messageContext);
 
 
-
+                    
                             // Nothing to pass as the callback!!!
-
+                        
 
           org.apache.axis2.util.CallbackReceiver _callbackReceiver = null;
         if ( _operations[0].getMessageReceiver()==null &&  _operationClient.getOptions().isUseSeparateListener()) {
@@ -318,7 +308,7 @@
            _operationClient.execute(false);
 
                     }
-
+                
 
 
        /**
@@ -334,18 +324,18 @@
        return returnMap;
     }
 
-
-
+    
+    
     private javax.xml.namespace.QName[] opNameArray = null;
     private boolean optimizeContent(javax.xml.namespace.QName opName) {
-
+        
 
         if (opNameArray == null) {
             return false;
         }
         for (int i = 0; i < opNameArray.length; i++) {
             if (opName.equals(opNameArray[i])) {
-                return true;
+                return true;   
             }
         }
         return false;
@@ -353,13 +343,13 @@
      //http://192.168.0.5:8090/mailarchiva/services/SearchService.SearchServiceHttpSoap11Endpoint
         public static class SearchMessage
         implements org.apache.axis2.databinding.ADBBean{
-
+        
                 public static final javax.xml.namespace.QName MY_QNAME = new javax.xml.namespace.QName(
                 "http://service.archiva.stimulus.com",
                 "searchMessage",
                 "ns1");
 
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://service.archiva.stimulus.com")){
@@ -368,21 +358,21 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
                         /**
                         * field for Search
                         */
 
-
+                        
                                     protected Search localSearch ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localSearchTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -392,27 +382,27 @@
                                return localSearch;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param Search
                                */
                                public void setSearch(Search param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localSearchTracker = true;
                                        } else {
                                           localSearchTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localSearch=param;
-
+                                    
 
                                }
-
+                            
 
      /**
      * isReaderMTOMAware
@@ -420,7 +410,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -428,8 +418,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -441,7 +431,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                 org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,MY_QNAME){
 
@@ -451,7 +441,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                MY_QNAME,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -466,13 +456,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -493,9 +483,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://service.archiva.stimulus.com");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -508,7 +498,7 @@
                            xmlWriter);
                    }
 
-
+               
                    }
                 if (localSearchTracker){
                                     if (localSearch==null){
@@ -543,7 +533,7 @@
                                     }
                                 }
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -690,7 +680,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -699,34 +689,34 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
                  if (localSearchTracker){
                             elementList.add(new javax.xml.namespace.QName("http://service.archiva.stimulus.com",
                                                                       "search"));
-
-
+                            
+                            
                                     elementList.add(localSearch==null?null:
                                     localSearch);
                                 }
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -744,11 +734,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -760,63 +750,63 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"searchMessage".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (SearchMessage)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
-
+                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://service.archiva.stimulus.com","search").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setSearch(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setSearch(Search.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
+                                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -829,11 +819,11 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class Search_Type
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -841,7 +831,7 @@
                 Namespace URI = http://domain.archiva.stimulus.com/xsd
                 Namespace Prefix = ns3
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://domain.archiva.stimulus.com/xsd")){
@@ -850,7 +840,7 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
      /**
      * isReaderMTOMAware
@@ -858,7 +848,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -866,8 +856,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -879,7 +869,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -889,7 +879,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -904,13 +894,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -931,9 +921,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://domain.archiva.stimulus.com/xsd");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -946,11 +936,11 @@
                            xmlWriter);
                    }
 
-
+               
                    }
-
+               
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -1097,7 +1087,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -1106,27 +1096,27 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
-
+                
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -1144,11 +1134,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -1160,39 +1150,39 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"Search_Type".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (Search_Type)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
+                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -1205,11 +1195,11 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class Search_FetchMessage
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -1217,7 +1207,7 @@
                 Namespace URI = http://domain.archiva.stimulus.com/xsd
                 Namespace Prefix = ns3
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://domain.archiva.stimulus.com/xsd")){
@@ -1226,7 +1216,7 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
      /**
      * isReaderMTOMAware
@@ -1234,7 +1224,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -1242,8 +1232,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -1255,7 +1245,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -1265,7 +1255,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -1280,13 +1270,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -1307,9 +1297,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://domain.archiva.stimulus.com/xsd");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -1322,11 +1312,11 @@
                            xmlWriter);
                    }
 
-
+               
                    }
-
+               
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -1473,7 +1463,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -1482,27 +1472,27 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
-
+                
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -1520,11 +1510,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -1536,39 +1526,39 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"Search_FetchMessage".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (Search_FetchMessage)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
+                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -1581,11 +1571,11 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class Search_Flag
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -1593,7 +1583,7 @@
                 Namespace URI = http://domain.archiva.stimulus.com/xsd
                 Namespace Prefix = ns3
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://domain.archiva.stimulus.com/xsd")){
@@ -1602,7 +1592,7 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
      /**
      * isReaderMTOMAware
@@ -1610,7 +1600,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -1618,8 +1608,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -1631,7 +1621,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -1641,7 +1631,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -1656,13 +1646,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -1683,9 +1673,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://domain.archiva.stimulus.com/xsd");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -1698,11 +1688,11 @@
                            xmlWriter);
                    }
 
-
+               
                    }
-
+               
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -1849,7 +1839,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -1858,27 +1848,27 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
-
+                
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -1896,11 +1886,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -1912,39 +1902,39 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"Search_Flag".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (Search_Flag)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
+                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -1957,11 +1947,11 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class ArchivaException extends ChainedException
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -1969,7 +1959,7 @@
                 Namespace URI = http://exception.archiva.stimulus.com/xsd
                 Namespace Prefix = ns2
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://exception.archiva.stimulus.com/xsd")){
@@ -1978,7 +1968,7 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
      /**
      * isReaderMTOMAware
@@ -1986,7 +1976,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -1994,8 +1984,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -2007,7 +1997,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -2017,7 +2007,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -2032,13 +2022,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -2059,7 +2049,7 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://exception.archiva.stimulus.com/xsd");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -2073,7 +2063,7 @@
                    }
 
                 if (localExceptionTracker){
-
+                            
                             if (localException!=null){
                                 if (localException instanceof org.apache.axis2.databinding.ADBBean){
                                     ((org.apache.axis2.databinding.ADBBean)localException).serialize(
@@ -2102,7 +2092,7 @@
                                     xmlWriter.writeEndElement();
                                  }
                             } else {
-
+                                
                                         // write null attribute
                                             java.lang.String namespace2 = "http://service.archiva.stimulus.com";
                                             if (! namespace2.equals("")) {
@@ -2126,12 +2116,12 @@
                                            // write the nil attribute
                                            writeAttribute("xsi","http://www.w3.org/2001/XMLSchema-instance","nil","1",xmlWriter);
                                            xmlWriter.writeEndElement();
-
+                                    
                             }
 
 
                         } if (localCauseTracker){
-
+                            
                             if (localCause!=null){
                                 if (localCause instanceof org.apache.axis2.databinding.ADBBean){
                                     ((org.apache.axis2.databinding.ADBBean)localCause).serialize(
@@ -2160,7 +2150,7 @@
                                     xmlWriter.writeEndElement();
                                  }
                             } else {
-
+                                
                                         // write null attribute
                                             java.lang.String namespace2 = "http://exception.archiva.stimulus.com/xsd";
                                             if (! namespace2.equals("")) {
@@ -2184,13 +2174,13 @@
                                            // write the nil attribute
                                            writeAttribute("xsi","http://www.w3.org/2001/XMLSchema-instance","nil","1",xmlWriter);
                                            xmlWriter.writeEndElement();
-
+                                    
                             }
 
 
                         }
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -2337,7 +2327,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -2346,44 +2336,44 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
-
+                
                     attribList.add(new javax.xml.namespace.QName("http://www.w3.org/2001/XMLSchema-instance","type"));
                     attribList.add(new javax.xml.namespace.QName("http://exception.archiva.stimulus.com/xsd","ArchivaException"));
                  if (localExceptionTracker){
                             elementList.add(new javax.xml.namespace.QName("http://service.archiva.stimulus.com",
                                                                       "Exception"));
-
-
+                            
+                            
                                     elementList.add(localException==null?null:
                                     localException);
                                 } if (localCauseTracker){
                             elementList.add(new javax.xml.namespace.QName("http://exception.archiva.stimulus.com/xsd",
                                                                       "cause"));
-
-
+                            
+                            
                                     elementList.add(localCause==null?null:
                                     localCause);
                                 }
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -2401,11 +2391,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -2417,71 +2407,71 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"ArchivaException".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (ArchivaException)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
-
+                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://service.archiva.stimulus.com","Exception").equals(reader.getName())){
-
+                                
                                      object.setException(org.apache.axis2.databinding.utils.ConverterUtil.getAnyTypeObject(reader,
                                                 ExtensionMapper.class));
-
+                                       
                                          reader.next();
-
+                                     
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://exception.archiva.stimulus.com/xsd","cause").equals(reader.getName())){
-
+                                
                                      object.setCause(org.apache.axis2.databinding.utils.ConverterUtil.getAnyTypeObject(reader,
                                                 ExtensionMapper.class));
-
+                                       
                                          reader.next();
-
+                                     
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
+                                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -2494,11 +2484,11 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class Search_OpenIndex
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -2506,7 +2496,7 @@
                 Namespace URI = http://domain.archiva.stimulus.com/xsd
                 Namespace Prefix = ns3
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://domain.archiva.stimulus.com/xsd")){
@@ -2515,7 +2505,7 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
      /**
      * isReaderMTOMAware
@@ -2523,7 +2513,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -2531,8 +2521,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -2544,7 +2534,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -2554,7 +2544,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -2569,13 +2559,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -2596,9 +2586,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://domain.archiva.stimulus.com/xsd");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -2611,11 +2601,11 @@
                            xmlWriter);
                    }
 
-
+               
                    }
-
+               
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -2762,7 +2752,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -2771,27 +2761,27 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
-
+                
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -2809,11 +2799,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -2825,39 +2815,39 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"Search_OpenIndex".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (Search_OpenIndex)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
+                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -2870,11 +2860,11 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class Search_DateType
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -2882,7 +2872,7 @@
                 Namespace URI = http://domain.archiva.stimulus.com/xsd
                 Namespace Prefix = ns3
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://domain.archiva.stimulus.com/xsd")){
@@ -2891,7 +2881,7 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
      /**
      * isReaderMTOMAware
@@ -2899,7 +2889,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -2907,8 +2897,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -2920,7 +2910,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -2930,7 +2920,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -2945,13 +2935,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -2972,9 +2962,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://domain.archiva.stimulus.com/xsd");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -2987,11 +2977,11 @@
                            xmlWriter);
                    }
 
-
+               
                    }
-
+               
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -3138,7 +3128,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -3147,27 +3137,27 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
-
+                
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -3185,11 +3175,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -3201,39 +3191,39 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"Search_DateType".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (Search_DateType)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
+                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -3246,11 +3236,11 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class Map
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -3258,7 +3248,7 @@
                 Namespace URI = http://util.java/xsd
                 Namespace Prefix = ns5
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://util.java/xsd")){
@@ -3267,21 +3257,21 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
                         /**
                         * field for Empty
                         */
 
-
+                        
                                     protected boolean localEmpty ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localEmptyTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -3291,28 +3281,28 @@
                                return localEmpty;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param Empty
                                */
                                public void setEmpty(boolean param){
-
+                            
                                        // setting primitive attribute tracker to true
-
+                                       
                                                if (false) {
                                            localEmptyTracker = false;
-
+                                              
                                        } else {
                                           localEmptyTracker = true;
                                        }
-
+                                   
                                             this.localEmpty=param;
-
+                                    
 
                                }
-
+                            
 
      /**
      * isReaderMTOMAware
@@ -3320,7 +3310,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -3328,8 +3318,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -3341,7 +3331,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -3351,7 +3341,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -3366,13 +3356,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -3393,9 +3383,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://util.java/xsd");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -3408,7 +3398,7 @@
                            xmlWriter);
                    }
 
-
+               
                    }
                 if (localEmptyTracker){
                                     namespace = "http://util.java/xsd";
@@ -3429,19 +3419,19 @@
                                     } else {
                                         xmlWriter.writeStartElement("empty");
                                     }
-
+                                
                                                if (false) {
-
+                                           
                                                          throw new org.apache.axis2.databinding.ADBException("empty cannot be null!!");
-
+                                                      
                                                } else {
                                                     xmlWriter.writeCharacters(org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localEmpty));
                                                }
-
+                                    
                                    xmlWriter.writeEndElement();
                              }
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -3588,7 +3578,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -3597,33 +3587,33 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
                  if (localEmptyTracker){
                                       elementList.add(new javax.xml.namespace.QName("http://util.java/xsd",
                                                                       "empty"));
-
+                                 
                                 elementList.add(
                                    org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localEmpty));
                             }
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -3641,11 +3631,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -3657,57 +3647,57 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"Map".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (Map)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
-
+                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://util.java/xsd","empty").equals(reader.getName())){
-
+                                
                                     java.lang.String content = reader.getElementText();
-
+                                    
                                               object.setEmpty(
                                                     org.apache.axis2.databinding.utils.ConverterUtil.convertToBoolean(content));
-
+                                              
                                         reader.next();
-
+                                    
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
+                                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -3720,11 +3710,11 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class ChainedException extends Exception
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -3732,7 +3722,7 @@
                 Namespace URI = http://exception.archiva.stimulus.com/xsd
                 Namespace Prefix = ns2
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://exception.archiva.stimulus.com/xsd")){
@@ -3741,21 +3731,21 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
                         /**
                         * field for Cause
                         */
 
-
+                        
                                     protected java.lang.Object localCause ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localCauseTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -3765,27 +3755,27 @@
                                return localCause;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param Cause
                                */
                                public void setCause(java.lang.Object param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localCauseTracker = true;
                                        } else {
                                           localCauseTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localCause=param;
-
+                                    
 
                                }
-
+                            
 
      /**
      * isReaderMTOMAware
@@ -3793,7 +3783,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -3801,8 +3791,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -3814,7 +3804,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -3824,7 +3814,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -3839,13 +3829,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -3866,7 +3856,7 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://exception.archiva.stimulus.com/xsd");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -3880,7 +3870,7 @@
                    }
 
                 if (localExceptionTracker){
-
+                            
                             if (localException!=null){
                                 if (localException instanceof org.apache.axis2.databinding.ADBBean){
                                     ((org.apache.axis2.databinding.ADBBean)localException).serialize(
@@ -3909,7 +3899,7 @@
                                     xmlWriter.writeEndElement();
                                  }
                             } else {
-
+                                
                                         // write null attribute
                                             java.lang.String namespace2 = "http://service.archiva.stimulus.com";
                                             if (! namespace2.equals("")) {
@@ -3933,12 +3923,12 @@
                                            // write the nil attribute
                                            writeAttribute("xsi","http://www.w3.org/2001/XMLSchema-instance","nil","1",xmlWriter);
                                            xmlWriter.writeEndElement();
-
+                                    
                             }
 
 
                         } if (localCauseTracker){
-
+                            
                             if (localCause!=null){
                                 if (localCause instanceof org.apache.axis2.databinding.ADBBean){
                                     ((org.apache.axis2.databinding.ADBBean)localCause).serialize(
@@ -3967,7 +3957,7 @@
                                     xmlWriter.writeEndElement();
                                  }
                             } else {
-
+                                
                                         // write null attribute
                                             java.lang.String namespace2 = "http://exception.archiva.stimulus.com/xsd";
                                             if (! namespace2.equals("")) {
@@ -3991,13 +3981,13 @@
                                            // write the nil attribute
                                            writeAttribute("xsi","http://www.w3.org/2001/XMLSchema-instance","nil","1",xmlWriter);
                                            xmlWriter.writeEndElement();
-
+                                    
                             }
 
 
                         }
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -4144,7 +4134,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -4153,44 +4143,44 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
-
+                
                     attribList.add(new javax.xml.namespace.QName("http://www.w3.org/2001/XMLSchema-instance","type"));
                     attribList.add(new javax.xml.namespace.QName("http://exception.archiva.stimulus.com/xsd","ChainedException"));
                  if (localExceptionTracker){
                             elementList.add(new javax.xml.namespace.QName("http://service.archiva.stimulus.com",
                                                                       "Exception"));
-
-
+                            
+                            
                                     elementList.add(localException==null?null:
                                     localException);
                                 } if (localCauseTracker){
                             elementList.add(new javax.xml.namespace.QName("http://exception.archiva.stimulus.com/xsd",
                                                                       "cause"));
-
-
+                            
+                            
                                     elementList.add(localCause==null?null:
                                     localCause);
                                 }
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -4208,11 +4198,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -4224,71 +4214,71 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"ChainedException".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (ChainedException)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
-
+                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://service.archiva.stimulus.com","Exception").equals(reader.getName())){
-
+                                
                                      object.setException(org.apache.axis2.databinding.utils.ConverterUtil.getAnyTypeObject(reader,
                                                 ExtensionMapper.class));
-
+                                       
                                          reader.next();
-
+                                     
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://exception.archiva.stimulus.com/xsd","cause").equals(reader.getName())){
-
+                                
                                      object.setCause(org.apache.axis2.databinding.utils.ConverterUtil.getAnyTypeObject(reader,
                                                 ExtensionMapper.class));
-
+                                       
                                          reader.next();
-
+                                     
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
+                                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -4301,11 +4291,11 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class Search_SortOrder
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -4313,7 +4303,7 @@
                 Namespace URI = http://domain.archiva.stimulus.com/xsd
                 Namespace Prefix = ns3
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://domain.archiva.stimulus.com/xsd")){
@@ -4322,7 +4312,7 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
      /**
      * isReaderMTOMAware
@@ -4330,7 +4320,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -4338,8 +4328,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -4351,7 +4341,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -4361,7 +4351,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -4376,13 +4366,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -4403,9 +4393,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://domain.archiva.stimulus.com/xsd");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -4418,11 +4408,11 @@
                            xmlWriter);
                    }
 
-
+               
                    }
-
+               
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -4569,7 +4559,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -4578,27 +4568,27 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
-
+                
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -4616,11 +4606,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -4632,39 +4622,39 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"Search_SortOrder".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (Search_SortOrder)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
+                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -4677,11 +4667,11 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class Search_Priority
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -4689,7 +4679,7 @@
                 Namespace URI = http://domain.archiva.stimulus.com/xsd
                 Namespace Prefix = ns3
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://domain.archiva.stimulus.com/xsd")){
@@ -4698,7 +4688,7 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
      /**
      * isReaderMTOMAware
@@ -4706,7 +4696,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -4714,8 +4704,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -4727,7 +4717,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -4737,7 +4727,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -4752,13 +4742,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -4779,9 +4769,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://domain.archiva.stimulus.com/xsd");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -4794,11 +4784,11 @@
                            xmlWriter);
                    }
 
-
+               
                    }
-
+               
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -4945,7 +4935,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -4954,27 +4944,27 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
-
+                
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -4992,11 +4982,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -5008,39 +4998,39 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"Search_Priority".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (Search_Priority)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
+                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -5053,11 +5043,11 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class ViewFilter
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -5065,7 +5055,7 @@
                 Namespace URI = http://domain.archiva.stimulus.com/xsd
                 Namespace Prefix = ns3
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://domain.archiva.stimulus.com/xsd")){
@@ -5074,21 +5064,21 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
                         /**
                         * field for Criteria
                         */
 
-
+                        
                                     protected java.lang.Object localCriteria ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localCriteriaTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -5098,27 +5088,27 @@
                                return localCriteria;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param Criteria
                                */
                                public void setCriteria(java.lang.Object param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localCriteriaTracker = true;
                                        } else {
                                           localCriteriaTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localCriteria=param;
-
+                                    
 
                                }
-
+                            
 
      /**
      * isReaderMTOMAware
@@ -5126,7 +5116,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -5134,8 +5124,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -5147,7 +5137,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -5157,7 +5147,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -5172,13 +5162,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -5199,9 +5189,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://domain.archiva.stimulus.com/xsd");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -5214,10 +5204,10 @@
                            xmlWriter);
                    }
 
-
+               
                    }
                 if (localCriteriaTracker){
-
+                            
                             if (localCriteria!=null){
                                 if (localCriteria instanceof org.apache.axis2.databinding.ADBBean){
                                     ((org.apache.axis2.databinding.ADBBean)localCriteria).serialize(
@@ -5246,7 +5236,7 @@
                                     xmlWriter.writeEndElement();
                                  }
                             } else {
-
+                                
                                         // write null attribute
                                             java.lang.String namespace2 = "http://domain.archiva.stimulus.com/xsd";
                                             if (! namespace2.equals("")) {
@@ -5270,13 +5260,13 @@
                                            // write the nil attribute
                                            writeAttribute("xsi","http://www.w3.org/2001/XMLSchema-instance","nil","1",xmlWriter);
                                            xmlWriter.writeEndElement();
-
+                                    
                             }
 
 
                         }
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -5423,7 +5413,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -5432,34 +5422,34 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
                  if (localCriteriaTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "criteria"));
-
-
+                            
+                            
                                     elementList.add(localCriteria==null?null:
                                     localCriteria);
                                 }
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -5477,11 +5467,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -5493,55 +5483,55 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"ViewFilter".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (ViewFilter)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
-
+                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","criteria").equals(reader.getName())){
-
+                                
                                      object.setCriteria(org.apache.axis2.databinding.utils.ConverterUtil.getAnyTypeObject(reader,
                                                 ExtensionMapper.class));
-
+                                       
                                          reader.next();
-
+                                     
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
+                                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -5554,11 +5544,11 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class Principal
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -5566,7 +5556,7 @@
                 Namespace URI = http://security.java/xsd
                 Namespace Prefix = ns4
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://security.java/xsd")){
@@ -5575,21 +5565,21 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
                         /**
                         * field for Name
                         */
 
-
+                        
                                     protected java.lang.String localName ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localNameTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -5599,27 +5589,27 @@
                                return localName;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param Name
                                */
                                public void setName(java.lang.String param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localNameTracker = true;
                                        } else {
                                           localNameTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localName=param;
-
+                                    
 
                                }
-
+                            
 
      /**
      * isReaderMTOMAware
@@ -5627,7 +5617,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -5635,8 +5625,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -5648,7 +5638,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -5658,7 +5648,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -5673,13 +5663,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -5700,9 +5690,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://security.java/xsd");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -5715,7 +5705,7 @@
                            xmlWriter);
                    }
 
-
+               
                    }
                 if (localNameTracker){
                                     namespace = "http://security.java/xsd";
@@ -5736,24 +5726,24 @@
                                     } else {
                                         xmlWriter.writeStartElement("name");
                                     }
-
+                                
 
                                           if (localName==null){
                                               // write the nil attribute
-
+                                              
                                                      writeAttribute("xsi","http://www.w3.org/2001/XMLSchema-instance","nil","1",xmlWriter);
-
+                                                  
                                           }else{
 
-
+                                        
                                                    xmlWriter.writeCharacters(localName);
-
+                                            
                                           }
-
+                                    
                                    xmlWriter.writeEndElement();
                              }
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -5900,7 +5890,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -5909,33 +5899,33 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
                  if (localNameTracker){
                                       elementList.add(new javax.xml.namespace.QName("http://security.java/xsd",
                                                                       "name"));
-
+                                 
                                          elementList.add(localName==null?null:
                                          org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localName));
                                     }
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -5953,11 +5943,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -5969,66 +5959,66 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"Principal".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (Principal)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
-
+                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://security.java/xsd","name").equals(reader.getName())){
-
+                                
                                        nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                        if (!"true".equals(nillableValue) && !"1".equals(nillableValue)){
-
+                                    
                                     java.lang.String content = reader.getElementText();
-
+                                    
                                               object.setName(
                                                     org.apache.axis2.databinding.utils.ConverterUtil.convertToString(content));
-
+                                            
                                        } else {
-
-
+                                           
+                                           
                                            reader.getElementText(); // throw away text nodes if any.
                                        }
-
+                                      
                                         reader.next();
-
+                                    
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
+                                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -6041,11 +6031,11 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class Search
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -6053,7 +6043,7 @@
                 Namespace URI = http://domain.archiva.stimulus.com/xsd
                 Namespace Prefix = ns3
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://domain.archiva.stimulus.com/xsd")){
@@ -6062,21 +6052,21 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
                         /**
                         * field for After
                         */
 
-
+                        
                                     protected java.util.Calendar localAfter ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localAfterTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6086,41 +6076,41 @@
                                return localAfter;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param After
                                */
                                public void setAfter(java.util.Calendar param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localAfterTracker = true;
                                        } else {
                                           localAfterTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localAfter=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for ArchiveDateOnly
                         */
 
-
+                        
                                     protected boolean localArchiveDateOnly ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localArchiveDateOnlyTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6130,42 +6120,42 @@
                                return localArchiveDateOnly;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param ArchiveDateOnly
                                */
                                public void setArchiveDateOnly(boolean param){
-
+                            
                                        // setting primitive attribute tracker to true
-
+                                       
                                                if (false) {
                                            localArchiveDateOnlyTracker = false;
-
+                                              
                                        } else {
                                           localArchiveDateOnlyTracker = true;
                                        }
-
+                                   
                                             this.localArchiveDateOnly=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for Attachment
                         */
 
-
+                        
                                     protected Search_Attachment localAttachment ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localAttachmentTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6175,41 +6165,41 @@
                                return localAttachment;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param Attachment
                                */
                                public void setAttachment(Search_Attachment param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localAttachmentTracker = true;
                                        } else {
                                           localAttachmentTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localAttachment=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for Before
                         */
 
-
+                        
                                     protected java.util.Calendar localBefore ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localBeforeTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6219,41 +6209,41 @@
                                return localBefore;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param Before
                                */
                                public void setBefore(java.util.Calendar param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localBeforeTracker = true;
                                        } else {
                                           localBeforeTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localBefore=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for DateType
                         */
 
-
+                        
                                     protected Search_DateType localDateType ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localDateTypeTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6263,41 +6253,41 @@
                                return localDateType;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param DateType
                                */
                                public void setDateType(Search_DateType param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localDateTypeTracker = true;
                                        } else {
                                           localDateTypeTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localDateType=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for FetchMessage
                         */
 
-
+                        
                                     protected Search_FetchMessage localFetchMessage ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localFetchMessageTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6307,41 +6297,41 @@
                                return localFetchMessage;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param FetchMessage
                                */
                                public void setFetchMessage(Search_FetchMessage param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localFetchMessageTracker = true;
                                        } else {
                                           localFetchMessageTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localFetchMessage=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for Flag
                         */
 
-
+                        
                                     protected Search_Flag localFlag ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localFlagTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6351,41 +6341,41 @@
                                return localFlag;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param Flag
                                */
                                public void setFlag(Search_Flag param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localFlagTracker = true;
                                        } else {
                                           localFlagTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localFlag=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for InitialDateType
                         */
 
-
+                        
                                     protected Search_DateType localInitialDateType ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localInitialDateTypeTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6395,41 +6385,41 @@
                                return localInitialDateType;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param InitialDateType
                                */
                                public void setInitialDateType(Search_DateType param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localInitialDateTypeTracker = true;
                                        } else {
                                           localInitialDateTypeTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localInitialDateType=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for InitialSortField
                         */
 
-
+                        
                                     protected java.lang.String localInitialSortField ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localInitialSortFieldTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6439,41 +6429,41 @@
                                return localInitialSortField;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param InitialSortField
                                */
                                public void setInitialSortField(java.lang.String param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localInitialSortFieldTracker = true;
                                        } else {
                                           localInitialSortFieldTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localInitialSortField=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for InitialSortOrder
                         */
 
-
+                        
                                     protected Search_SortOrder localInitialSortOrder ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localInitialSortOrderTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6483,41 +6473,41 @@
                                return localInitialSortOrder;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param InitialSortOrder
                                */
                                public void setInitialSortOrder(Search_SortOrder param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localInitialSortOrderTracker = true;
                                        } else {
                                           localInitialSortOrderTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localInitialSortOrder=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for Language
                         */
 
-
+                        
                                     protected java.lang.String localLanguage ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localLanguageTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6527,41 +6517,41 @@
                                return localLanguage;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param Language
                                */
                                public void setLanguage(java.lang.String param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localLanguageTracker = true;
                                        } else {
                                           localLanguageTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localLanguage=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for MaxSearchResults
                         */
 
-
+                        
                                     protected int localMaxSearchResults ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localMaxSearchResultsTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6571,42 +6561,42 @@
                                return localMaxSearchResults;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param MaxSearchResults
                                */
                                public void setMaxSearchResults(int param){
-
+                            
                                        // setting primitive attribute tracker to true
-
+                                       
                                                if (param==java.lang.Integer.MIN_VALUE) {
                                            localMaxSearchResultsTracker = false;
-
+                                              
                                        } else {
                                           localMaxSearchResultsTracker = true;
                                        }
-
+                                   
                                             this.localMaxSearchResults=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for OpenIndex
                         */
 
-
+                        
                                     protected Search_OpenIndex localOpenIndex ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localOpenIndexTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6616,41 +6606,41 @@
                                return localOpenIndex;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param OpenIndex
                                */
                                public void setOpenIndex(Search_OpenIndex param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localOpenIndexTracker = true;
                                        } else {
                                           localOpenIndexTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localOpenIndex=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for Principal
                         */
 
-
+                        
                                     protected Principal localPrincipal ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localPrincipalTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6660,41 +6650,41 @@
                                return localPrincipal;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param Principal
                                */
                                public void setPrincipal(Principal param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localPrincipalTracker = true;
                                        } else {
                                           localPrincipalTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localPrincipal=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for Priority
                         */
 
-
+                        
                                     protected Search_Priority localPriority ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localPriorityTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6704,41 +6694,41 @@
                                return localPriority;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param Priority
                                */
                                public void setPriority(Search_Priority param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localPriorityTracker = true;
                                        } else {
                                           localPriorityTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localPriority=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for ResultSize
                         */
 
-
+                        
                                     protected int localResultSize ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localResultSizeTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6748,42 +6738,42 @@
                                return localResultSize;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param ResultSize
                                */
                                public void setResultSize(int param){
-
+                            
                                        // setting primitive attribute tracker to true
-
+                                       
                                                if (param==java.lang.Integer.MIN_VALUE) {
                                            localResultSizeTracker = false;
-
+                                              
                                        } else {
                                           localResultSizeTracker = true;
                                        }
-
+                                   
                                             this.localResultSize=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for Results
                         */
 
-
+                        
                                     protected java.lang.Object localResults ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localResultsTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6793,41 +6783,41 @@
                                return localResults;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param Results
                                */
                                public void setResults(java.lang.Object param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localResultsTracker = true;
                                        } else {
                                           localResultsTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localResults=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for SearchAnalyzers
                         */
 
-
+                        
                                     protected Map localSearchAnalyzers ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localSearchAnalyzersTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6837,41 +6827,41 @@
                                return localSearchAnalyzers;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param SearchAnalyzers
                                */
                                public void setSearchAnalyzers(Map param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localSearchAnalyzersTracker = true;
                                        } else {
                                           localSearchAnalyzersTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localSearchAnalyzers=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for SearchQuery
                         */
 
-
+                        
                                     protected java.lang.String localSearchQuery ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localSearchQueryTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6881,41 +6871,41 @@
                                return localSearchQuery;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param SearchQuery
                                */
                                public void setSearchQuery(java.lang.String param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localSearchQueryTracker = true;
                                        } else {
                                           localSearchQueryTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localSearchQuery=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for SortField
                         */
 
-
+                        
                                     protected java.lang.String localSortField ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localSortFieldTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6925,41 +6915,41 @@
                                return localSortField;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param SortField
                                */
                                public void setSortField(java.lang.String param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localSortFieldTracker = true;
                                        } else {
                                           localSortFieldTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localSortField=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for SortOrder
                         */
 
-
+                        
                                     protected Search_SortOrder localSortOrder ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localSortOrderTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -6969,41 +6959,41 @@
                                return localSortOrder;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param SortOrder
                                */
                                public void setSortOrder(Search_SortOrder param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localSortOrderTracker = true;
                                        } else {
                                           localSortOrderTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localSortOrder=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for TotalHits
                         */
 
-
+                        
                                     protected int localTotalHits ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localTotalHitsTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -7013,42 +7003,42 @@
                                return localTotalHits;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param TotalHits
                                */
                                public void setTotalHits(int param){
-
+                            
                                        // setting primitive attribute tracker to true
-
+                                       
                                                if (param==java.lang.Integer.MIN_VALUE) {
                                            localTotalHitsTracker = false;
-
+                                              
                                        } else {
                                           localTotalHitsTracker = true;
                                        }
-
+                                   
                                             this.localTotalHits=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for Type
                         */
 
-
+                        
                                     protected Search_Type localType ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localTypeTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -7058,41 +7048,41 @@
                                return localType;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param Type
                                */
                                public void setType(Search_Type param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localTypeTracker = true;
                                        } else {
                                           localTypeTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localType=param;
-
+                                    
 
                                }
-
+                            
 
                         /**
                         * field for ViewFilter
                         */
 
-
+                        
                                     protected ViewFilter localViewFilter ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localViewFilterTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -7102,27 +7092,27 @@
                                return localViewFilter;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param ViewFilter
                                */
                                public void setViewFilter(ViewFilter param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localViewFilterTracker = true;
                                        } else {
                                           localViewFilterTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localViewFilter=param;
-
+                                    
 
                                }
-
+                            
 
      /**
      * isReaderMTOMAware
@@ -7130,7 +7120,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -7138,8 +7128,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -7151,7 +7141,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -7161,7 +7151,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -7176,13 +7166,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -7203,9 +7193,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://domain.archiva.stimulus.com/xsd");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -7218,7 +7208,7 @@
                            xmlWriter);
                    }
 
-
+               
                    }
                 if (localAfterTracker){
                                     namespace = "http://domain.archiva.stimulus.com/xsd";
@@ -7239,20 +7229,20 @@
                                     } else {
                                         xmlWriter.writeStartElement("after");
                                     }
-
+                                
 
                                           if (localAfter==null){
                                               // write the nil attribute
-
+                                              
                                                      writeAttribute("xsi","http://www.w3.org/2001/XMLSchema-instance","nil","1",xmlWriter);
-
+                                                  
                                           }else{
 
-
+                                        
                                                    xmlWriter.writeCharacters(org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localAfter));
-
+                                            
                                           }
-
+                                    
                                    xmlWriter.writeEndElement();
                              } if (localArchiveDateOnlyTracker){
                                     namespace = "http://domain.archiva.stimulus.com/xsd";
@@ -7273,15 +7263,15 @@
                                     } else {
                                         xmlWriter.writeStartElement("archiveDateOnly");
                                     }
-
+                                
                                                if (false) {
-
+                                           
                                                          throw new org.apache.axis2.databinding.ADBException("archiveDateOnly cannot be null!!");
-
+                                                      
                                                } else {
                                                     xmlWriter.writeCharacters(org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localArchiveDateOnly));
                                                }
-
+                                    
                                    xmlWriter.writeEndElement();
                              } if (localAttachmentTracker){
                                     if (localAttachment==null){
@@ -7333,20 +7323,20 @@
                                     } else {
                                         xmlWriter.writeStartElement("before");
                                     }
-
+                                
 
                                           if (localBefore==null){
                                               // write the nil attribute
-
+                                              
                                                      writeAttribute("xsi","http://www.w3.org/2001/XMLSchema-instance","nil","1",xmlWriter);
-
+                                                  
                                           }else{
 
-
+                                        
                                                    xmlWriter.writeCharacters(org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localBefore));
-
+                                            
                                           }
-
+                                    
                                    xmlWriter.writeEndElement();
                              } if (localDateTypeTracker){
                                     if (localDateType==null){
@@ -7491,20 +7481,20 @@
                                     } else {
                                         xmlWriter.writeStartElement("initialSortField");
                                     }
-
+                                
 
                                           if (localInitialSortField==null){
                                               // write the nil attribute
-
+                                              
                                                      writeAttribute("xsi","http://www.w3.org/2001/XMLSchema-instance","nil","1",xmlWriter);
-
+                                                  
                                           }else{
 
-
+                                        
                                                    xmlWriter.writeCharacters(localInitialSortField);
-
+                                            
                                           }
-
+                                    
                                    xmlWriter.writeEndElement();
                              } if (localInitialSortOrderTracker){
                                     if (localInitialSortOrder==null){
@@ -7556,20 +7546,20 @@
                                     } else {
                                         xmlWriter.writeStartElement("language");
                                     }
-
+                                
 
                                           if (localLanguage==null){
                                               // write the nil attribute
-
+                                              
                                                      writeAttribute("xsi","http://www.w3.org/2001/XMLSchema-instance","nil","1",xmlWriter);
-
+                                                  
                                           }else{
 
-
+                                        
                                                    xmlWriter.writeCharacters(localLanguage);
-
+                                            
                                           }
-
+                                    
                                    xmlWriter.writeEndElement();
                              } if (localMaxSearchResultsTracker){
                                     namespace = "http://domain.archiva.stimulus.com/xsd";
@@ -7590,15 +7580,15 @@
                                     } else {
                                         xmlWriter.writeStartElement("maxSearchResults");
                                     }
-
+                                
                                                if (localMaxSearchResults==java.lang.Integer.MIN_VALUE) {
-
+                                           
                                                          throw new org.apache.axis2.databinding.ADBException("maxSearchResults cannot be null!!");
-
+                                                      
                                                } else {
                                                     xmlWriter.writeCharacters(org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localMaxSearchResults));
                                                }
-
+                                    
                                    xmlWriter.writeEndElement();
                              } if (localOpenIndexTracker){
                                     if (localOpenIndex==null){
@@ -7712,18 +7702,18 @@
                                     } else {
                                         xmlWriter.writeStartElement("resultSize");
                                     }
-
+                                
                                                if (localResultSize==java.lang.Integer.MIN_VALUE) {
-
+                                           
                                                          throw new org.apache.axis2.databinding.ADBException("resultSize cannot be null!!");
-
+                                                      
                                                } else {
                                                     xmlWriter.writeCharacters(org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localResultSize));
                                                }
-
+                                    
                                    xmlWriter.writeEndElement();
                              } if (localResultsTracker){
-
+                            
                             if (localResults!=null){
                                 if (localResults instanceof org.apache.axis2.databinding.ADBBean){
                                     ((org.apache.axis2.databinding.ADBBean)localResults).serialize(
@@ -7752,7 +7742,7 @@
                                     xmlWriter.writeEndElement();
                                  }
                             } else {
-
+                                
                                         // write null attribute
                                             java.lang.String namespace2 = "http://domain.archiva.stimulus.com/xsd";
                                             if (! namespace2.equals("")) {
@@ -7776,7 +7766,7 @@
                                            // write the nil attribute
                                            writeAttribute("xsi","http://www.w3.org/2001/XMLSchema-instance","nil","1",xmlWriter);
                                            xmlWriter.writeEndElement();
-
+                                    
                             }
 
 
@@ -7830,20 +7820,20 @@
                                     } else {
                                         xmlWriter.writeStartElement("searchQuery");
                                     }
-
+                                
 
                                           if (localSearchQuery==null){
                                               // write the nil attribute
-
+                                              
                                                      writeAttribute("xsi","http://www.w3.org/2001/XMLSchema-instance","nil","1",xmlWriter);
-
+                                                  
                                           }else{
 
-
+                                        
                                                    xmlWriter.writeCharacters(localSearchQuery);
-
+                                            
                                           }
-
+                                    
                                    xmlWriter.writeEndElement();
                              } if (localSortFieldTracker){
                                     namespace = "http://domain.archiva.stimulus.com/xsd";
@@ -7864,20 +7854,20 @@
                                     } else {
                                         xmlWriter.writeStartElement("sortField");
                                     }
-
+                                
 
                                           if (localSortField==null){
                                               // write the nil attribute
-
+                                              
                                                      writeAttribute("xsi","http://www.w3.org/2001/XMLSchema-instance","nil","1",xmlWriter);
-
+                                                  
                                           }else{
 
-
+                                        
                                                    xmlWriter.writeCharacters(localSortField);
-
+                                            
                                           }
-
+                                    
                                    xmlWriter.writeEndElement();
                              } if (localSortOrderTracker){
                                     if (localSortOrder==null){
@@ -7929,15 +7919,15 @@
                                     } else {
                                         xmlWriter.writeStartElement("totalHits");
                                     }
-
+                                
                                                if (localTotalHits==java.lang.Integer.MIN_VALUE) {
-
+                                           
                                                          throw new org.apache.axis2.databinding.ADBException("totalHits cannot be null!!");
-
+                                                      
                                                } else {
                                                     xmlWriter.writeCharacters(org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localTotalHits));
                                                }
-
+                                    
                                    xmlWriter.writeEndElement();
                              } if (localTypeTracker){
                                     if (localType==null){
@@ -8003,7 +7993,7 @@
                                     }
                                 }
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -8150,7 +8140,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -8159,185 +8149,185 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
                  if (localAfterTracker){
                                       elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "after"));
-
+                                 
                                          elementList.add(localAfter==null?null:
                                          org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localAfter));
                                     } if (localArchiveDateOnlyTracker){
                                       elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "archiveDateOnly"));
-
+                                 
                                 elementList.add(
                                    org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localArchiveDateOnly));
                             } if (localAttachmentTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "attachment"));
-
-
+                            
+                            
                                     elementList.add(localAttachment==null?null:
                                     localAttachment);
                                 } if (localBeforeTracker){
                                       elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "before"));
-
+                                 
                                          elementList.add(localBefore==null?null:
                                          org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localBefore));
                                     } if (localDateTypeTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "dateType"));
-
-
+                            
+                            
                                     elementList.add(localDateType==null?null:
                                     localDateType);
                                 } if (localFetchMessageTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "fetchMessage"));
-
-
+                            
+                            
                                     elementList.add(localFetchMessage==null?null:
                                     localFetchMessage);
                                 } if (localFlagTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "flag"));
-
-
+                            
+                            
                                     elementList.add(localFlag==null?null:
                                     localFlag);
                                 } if (localInitialDateTypeTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "initialDateType"));
-
-
+                            
+                            
                                     elementList.add(localInitialDateType==null?null:
                                     localInitialDateType);
                                 } if (localInitialSortFieldTracker){
                                       elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "initialSortField"));
-
+                                 
                                          elementList.add(localInitialSortField==null?null:
                                          org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localInitialSortField));
                                     } if (localInitialSortOrderTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "initialSortOrder"));
-
-
+                            
+                            
                                     elementList.add(localInitialSortOrder==null?null:
                                     localInitialSortOrder);
                                 } if (localLanguageTracker){
                                       elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "language"));
-
+                                 
                                          elementList.add(localLanguage==null?null:
                                          org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localLanguage));
                                     } if (localMaxSearchResultsTracker){
                                       elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "maxSearchResults"));
-
+                                 
                                 elementList.add(
                                    org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localMaxSearchResults));
                             } if (localOpenIndexTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "openIndex"));
-
-
+                            
+                            
                                     elementList.add(localOpenIndex==null?null:
                                     localOpenIndex);
                                 } if (localPrincipalTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "principal"));
-
-
+                            
+                            
                                     elementList.add(localPrincipal==null?null:
                                     localPrincipal);
                                 } if (localPriorityTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "priority"));
-
-
+                            
+                            
                                     elementList.add(localPriority==null?null:
                                     localPriority);
                                 } if (localResultSizeTracker){
                                       elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "resultSize"));
-
+                                 
                                 elementList.add(
                                    org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localResultSize));
                             } if (localResultsTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "results"));
-
-
+                            
+                            
                                     elementList.add(localResults==null?null:
                                     localResults);
                                 } if (localSearchAnalyzersTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "searchAnalyzers"));
-
-
+                            
+                            
                                     elementList.add(localSearchAnalyzers==null?null:
                                     localSearchAnalyzers);
                                 } if (localSearchQueryTracker){
                                       elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "searchQuery"));
-
+                                 
                                          elementList.add(localSearchQuery==null?null:
                                          org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localSearchQuery));
                                     } if (localSortFieldTracker){
                                       elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "sortField"));
-
+                                 
                                          elementList.add(localSortField==null?null:
                                          org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localSortField));
                                     } if (localSortOrderTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "sortOrder"));
-
-
+                            
+                            
                                     elementList.add(localSortOrder==null?null:
                                     localSortOrder);
                                 } if (localTotalHitsTracker){
                                       elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "totalHits"));
-
+                                 
                                 elementList.add(
                                    org.apache.axis2.databinding.utils.ConverterUtil.convertToString(localTotalHits));
                             } if (localTypeTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "type"));
-
-
+                            
+                            
                                     elementList.add(localType==null?null:
                                     localType);
                                 } if (localViewFilterTracker){
                             elementList.add(new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd",
                                                                       "viewFilter"));
-
-
+                            
+                            
                                     elementList.add(localViewFilter==null?null:
                                     localViewFilter);
                                 }
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -8355,11 +8345,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -8371,607 +8361,607 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"Search".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (Search)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
-
+                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","after").equals(reader.getName())){
-
+                                
                                        nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                        if (!"true".equals(nillableValue) && !"1".equals(nillableValue)){
-
+                                    
                                     java.lang.String content = reader.getElementText();
-
+                                    
                                               object.setAfter(
                                                     org.apache.axis2.databinding.utils.ConverterUtil.convertToDateTime(content));
-
+                                            
                                        } else {
-
-
+                                           
+                                           
                                            reader.getElementText(); // throw away text nodes if any.
                                        }
-
+                                      
                                         reader.next();
-
+                                    
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","archiveDateOnly").equals(reader.getName())){
-
+                                
                                     java.lang.String content = reader.getElementText();
-
+                                    
                                               object.setArchiveDateOnly(
                                                     org.apache.axis2.databinding.utils.ConverterUtil.convertToBoolean(content));
-
+                                              
                                         reader.next();
-
+                                    
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","attachment").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setAttachment(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setAttachment(Search_Attachment.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","before").equals(reader.getName())){
-
+                                
                                        nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                        if (!"true".equals(nillableValue) && !"1".equals(nillableValue)){
-
+                                    
                                     java.lang.String content = reader.getElementText();
-
+                                    
                                               object.setBefore(
                                                     org.apache.axis2.databinding.utils.ConverterUtil.convertToDateTime(content));
-
+                                            
                                        } else {
-
-
+                                           
+                                           
                                            reader.getElementText(); // throw away text nodes if any.
                                        }
-
+                                      
                                         reader.next();
-
+                                    
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","dateType").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setDateType(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setDateType(Search_DateType.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","fetchMessage").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setFetchMessage(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setFetchMessage(Search_FetchMessage.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","flag").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setFlag(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setFlag(Search_Flag.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","initialDateType").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setInitialDateType(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setInitialDateType(Search_DateType.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","initialSortField").equals(reader.getName())){
-
+                                
                                        nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                        if (!"true".equals(nillableValue) && !"1".equals(nillableValue)){
-
+                                    
                                     java.lang.String content = reader.getElementText();
-
+                                    
                                               object.setInitialSortField(
                                                     org.apache.axis2.databinding.utils.ConverterUtil.convertToString(content));
-
+                                            
                                        } else {
-
-
+                                           
+                                           
                                            reader.getElementText(); // throw away text nodes if any.
                                        }
-
+                                      
                                         reader.next();
-
+                                    
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","initialSortOrder").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setInitialSortOrder(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setInitialSortOrder(Search_SortOrder.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","language").equals(reader.getName())){
-
+                                
                                        nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                        if (!"true".equals(nillableValue) && !"1".equals(nillableValue)){
-
+                                    
                                     java.lang.String content = reader.getElementText();
-
+                                    
                                               object.setLanguage(
                                                     org.apache.axis2.databinding.utils.ConverterUtil.convertToString(content));
-
+                                            
                                        } else {
-
-
+                                           
+                                           
                                            reader.getElementText(); // throw away text nodes if any.
                                        }
-
+                                      
                                         reader.next();
-
+                                    
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","maxSearchResults").equals(reader.getName())){
-
+                                
                                     java.lang.String content = reader.getElementText();
-
+                                    
                                               object.setMaxSearchResults(
                                                     org.apache.axis2.databinding.utils.ConverterUtil.convertToInt(content));
-
+                                              
                                         reader.next();
-
+                                    
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                                object.setMaxSearchResults(java.lang.Integer.MIN_VALUE);
-
+                                           
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","openIndex").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setOpenIndex(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setOpenIndex(Search_OpenIndex.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","principal").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setPrincipal(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setPrincipal(Principal.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","priority").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setPriority(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setPriority(Search_Priority.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","resultSize").equals(reader.getName())){
-
+                                
                                     java.lang.String content = reader.getElementText();
-
+                                    
                                               object.setResultSize(
                                                     org.apache.axis2.databinding.utils.ConverterUtil.convertToInt(content));
-
+                                              
                                         reader.next();
-
+                                    
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                                object.setResultSize(java.lang.Integer.MIN_VALUE);
-
+                                           
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","results").equals(reader.getName())){
-
+                                
                                      object.setResults(org.apache.axis2.databinding.utils.ConverterUtil.getAnyTypeObject(reader,
                                                 ExtensionMapper.class));
-
+                                       
                                          reader.next();
-
+                                     
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","searchAnalyzers").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setSearchAnalyzers(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setSearchAnalyzers(Map.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","searchQuery").equals(reader.getName())){
-
+                                
                                        nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                        if (!"true".equals(nillableValue) && !"1".equals(nillableValue)){
-
+                                    
                                     java.lang.String content = reader.getElementText();
-
+                                    
                                               object.setSearchQuery(
                                                     org.apache.axis2.databinding.utils.ConverterUtil.convertToString(content));
-
+                                            
                                        } else {
-
-
+                                           
+                                           
                                            reader.getElementText(); // throw away text nodes if any.
                                        }
-
+                                      
                                         reader.next();
-
+                                    
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","sortField").equals(reader.getName())){
-
+                                
                                        nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                        if (!"true".equals(nillableValue) && !"1".equals(nillableValue)){
-
+                                    
                                     java.lang.String content = reader.getElementText();
-
+                                    
                                               object.setSortField(
                                                     org.apache.axis2.databinding.utils.ConverterUtil.convertToString(content));
-
+                                            
                                        } else {
-
-
+                                           
+                                           
                                            reader.getElementText(); // throw away text nodes if any.
                                        }
-
+                                      
                                         reader.next();
-
+                                    
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","sortOrder").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setSortOrder(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setSortOrder(Search_SortOrder.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","totalHits").equals(reader.getName())){
-
+                                
                                     java.lang.String content = reader.getElementText();
-
+                                    
                                               object.setTotalHits(
                                                     org.apache.axis2.databinding.utils.ConverterUtil.convertToInt(content));
-
+                                              
                                         reader.next();
-
+                                    
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                                object.setTotalHits(java.lang.Integer.MIN_VALUE);
-
+                                           
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","type").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setType(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setType(Search_Type.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
-
+                                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://domain.archiva.stimulus.com/xsd","viewFilter").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setViewFilter(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setViewFilter(ViewFilter.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
+                                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -8984,11 +8974,11 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class Exception
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -8996,7 +8986,7 @@
                 Namespace URI = http://service.archiva.stimulus.com
                 Namespace Prefix = ns1
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://service.archiva.stimulus.com")){
@@ -9005,21 +8995,21 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
                         /**
                         * field for Exception
                         */
 
-
+                        
                                     protected java.lang.Object localException ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localExceptionTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -9029,27 +9019,27 @@
                                return localException;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param Exception
                                */
                                public void setException(java.lang.Object param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localExceptionTracker = true;
                                        } else {
                                           localExceptionTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localException=param;
-
+                                    
 
                                }
-
+                            
 
      /**
      * isReaderMTOMAware
@@ -9057,7 +9047,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -9065,8 +9055,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -9078,7 +9068,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -9088,7 +9078,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -9103,13 +9093,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -9130,9 +9120,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://service.archiva.stimulus.com");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -9145,10 +9135,10 @@
                            xmlWriter);
                    }
 
-
+               
                    }
                 if (localExceptionTracker){
-
+                            
                             if (localException!=null){
                                 if (localException instanceof org.apache.axis2.databinding.ADBBean){
                                     ((org.apache.axis2.databinding.ADBBean)localException).serialize(
@@ -9177,7 +9167,7 @@
                                     xmlWriter.writeEndElement();
                                  }
                             } else {
-
+                                
                                         // write null attribute
                                             java.lang.String namespace2 = "http://service.archiva.stimulus.com";
                                             if (! namespace2.equals("")) {
@@ -9201,13 +9191,13 @@
                                            // write the nil attribute
                                            writeAttribute("xsi","http://www.w3.org/2001/XMLSchema-instance","nil","1",xmlWriter);
                                            xmlWriter.writeEndElement();
-
+                                    
                             }
 
 
                         }
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -9354,7 +9344,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -9363,34 +9353,34 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
                  if (localExceptionTracker){
                             elementList.add(new javax.xml.namespace.QName("http://service.archiva.stimulus.com",
                                                                       "Exception"));
-
-
+                            
+                            
                                     elementList.add(localException==null?null:
                                     localException);
                                 }
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -9408,11 +9398,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -9424,55 +9414,55 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"Exception".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (Exception)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
-
+                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://service.archiva.stimulus.com","Exception").equals(reader.getName())){
-
+                                
                                      object.setException(org.apache.axis2.databinding.utils.ConverterUtil.getAnyTypeObject(reader,
                                                 ExtensionMapper.class));
-
+                                       
                                          reader.next();
-
+                                     
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
+                                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -9485,173 +9475,173 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class ExtensionMapper{
 
           public static java.lang.Object getTypeObject(java.lang.String namespaceURI,
                                                        java.lang.String typeName,
                                                        javax.xml.stream.XMLStreamReader reader) throws java.lang.Exception{
 
-
+              
                   if (
                   "http://domain.archiva.stimulus.com/xsd".equals(namespaceURI) &&
                   "Search_Type".equals(typeName)){
-
+                   
                             return  Search_Type.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
                   if (
                   "http://domain.archiva.stimulus.com/xsd".equals(namespaceURI) &&
                   "Search_FetchMessage".equals(typeName)){
-
+                   
                             return  Search_FetchMessage.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
                   if (
                   "http://domain.archiva.stimulus.com/xsd".equals(namespaceURI) &&
                   "Search_Flag".equals(typeName)){
-
+                   
                             return  Search_Flag.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
                   if (
                   "http://exception.archiva.stimulus.com/xsd".equals(namespaceURI) &&
                   "ArchivaException".equals(typeName)){
-
+                   
                             return  ArchivaException.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
                   if (
                   "http://domain.archiva.stimulus.com/xsd".equals(namespaceURI) &&
                   "Search_OpenIndex".equals(typeName)){
-
+                   
                             return  Search_OpenIndex.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
                   if (
                   "http://domain.archiva.stimulus.com/xsd".equals(namespaceURI) &&
                   "Search_DateType".equals(typeName)){
-
+                   
                             return  Search_DateType.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
                   if (
                   "http://util.java/xsd".equals(namespaceURI) &&
                   "Map".equals(typeName)){
-
+                   
                             return  Map.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
                   if (
                   "http://exception.archiva.stimulus.com/xsd".equals(namespaceURI) &&
                   "ChainedException".equals(typeName)){
-
+                   
                             return  ChainedException.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
                   if (
                   "http://domain.archiva.stimulus.com/xsd".equals(namespaceURI) &&
                   "Search_SortOrder".equals(typeName)){
-
+                   
                             return  Search_SortOrder.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
                   if (
                   "http://domain.archiva.stimulus.com/xsd".equals(namespaceURI) &&
                   "Search_Priority".equals(typeName)){
-
+                   
                             return  Search_Priority.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
                   if (
                   "http://domain.archiva.stimulus.com/xsd".equals(namespaceURI) &&
                   "ViewFilter".equals(typeName)){
-
+                   
                             return  ViewFilter.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
                   if (
                   "http://security.java/xsd".equals(namespaceURI) &&
                   "Principal".equals(typeName)){
-
+                   
                             return  Principal.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
                   if (
                   "http://domain.archiva.stimulus.com/xsd".equals(namespaceURI) &&
                   "Search".equals(typeName)){
-
+                   
                             return  Search.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
                   if (
                   "http://service.archiva.stimulus.com".equals(namespaceURI) &&
                   "Exception".equals(typeName)){
-
+                   
                             return  Exception.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
                   if (
                   "http://domain.archiva.stimulus.com/xsd".equals(namespaceURI) &&
                   "Search_Attachment".equals(typeName)){
-
+                   
                             return  Search_Attachment.Factory.parse(reader);
-
+                        
 
                   }
 
-
+              
              throw new org.apache.axis2.databinding.ADBException("Unsupported type " + namespaceURI + " " + typeName);
           }
 
         }
-
+    
         public static class Search_Attachment
         implements org.apache.axis2.databinding.ADBBean{
         /* This type was generated from the piece of schema that had
@@ -9659,7 +9649,7 @@
                 Namespace URI = http://domain.archiva.stimulus.com/xsd
                 Namespace Prefix = ns3
                 */
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://domain.archiva.stimulus.com/xsd")){
@@ -9668,7 +9658,7 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
      /**
      * isReaderMTOMAware
@@ -9676,7 +9666,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -9684,8 +9674,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -9697,7 +9687,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,parentQName){
 
@@ -9707,7 +9697,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                parentQName,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -9722,13 +9712,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -9749,9 +9739,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://domain.archiva.stimulus.com/xsd");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -9764,11 +9754,11 @@
                            xmlWriter);
                    }
 
-
+               
                    }
-
+               
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -9915,7 +9905,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -9924,27 +9914,27 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
-
+                
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -9962,11 +9952,11 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -9978,39 +9968,39 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"Search_Attachment".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (Search_Attachment)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
+                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -10023,20 +10013,20 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
         public static class ArchivaExceptionE
         implements org.apache.axis2.databinding.ADBBean{
-
+        
                 public static final javax.xml.namespace.QName MY_QNAME = new javax.xml.namespace.QName(
                 "http://service.archiva.stimulus.com",
                 "ArchivaException",
                 "ns1");
 
-
+            
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://service.archiva.stimulus.com")){
@@ -10045,21 +10035,21 @@
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
 
-
+        
 
                         /**
                         * field for ArchivaException
                         */
 
-
+                        
                                     protected ArchivaException localArchivaException ;
-
+                                
                            /*  This tracker boolean wil be used to detect whether the user called the set method
                           *   for this attribute. It will be used to determine whether to include this field
                            *   in the serialized XML
                            */
                            protected boolean localArchivaExceptionTracker = false ;
-
+                           
 
                            /**
                            * Auto generated getter method
@@ -10069,27 +10059,27 @@
                                return localArchivaException;
                            }
 
-
-
+                           
+                        
                             /**
                                * Auto generated setter method
                                * @param param ArchivaException
                                */
                                public void setArchivaException(ArchivaException param){
-
+                            
                                        if (param != null){
                                           //update the setting tracker
                                           localArchivaExceptionTracker = true;
                                        } else {
                                           localArchivaExceptionTracker = true;
-
+                                              
                                        }
-
+                                   
                                             this.localArchivaException=param;
-
+                                    
 
                                }
-
+                            
 
      /**
      * isReaderMTOMAware
@@ -10097,7 +10087,7 @@
      */
    public static boolean isReaderMTOMAware(javax.xml.stream.XMLStreamReader reader) {
         boolean isReaderMTOMAware = false;
-
+        
         try{
           isReaderMTOMAware = java.lang.Boolean.TRUE.equals(reader.getProperty(org.apache.axiom.om.OMConstants.IS_DATA_HANDLERS_AWARE));
         }catch(java.lang.IllegalArgumentException e){
@@ -10105,8 +10095,8 @@
         }
         return isReaderMTOMAware;
    }
-
-
+     
+     
         /**
         *
         * @param parentQName
@@ -10118,7 +10108,7 @@
                final org.apache.axiom.om.OMFactory factory) throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                 org.apache.axiom.om.OMDataSource dataSource =
                        new org.apache.axis2.databinding.ADBDataSource(this,MY_QNAME){
 
@@ -10128,7 +10118,7 @@
                };
                return new org.apache.axiom.om.impl.llom.OMSourcedElementImpl(
                MY_QNAME,factory,dataSource);
-
+            
        }
 
          public void serialize(final javax.xml.namespace.QName parentQName,
@@ -10143,13 +10133,13 @@
                                org.apache.axis2.databinding.utils.writer.MTOMAwareXMLStreamWriter xmlWriter,
                                boolean serializeType)
             throws javax.xml.stream.XMLStreamException, org.apache.axis2.databinding.ADBException{
-
-
+            
+                
 
 
                 java.lang.String prefix = null;
                 java.lang.String namespace = null;
-
+                
 
                     prefix = parentQName.getPrefix();
                     namespace = parentQName.getNamespaceURI();
@@ -10170,9 +10160,9 @@
                     } else {
                         xmlWriter.writeStartElement(parentQName.getLocalPart());
                     }
-
+                
                   if (serializeType){
-
+               
 
                    java.lang.String namespacePrefix = registerPrefix(xmlWriter,"http://service.archiva.stimulus.com");
                    if ((namespacePrefix != null) && (namespacePrefix.trim().length() > 0)){
@@ -10185,7 +10175,7 @@
                            xmlWriter);
                    }
 
-
+               
                    }
                 if (localArchivaExceptionTracker){
                                     if (localArchivaException==null){
@@ -10220,7 +10210,7 @@
                                     }
                                 }
                     xmlWriter.writeEndElement();
-
+               
 
         }
 
@@ -10367,7 +10357,7 @@
             }
 
 
-
+  
         /**
         * databinding method to get an XML representation of this object
         *
@@ -10376,34 +10366,34 @@
                     throws org.apache.axis2.databinding.ADBException{
 
 
-
+        
                  java.util.ArrayList elementList = new java.util.ArrayList();
                  java.util.ArrayList attribList = new java.util.ArrayList();
 
                  if (localArchivaExceptionTracker){
                             elementList.add(new javax.xml.namespace.QName("http://service.archiva.stimulus.com",
                                                                       "ArchivaException"));
-
-
+                            
+                            
                                     elementList.add(localArchivaException==null?null:
                                     localArchivaException);
                                 }
 
                 return new org.apache.axis2.databinding.utils.reader.ADBXMLStreamReaderImpl(qName, elementList.toArray(), attribList.toArray());
-
-
+            
+            
 
         }
 
-
+  
 
      /**
       *  Factory class that keeps the parse method
       */
     public static class Factory{
 
-
-
+        
+        
 
         /**
         * static method to create the object
@@ -10421,22 +10411,22 @@
             java.lang.String prefix ="";
             java.lang.String namespaceuri ="";
             try {
-
+                
                 while (!reader.isStartElement() && !reader.isEndElement())
                     reader.next();
 
-
+                
                    nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                    if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                          // Skip the element and report the null value.  It cannot have subelements.
                          while (!reader.isEndElement())
                              reader.next();
-
+                         
                                  return null;
-
+                             
 
                    }
-
+                
                 if (reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","type")!=null){
                   java.lang.String fullTypeName = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance",
                         "type");
@@ -10448,63 +10438,63 @@
                     nsPrefix = nsPrefix==null?"":nsPrefix;
 
                     java.lang.String type = fullTypeName.substring(fullTypeName.indexOf(":")+1);
-
+                    
                             if (!"ArchivaException".equals(type)){
                                 //find namespace for the prefix
                                 java.lang.String nsUri = reader.getNamespaceContext().getNamespaceURI(nsPrefix);
                                 return (ArchivaExceptionE)ExtensionMapper.getTypeObject(
                                      nsUri,type,reader);
                               }
-
+                        
 
                   }
-
+                
 
                 }
 
+                
 
-
-
+                
                 // Note all attributes that were handled. Used to differ normal attributes
                 // from anyAttributes.
                 java.util.Vector handledAttributes = new java.util.Vector();
+                
 
-
-
-
+                 
+                    
                     reader.next();
-
-
+                
+                                    
                                     while (!reader.isStartElement() && !reader.isEndElement()) reader.next();
-
+                                
                                     if (reader.isStartElement() && new javax.xml.namespace.QName("http://service.archiva.stimulus.com","ArchivaException").equals(reader.getName())){
-
+                                
                                       nillableValue = reader.getAttributeValue("http://www.w3.org/2001/XMLSchema-instance","nil");
                                       if ("true".equals(nillableValue) || "1".equals(nillableValue)){
                                           object.setArchivaException(null);
                                           reader.next();
-
+                                            
                                             reader.next();
-
+                                          
                                       }else{
-
+                                    
                                                 object.setArchivaException(ArchivaException.Factory.parse(reader));
-
+                                              
                                         reader.next();
                                     }
                               }  // End of if for expected property start element
-
+                                
                                     else {
-
+                                        
                                     }
-
+                                  
                             while (!reader.isStartElement() && !reader.isEndElement())
                                 reader.next();
-
+                            
                                 if (reader.isStartElement())
                                 // A start element we are not expecting indicates a trailing invalid property
                                 throw new org.apache.axis2.databinding.ADBException("Unexpected subelement " + reader.getLocalName());
-
+                            
 
 
 
@@ -10517,44 +10507,44 @@
 
         }//end of factory class
 
-
+        
 
         }
-
-
+           
+          
             private  org.apache.axiom.om.OMElement  toOM(com.stimulus.archiva.service.SearchServiceStub.SearchMessage param, boolean optimizeContent)
             throws org.apache.axis2.AxisFault {
 
-
+            
                         try{
                              return param.getOMElement(com.stimulus.archiva.service.SearchServiceStub.SearchMessage.MY_QNAME,
                                           org.apache.axiom.om.OMAbstractFactory.getOMFactory());
                         } catch(org.apache.axis2.databinding.ADBException e){
                             throw org.apache.axis2.AxisFault.makeFault(e);
                         }
-
+                    
 
             }
-
+        
             private  org.apache.axiom.om.OMElement  toOM(com.stimulus.archiva.service.SearchServiceStub.ArchivaExceptionE param, boolean optimizeContent)
             throws org.apache.axis2.AxisFault {
 
-
+            
                         try{
                              return param.getOMElement(com.stimulus.archiva.service.SearchServiceStub.ArchivaExceptionE.MY_QNAME,
                                           org.apache.axiom.om.OMAbstractFactory.getOMFactory());
                         } catch(org.apache.axis2.databinding.ADBException e){
                             throw org.apache.axis2.AxisFault.makeFault(e);
                         }
-
+                    
 
             }
-
-
+        
+                                    
                                         private  org.apache.axiom.soap.SOAPEnvelope toEnvelope(org.apache.axiom.soap.SOAPFactory factory, com.stimulus.archiva.service.SearchServiceStub.SearchMessage param, boolean optimizeContent)
                                         throws org.apache.axis2.AxisFault{
 
-
+                                             
                                                     try{
 
                                                             org.apache.axiom.soap.SOAPEnvelope emptyEnvelope = factory.getDefaultEnvelope();
@@ -10563,14 +10553,14 @@
                                                         } catch(org.apache.axis2.databinding.ADBException e){
                                                             throw org.apache.axis2.AxisFault.makeFault(e);
                                                         }
-
+                                                
 
                                         }
-
-
+                                
+                             
                              /* methods to provide back word compatibility */
 
-
+                             
 
 
         /**
@@ -10587,21 +10577,21 @@
         java.util.Map extraNamespaces) throws org.apache.axis2.AxisFault{
 
         try {
-
+        
                 if (com.stimulus.archiva.service.SearchServiceStub.SearchMessage.class.equals(type)){
-
+                
                            return com.stimulus.archiva.service.SearchServiceStub.SearchMessage.Factory.parse(param.getXMLStreamReaderWithoutCaching());
-
+                    
 
                 }
-
+           
                 if (com.stimulus.archiva.service.SearchServiceStub.ArchivaExceptionE.class.equals(type)){
-
+                
                            return com.stimulus.archiva.service.SearchServiceStub.ArchivaExceptionE.Factory.parse(param.getXMLStreamReaderWithoutCaching());
-
+                    
 
                 }
-
+           
         } catch (java.lang.Exception e) {
         throw org.apache.axis2.AxisFault.makeFault(e);
         }
@@ -10610,5 +10600,6 @@
 
 
 
-
+    
    }
+   

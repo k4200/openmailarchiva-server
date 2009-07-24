@@ -1,8 +1,9 @@
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+
+/* Copyright (C) 2005-2007 Jamie Angus Band 
+ * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+ * 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -37,8 +38,8 @@ public class Config implements Serializable, Cloneable {
      protected static final boolean LOAD_AS_RESOURCE_BUNDLE = false;
      protected static final Log logger = LogFactory.getLog(Config.class);
      protected static final Log audit = LogFactory.getLog("com.stimulus.archiva.audit");
-     protected static WeakHashMap<UpdateObserver,UpdateObserver> updateObservers;
-
+     protected static WeakHashMap<UpdateObserver,UpdateObserver> updateObservers; 
+     
      // misc configuration options
      protected static final String applicationVersionKey       	= "application.version";
      protected static final String exportMaxMessagesKey		  	= "export.max.messages";
@@ -60,9 +61,9 @@ public class Config implements Serializable, Cloneable {
      protected static boolean shutdown = false;
 
      protected static final Object readWriteLock = new Object();
-     protected static FileSystem filesystem;
+     protected static FileSystem filesystem; 
      protected static StopBlockFactory stopBlockFactory;
-
+     
      protected ArchiveFilter 		archiveFilter;
      protected Authentication 		authentication;
      protected Domains 				domains;
@@ -70,7 +71,7 @@ public class Config implements Serializable, Cloneable {
      protected ADIdentity 			adIdentity;
      protected BasicIdentity 		basicIdentity;
      protected MailboxConnections 	mailboxConnections;
-
+     
      protected Archiver				archiver;
      protected Indexer				indexer;
      protected Volumes 				volumes;
@@ -87,32 +88,32 @@ public class Config implements Serializable, Cloneable {
      protected LogFiles				logFiles;
 	 protected VolumeIRService 		volumeIRService;
 	 protected CPUThrottleService	throttleService;
-
-
+     
+     
      protected byte[]    salt;
      protected String    pbeAlgorithm;
      protected static ConfigAutoLoadService configAutoLoad = new ConfigAutoLoadService();
-
+    
      protected int exportMaxMessages	= 1000;
      protected int viewMaxMessages 		= 1000;
-     protected int deleteMaxMessages	= 1000;
+     protected int deleteMaxMessages	= 1000;	
      protected int sendMaxMessages 		= 1000;
      protected String tempDir;
-
+     
     protected FetchMessageCallback callback;
 	static {
-
+	
     	 startup();
     	 System.setProperty("mail.mime.base64.ignoreerrors", "true");
     	 System.setProperty("mail.mime.applefilenames", "true");
      }
-
+     
      public Config() {
-
+    
      }
 
      public void init(FetchMessageCallback callback) {
-
+    	 
     	  if (callback==null) {
     		  logger.debug("call back is null.");
     		  callback = MessageService.getFetchMessageCallback();
@@ -144,18 +145,18 @@ public class Config implements Serializable, Cloneable {
 	   	  registerProps();
      }
 	 public String getApplicationVersion() { return applicationVersion; }
-
+	 
 	 public String getProductName() { return FileSystem.getProductName(); }
-
-	 public FetchMessageCallback getFetchMessageCallback() {
+	
+	 public FetchMessageCallback getFetchMessageCallback() { 
 		 if (callback==null) {
 			 logger.debug("call back is null.");
    		  	callback = MessageService.getFetchMessageCallback();
    	  	 }
-		 return callback;
+		 return callback; 
 	 }
-
-
+	 
+	 
 	 protected void registerProps() {
 		 props = new ArrayList<Props>();
 		 props.add(agent);
@@ -167,7 +168,7 @@ public class Config implements Serializable, Cloneable {
 		 props.add(adIdentity);
 		 props.add(basicIdentity);
 		 props.add(mailboxConnections);
-
+		
 		 props.add(archiver);
 		 props.add(volumes);
 		 props.add(search);
@@ -175,7 +176,7 @@ public class Config implements Serializable, Cloneable {
 		 props.add(roles);
 		 props.add(throttleService);
 	 }
-
+	 
 	 public void registerServices() {
 		 services.registerService(smtpService);
 		 services.registerService(milterService);
@@ -183,23 +184,23 @@ public class Config implements Serializable, Cloneable {
 		 services.registerService(indexer);
 		 services.registerService(volumeIRService);
 		 services.registerService(configAutoLoad);
-		 services.registerService(volumeInfoService);
-		 services.registerService(new ReArchiveService());
-		 //services.registerService(throttleService);
+		 services.registerService(volumeInfoService); 
+		 services.registerService(new ReArchiveService()); 
+		 //services.registerService(throttleService); 
 }
  	public void save(String prefix, Settings prop, String suffix) {
-
+		 
 	 }
 
 	 public String getServerConfFile() {
 		 return filesystem.getConfigurationPath() + File.separatorChar + "server.conf";
 	 }
-
+	 
 	 public Settings loadConfigurationFile(MailArchivaPrincipal principal) throws ConfigurationException {
 			String fileName = getServerConfFile();
 		  	logger.debug("loading server settings {location='"+fileName+"'}");
 		  	Settings prop = Settings.loadProperties(fileName,"UTF-8");
-
+		  	
 		  	// record this event
 		  	Settings debugoutput = (Settings)prop.clone();
 		  	debugoutput.setProperty("security.passhrase","<hidden>");
@@ -207,25 +208,25 @@ public class Config implements Serializable, Cloneable {
 		    logger.debug(debugoutput.toString());
 		  	return prop;
 	 }
-
+	 
 	 public void saveConfigurationFile(MailArchivaPrincipal principal, Settings settings) throws ConfigurationException {
-
+		
 		synchronized(readWriteLock) {
 			String fileName = getServerConfFile();
 			logger.debug("saving Settings {location='"+fileName+"'}");
-
+		
 			logger.debug(settings.toString());
 			audit.info("update config "+ settings.toString()+", "+principal+"}");
-
+			
 			String intro =  "# "+Config.getConfig().getProductName().toUpperCase(Locale.ENGLISH)+" Settings File" + System.getProperty("line.separator")+
 							"# Copyright Jamie Band 2008" + System.getProperty("line.separator")+
 							"version = "+getApplicationVersion()+System.getProperty("line.separator");
-
+		
 			Settings.saveProperties(fileName, intro, settings,"UTF-8");
 		}
-
+	
 	}
-
+	 
 	private String newTempDir() {
 		 String tmpDir = System.getProperty("java.io.tmpdir");
 	  	  if (tmpDir.charAt(tmpDir.length()-1)==File.separatorChar)
@@ -234,47 +235,47 @@ public class Config implements Serializable, Cloneable {
 	  		  tmpDir = File.separatorChar + "tmp" + File.separatorChar + FileSystem.getProductName().toLowerCase(Locale.ENGLISH);
 	  	  } else {
 	  		  if (!tmpDir.contains(FileSystem.getProductName().toLowerCase(Locale.ENGLISH))) {
-	  			tmpDir = tmpDir + File.separatorChar + FileSystem.getProductName().toLowerCase(Locale.ENGLISH);
+	  			tmpDir = tmpDir + File.separatorChar + FileSystem.getProductName().toLowerCase(Locale.ENGLISH); 
 	  		  }
-	  	  }
+	  	  }    
 	  	  return tmpDir;
 	}
-
-
+	
+    
     public synchronized Settings loadConfiguration(MailArchivaPrincipal principal) throws ConfigurationException {
-    	Settings prop = loadConfigurationFile(principal);
+    	Settings prop = loadConfigurationFile(principal); 
     	setSalt(prop.getProperty(saltKey));
      	setPBEAlgorithm(ConfigUtil.getString(prop.getProperty(pbeAlgorithmKey),defaultPBEAlgorithm));
 		//applicationVersion = ConfigUtil.getString(settings.getProperty(applicationVersionKey),defaultApplicationVersion);
 		String tmpDir = prop.getProperty(tempDirKey);
-
+	  	
 	  	if (tmpDir==null) {
 	  		tempDir = newTempDir();
 	  	} else {
 	  		tempDir = tmpDir;
 	  	}
 	  	File tempDirFile = new File(tempDir);
-
+	  	
 	  	if (!tempDirFile.exists())
 	  		tempDirFile.mkdirs();
-
+	  	
 	  	System.setProperty("java.io.tmpdir",tempDir);
-
+	  	
 	  	logger.debug("initializing temp directory");
-
+	  	 
 		for (Props setting : props) {
 			setting.loadSettings(null,prop,null);
 		}
     	return prop;
     }
-
+    
     public synchronized Settings saveConfiguration(MailArchivaPrincipal principal) throws ConfigurationException {
 	    Settings settings = getSettings();
 		saveConfigurationFile(principal,settings);
 		return settings;
     }
-
-	 public Settings getSettings() {
+	 
+	 public Settings getSettings() { 
 		 	Settings currentConfiguration = new Settings();
 		 	currentConfiguration.setProperty(pbeAlgorithmKey,getPBEAlgorithm());
 			if (salt!=null)
@@ -287,7 +288,7 @@ public class Config implements Serializable, Cloneable {
 			return currentConfiguration;
 
 	 }
-
+   
     // legacy
       public void load(MailArchivaPrincipal principal) throws ConfigurationException {
     	  loadSettings(principal);
@@ -296,7 +297,7 @@ public class Config implements Serializable, Cloneable {
       public void save(MailArchivaPrincipal principal) throws ConfigurationException {
     	  saveSettings(principal,true);
       }
-
+      
       public synchronized void loadSettings(MailArchivaPrincipal principal) throws ConfigurationException {
     	  try {
     		configAutoLoad.block();
@@ -311,13 +312,13 @@ public class Config implements Serializable, Cloneable {
     		basicIdentity.loadXMLFile();
     		emailFields.loadXMLFile();
     		try { volumes.loadAllVolumeInfo(); } catch (Exception e) {}
-    	    notifyUpdateObservers();
+    	    notifyUpdateObservers(); 
     	  } finally {
     		  configAutoLoad.unblock();
     		  volumeIRService.unblock();
     	  }
       }
-
+      
       public synchronized void saveSettings(MailArchivaPrincipal principal, boolean updateRemoteServers) throws ConfigurationException {
     	  	// we dont want changes to trigger configautoload service
     	  try {
@@ -332,94 +333,94 @@ public class Config implements Serializable, Cloneable {
     		  volumeIRService.unblock();
     	  }
       }
-
+     
       public ArchiveFilter getArchiveFilter() { return archiveFilter; }
-
+    
       public Volumes getVolumes() { return volumes; }
-
+      
       public VolumeIRService getVolumeIRService() { return volumeIRService; }
-
+    
       public Domains getDomains() { return domains; }
-
+    
       public Authentication getAuthentication() { return authentication; }
-
+      
       public ADIdentity getADIdentity() {  return adIdentity; }
-
-
+      
+  
       public BasicIdentity getBasicIdentity() { return basicIdentity; }
-
+ 
       public static FileSystem getFileSystem() { return filesystem; }
-
+   
       public Indexer getIndex() { return indexer; }
-
+      
       public Archiver getArchiver() { return archiver; }
-
+      
       public Search getSearch() { return search; }
-
+      
       public Services getServices() { return services; }
-
+      
       public SMTPServerService getSMTPServerService() { return smtpService; }
-
+      
       public MilterServerService getMilterServerService() { return milterService; }
-
+      
       public Agent getAgent() { return agent; }
-
+      
       public Roles getRoles() { return roles; }
-
-
+      
+        
  	 public ConfigAutoLoadService getConfigAutoLoadService() { return configAutoLoad; }
-
+      
       public EmailFields getEmailFields() { return emailFields; }
-
+   
       public LogFiles getLogFiles() { return logFiles; }
-
-
+      
+	 
       public String getTempDir() { return tempDir; }
-
+      
       public void setTempDir(String tempDir) { this.tempDir = tempDir; }
-
+      
 	public int getExportMaxMessages() { return exportMaxMessages; }
 	public int getViewMaxMessages() { return viewMaxMessages; }
 	public int getSendMaxMessages() { return sendMaxMessages; }
 	public int getDeleteMaxMessages() { return deleteMaxMessages; }
+	
 
-
-
+   
     public MailboxConnections getMailboxConnections() {
     	   return mailboxConnections;
     }
-
-
+    
+   
 	   // static methods
-
+	   
 	   public static synchronized Config getConfig() {
 	 		if (Config.config==null) {
 	 			Config.config = new Config();
 	 		}
 	 		return Config.config;
 	   }
-
-
+	 
+	  
 	   public void registerUpdateObserver(UpdateObserver observer) {
 		   updateObservers.put(observer,observer);
 	   }
-
+	   
 	   public void unregisterUpdateObserver(UpdateObserver observer) {
 		   updateObservers.remove(observer);
 	   }
-
+	   
 	   public void notifyUpdateObservers() {
 		   for (UpdateObserver observer : updateObservers.values()) {
 			   observer.updateConfig();
 		   }
 	   }
-
-	   public interface UpdateObserver {
-
+	
+	   public interface UpdateObserver { 
+		   
 		   public void updateConfig();
 	   }
-
-
+	   
+	   
 	   public static void shutdown() {
 		   if (Config.config!=null) {
 			   Config.config.getServices().stopAll();
@@ -432,17 +433,17 @@ public class Config implements Serializable, Cloneable {
 		   Config.stopBlockFactory.shutdown();
 		   Config.stopBlockFactory = null;
 	   }
-
+	   
 	   public static void startup() {
-		   filesystem = new FileSystem();
+		   filesystem = new FileSystem(); 
 		   stopBlockFactory = new StopBlockFactory();
 		   updateObservers = new WeakHashMap<UpdateObserver,UpdateObserver>();
 	   }
-
+	   
 	   public static boolean getShutdown() {
 		   return shutdown;
 	   }
-
+	   
 	   public static StopBlockFactory getStopBlockFactory() {
 		   return stopBlockFactory;
 	   }
@@ -450,21 +451,21 @@ public class Config implements Serializable, Cloneable {
 	   public static String getEncKey() {
 		   return "tQwe4rZdfjerosd23912As23z";
 	   }
-
+	   
 	   public void setPBEAlgorithm(String pbeAlgorithm) {
 	        this.pbeAlgorithm = pbeAlgorithm;
 	    }
-
+	    
 	    public byte[] getSalt() {
 	        return salt;
 	    }
 
 		public String getPBEAlgorithm() { return pbeAlgorithm; }
-
+		
 		 private void setSalt(String saltStr) {
 		        if (saltStr==null) {
 		      	  // we fake the salt for the moment, as there is too much of a risk that
-		      	  // the admin will lose their entire store because they forgot to
+		      	  // the admin will lose their entire store because they forgot to 
 		      	  // copy the server.conf file (which contains their salt value)
 		  	  	  //salt = new byte[8];
 		            //new Random().nextBytes(salt);
@@ -473,11 +474,11 @@ public class Config implements Serializable, Cloneable {
 		  	  	  salt = ConfigUtil.fromHex(saltStr);
 		  	  	}
 		}
-
+		 
 		 public VolumeInfoService getVolumeInfoService() {
 			 return volumeInfoService;
 		 }
-
+		 
 		 public Config clone(MailArchivaPrincipal principal)  throws ConfigurationException {
 			 Config newConfig = new Config();
 			 // for most part we can use properties to clone objects
@@ -491,10 +492,10 @@ public class Config implements Serializable, Cloneable {
 			 newConfig.registerProps(); // re-register properties as we cloned them since config was initialized
 			 return newConfig;
 		 }
-
+		
 }
 
 
-
-
-
+  	
+  	
+  	

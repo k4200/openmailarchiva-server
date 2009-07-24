@@ -15,7 +15,7 @@
  */
 package com.stimulus.struts;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 import org.apache.struts.action.Action;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -128,7 +128,7 @@ public class BeanAction extends Action implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -8636344294577044962L;
-	protected static final Logger logger = Logger.getLogger(Config.class);
+	protected static final Log logger = LogFactory.getLog(Config.class);
 	
 	public final static String getActionPathMethodName(ActionMapping mapping) {
 		String methodName = mapping.getPath();

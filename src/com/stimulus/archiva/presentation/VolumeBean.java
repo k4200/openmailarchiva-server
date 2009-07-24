@@ -1,5 +1,5 @@
 
-/* Copyright (C) 2005-2007 Jamie Angus Band
+/* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
@@ -33,19 +33,19 @@ public class VolumeBean extends BaseBean implements Serializable {
 	 private static final long serialVersionUID = -166626751279723226L;
 	 protected static Log logger = LogFactory.getLog(VolumeBean.class.getName());
 	 protected static final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-
+	 
 	 protected Volume v;
-
+	 
 	 public VolumeBean(Volume v)  {
-
+	
 		 this.v = v;
-
+		
 		  		if (v.getStatus()==Volume.Status.ACTIVE ||
 		  			v.getStatus()==Volume.Status.CLOSED  ||
 		  			v.getStatus()==Volume.Status.UNUSED) {
-
+		  			
 		  		}
-
+		  	
 	 }
 
 	 public String getStatus() {
@@ -53,12 +53,12 @@ public class VolumeBean extends BaseBean implements Serializable {
 		 if (v.getStatus()!=Volume.Status.NEW && v.isEjected()) {
 			 return Volume.Status.EJECTED.toString();
 		 }
-
+		 
 		 return v.getStatus().toString();
 	 }
-
+	 
 	 public void setStatus(String status) throws ConfigurationException {
-
+		 
 			 Status newStatus = Status.CLOSED;
 			 try {
 				 newStatus = Status.valueOf(status.trim().toUpperCase());
@@ -66,20 +66,20 @@ public class VolumeBean extends BaseBean implements Serializable {
 	 	    		logger.error("failed to set volume status. status is set to an illegal value {status='"+status+"'}");
 	 	    		logger.info("volume is automatically set to closed (error recovery)");
 	  		 }
-
+			 
 			 // we are using a different flag for ejected status
 			 //so as to preserve the original volume status when the drive is reinserted
 			 if (newStatus!=Volume.Status.EJECTED)
 				 v.setStatus(newStatus);
-
+		 
 	 }
-
+	
 	  public int getStatusID() {
 		 // if its ejected, we want to show the status as ejected
 		  if (v.isEjected()) {
 				 return Volume.Status.EJECTED.ordinal();
 			 }
-
+		  
 		  return v.getStatus().ordinal();
 	  }
 
@@ -94,10 +94,10 @@ public class VolumeBean extends BaseBean implements Serializable {
 			  return format.format(v.getCreatedDate());
 		  else return "";
 	  }
-
+		 
 	  public long getMaxSize() { return v.getMaxSize() ; }
 	  public String getIndexPath() { return v.getIndexPath(); }
-
+	  
 	  public void setIndexPath(String indexPath) { v.setIndexPath(indexPath); }
 	  public String getPath() { return v.getPath(); }
 	  public void setPath(String path) { v.setPath(path);}
@@ -109,52 +109,52 @@ public class VolumeBean extends BaseBean implements Serializable {
 			  volumeBeans.add(new VolumeBean(vol));
 		  return volumeBeans;
 	  }
-
+	  
 	  public static List<VolumeBean> getVolumeBeans(Volumes volumes) {
 		  return getVolumeBeans(volumes.getVolumes());
 	  }
-
+	  
 	  public static List<String> getStatuses() {
 	    	return EnumUtil.enumToList(Volume.Status.values());
 	  }
-
-	  public String getFreeIndexSpace() {
+	
+	  public String getFreeIndexSpace() { 
 		  if (v.isDiskSpaceChecked())
-			  return v.formatDiskSpace(v.getFreeIndexSpace());
+			  return v.formatDiskSpace(v.getFreeIndexSpace()); 
 		  else
 			  return "";
 	  }
-
-	  public String getFreeArchiveSpace() {
+	  
+	  public String getFreeArchiveSpace() { 
 		  try {
 		  if (v.isDiskSpaceChecked())
-			  return v.formatDiskSpace(v.getFreeArchiveSpace());
-		  else
+			  return v.formatDiskSpace(v.getFreeArchiveSpace()); 
+		  else 
 			  return "";
 		  } catch (Throwable t) {
 			  logger.error("failed to obtain free archive space:"+t.getMessage(),t);
 			  return "";
 		  }
 	  }
-
-	  public String getUsedIndexSpace() {
+	  
+	  public String getUsedIndexSpace() { 
 		  if (v.isDiskSpaceChecked())
 			  return v.formatDiskSpace(v.getUsedIndexSpace());
 		  else
-			  return "";
+			  return "";  
 	  }
-
-	  public String getUsedArchiveSpace() {
+	  
+	  public String getUsedArchiveSpace() { 
 		  if (v.isDiskSpaceChecked())
 			  return v.formatDiskSpace(v.getUsedArchiveSpace());
 		  else
 			  return "";
 	  }
-
-
+	  
+	 
 	  public String getTotalMessageCount() {
 		 return v.formatTotalMessageCount();
 	  }
-
-
+	  
+	
 }

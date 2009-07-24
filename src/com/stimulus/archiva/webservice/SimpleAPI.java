@@ -1,19 +1,4 @@
-
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
- */
- package com.stimulus.archiva.webservice;
+package com.stimulus.archiva.webservice;
 
 import java.util.ArrayList;
 import com.stimulus.archiva.domain.Config;
@@ -34,8 +19,8 @@ public class SimpleAPI {
 	private static MailArchivaPrincipal principal = null;
 	protected static final Log logger = LogFactory.getLog(SearchService.class.getName());
 	protected static final Log audit = LogFactory.getLog("com.stimulus.archiva.audit");
-
-
+	 
+	
 	public static boolean login(String username, String password) throws AxisFault {
 		if (username==null || password==null)
 			return false;
@@ -46,17 +31,17 @@ public class SimpleAPI {
 		} else {
 			audit.warn("failed to login to web service. could not authenticate user. password incorrect? {username='"+username+"'}");
 		}
-
+		
 		return false;
 	}
-
+	
 	public  static void logout() {
 		audit.info("web service logout {"+principal+"'}");
 		principal = null;
-
+		
 	}
 	public static byte[] getMessageByID(String volumeId, String emailId) throws AxisFault {
-		if (principal!=null)
+		if (principal!=null) 
 			throw new AxisFault("not logged in");
 		try {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -67,13 +52,13 @@ public class SimpleAPI {
 			throw new AxisFault("failed to retrieve email:"+ae.getMessage());
 		}
 	}
-
+	
 
 	public static void updateConfiguration(String newSettings) throws AxisFault {
 		if (principal==null) {
 			audit.warn("attempt to update configuration while not logged in");
 			throw new AxisFault("not logged in");
-
+			
 		}
 		Settings settings = new Settings();
 		try {
@@ -90,7 +75,7 @@ public class SimpleAPI {
 			audit.warn("attempt to search message via web service interface while not logged in {query='"+luceneQuery+"'}");
 			throw new AxisFault("not logged in");
 		}
-
+		
 		audit.info("executing search via web service interface {"+principal+",query='"+luceneQuery+"'}");
 		ArrayList<SearchResult> searchResult = null;
 		try {
@@ -140,6 +125,6 @@ public class SimpleAPI {
 		return out;
 		//return (SearchResult[])searchResult.toArray();
 	}
-
-
+	
+	
 }

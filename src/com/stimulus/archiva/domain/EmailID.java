@@ -1,9 +1,9 @@
 
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+/* Copyright (C) 2005-2007 Jamie Angus Band 
+ * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+ * 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -38,21 +38,21 @@ public class EmailID implements Serializable {
         uniqueId = generateUniqueID(email);
         this.volume = volume;
     }
-
+    
     protected EmailID(Volume volume, String uniqueId) {
         this.uniqueId = uniqueId;
         this.volume = volume;
     }
-
+    
 
     public static EmailID getEmailID(Volume volume,String uniqueID) {
     	return new EmailID(volume,uniqueID);
     }
-
+    
     public static EmailID createEmailID(Volume volume, Email email) {
     	return new EmailID(volume,email);
     }
-
+    
     protected EmailID(String uniqueId) {
         this.uniqueId = uniqueId;
     }
@@ -69,7 +69,7 @@ public class EmailID implements Serializable {
     public Volume getVolume() {
     	return volume;
     }
-
+    
     public void setVolume(Volume volume) {
     	this.volume = volume;
     }
@@ -87,7 +87,7 @@ public class EmailID implements Serializable {
     		LinkedList<String> orderedHeaders = new LinkedList<String>();
     		while (headers.hasMoreElements()) {
     			Header header = headers.nextElement();
-
+    			
     			if (Compare.equalsIgnoreCase(header.getName(), "Date") ||
 					Compare.equalsIgnoreCase(header.getName(), "CC") ||
 					Compare.equalsIgnoreCase(header.getName(), "BCC") ||
@@ -95,7 +95,7 @@ public class EmailID implements Serializable {
 					Compare.equalsIgnoreCase(header.getName(), "To") ||
 					Compare.equalsIgnoreCase(header.getName(), "From"))
     					orderedHeaders.add(header.getName()+header.getValue());
-
+    		
     		}
     		Collections.sort(orderedHeaders);
     		StringBuffer allHeaders = new StringBuffer();
@@ -107,7 +107,7 @@ public class EmailID implements Serializable {
     		DigestInputStream dis = new DigestInputStream(is,sha);
     		while (dis.read()!=-1);
     		dis.close();
-		    byte[] digest = sha.digest();
+		    byte[] digest = sha.digest();  
 	  	  	return toHex(digest);
 	  	} catch (Exception e)
 	  	{
@@ -115,7 +115,7 @@ public class EmailID implements Serializable {
 	  		return null;
 	  	}
     }
-
+    
     private static String toHex(byte[] block) {
 		StringBuffer buf = new StringBuffer();
 
@@ -125,31 +125,31 @@ public class EmailID implements Serializable {
 		}
 		return buf + "";
 	}
-
-
+    
+    
 
     @Override
 	public String toString() {
         return "uniqueId='"+uniqueId+"', " + volume;
     }
-
+    
     public static class NullOutputStream extends OutputStream
 	{
 		@Override
 		public void write (byte [] b) throws IOException {}
-
+		
 		@Override
 		public void write (byte [] b, int off, int len) throws IOException {}
-
+			
 		@Override
 		public void write (int b) throws IOException {}
-
-
+			
+	
 		@Override
 		public void flush () throws IOException {}
-
+			
 		@Override
 		public void close () throws IOException {}
-
+		
 	}
 }

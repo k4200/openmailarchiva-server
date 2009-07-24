@@ -1,18 +1,3 @@
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
- */
-
 package com.stimulus.archiva.incoming;
 
 import java.util.*;
@@ -34,7 +19,7 @@ public class RequestQueue
     protected static Log logger = LogFactory.getLog(RequestQueue.class);
     protected FetchMessageCallback callback;
     protected String serverName;
-
+    
     public RequestQueue( String serverName,
     					 String requestHandlerClassName,
     					 FetchMessageCallback callback,
@@ -49,7 +34,7 @@ public class RequestQueue
         this.currentThreads = this.minThreads;
         this.callback = callback;
         this.serverName = serverName;
-
+        
         for( int i=0; i<this.minThreads; i++ ) {
             RequestThread thread = new RequestThread( this, i, requestHandlerClassName, callback );
             thread.setName(serverName+" request processor "+i);
@@ -58,16 +43,16 @@ public class RequestQueue
         }
     }
 
-
+   
     public String getRequestHandlerClassName() {
         return this.requestHandlerClassName;
     }
 
-
+   
     public boolean isAlive() {
     	 if (currentThreads<1)
     		 return true;
-
+    	 
     	 List<RequestThread> threadPool = new ArrayList<RequestThread>();
     	 for (RequestThread rt : threadPool) {
     		 if (rt.isAlive())
@@ -75,19 +60,19 @@ public class RequestQueue
     	 }
     	 return false;
     }
-
+    
     public synchronized void add( Object o ) throws IncomingException {
-
+     
         if( queue.size() > this.maxQueueLength ) {
             throw new IncomingException("the request queue is full. {maxsize='"+this.maxQueueLength+"'",logger );
         }
 
-
+       
         queue.addLast( o );
 
-
+      
         boolean availableThread = false;
-
+     
         for (RequestThread rt : threadPool) {
 
             if( !rt.isProcessing() )
@@ -99,7 +84,7 @@ public class RequestQueue
             logger.debug("incoming request thread is busy");
         }
 
-
+      
         if( !availableThread )
         {
             if( this.currentThreads < this.maxThreads )
@@ -148,4 +133,4 @@ public class RequestQueue
 
         notifyAll();
     }
-}
+}                      

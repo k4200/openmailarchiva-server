@@ -1,8 +1,11 @@
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+package com.stimulus.archiva.incoming;
+
+
+/* Copyright (C) 2005-2007 Jamie Angus Band 
+ * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+ * 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -12,9 +15,6 @@
  * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
-
-package com.stimulus.archiva.incoming;
-
 
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ public class SMTPFilterReader extends FilterReader {
    private static Log logger = LogFactory.getLog(SMTPFilterReader.class);
    private long size = 0;
    private long maxsize = 0;
-
+   
    public SMTPFilterReader(Reader isr, long maxsize) throws IOException,SMTPEndStreamException {
 	 super(isr);
 	 logger.debug("smtpinputstream() construct");
@@ -59,25 +59,25 @@ public int read() throws IOException {
 		   throw new MaxMessageSizeException("maximum message size is exceeded",logger);
 	   }
 	   return readp();
-
+	  
    }
-
+   
    @Override
 public boolean markSupported() {
 	   return false;
    }
-
+   
    protected int readp() throws IOException {
 	   if (end) return -1;
 	   int i= isr.read();
-	   push(i);
+	   push(i); 
 	   bufout();
 	   if (i==-1 || CRLFDotCRLF())
     	  return end();
 	   transparent();
        return buffer[4];
    }
-
+   
    @Override
 public int read(char[] cbuf,int off,int len) throws IOException {
 	   if (end) return -1;
@@ -93,22 +93,22 @@ public int read(char[] cbuf,int off,int len) throws IOException {
 	   }
 	   return i;
    }
-
+   
    protected int end() {
 	   end = true;
 	   logger.debug("smtpinputstream() end");
 	   return -1;
    }
-
-   public int available() throws IOException { return 0; }
-
+   
+   public int available() throws IOException { return 0; } 
+  
    protected void push(int t) {
-
+	 
 	   for (int i=3;i>=0;i--)
 		   buffer[i+1] = buffer[i];
 	   buffer[0] = t;
    }
-
+   
    protected void bufout() {
 	   String out = "";
 	   for (int j=0;j<5;j++)
@@ -117,20 +117,20 @@ public int read(char[] cbuf,int off,int len) throws IOException {
    protected int pop() {
 	   return buffer[4];
    }
-
+   
    protected boolean CRLFDotCRLF() {
 	   if (buffer[0]==10 &&
 		   buffer[1]==13 &&
 		   buffer[2]==46 &&
 		   buffer[3]==10  &&
 		   buffer[4]==13) {
-		   		logger.debug("dot received");
+		   		logger.debug("dot received"); 
 		   		return true;
 		   } else {
 			   return false;
 		   }
    }
-
+   
    protected void transparent() throws IOException {
 	   if (buffer[0]==13 &&
     	   buffer[1]==46 &&
@@ -140,13 +140,13 @@ public int read(char[] cbuf,int off,int len) throws IOException {
 		    buffer[2] = buffer[3];
 		    buffer[3] = buffer[4];
 		    push(isr.read());
-		    logger.debug("transparent marker received");
+		    logger.debug("transparent marker received"); 
 	   }
    }
-
+   
    @Override
 public void close()throws IOException {
 	   end = true;
    }
-
+ 
 }

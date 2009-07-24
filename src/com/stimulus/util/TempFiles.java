@@ -17,12 +17,8 @@ package com.stimulus.util;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 
 import org.apache.commons.logging.*;
 import com.stimulus.archiva.index.VolumeIndex;
@@ -31,19 +27,20 @@ public class TempFiles implements Serializable, Runnable {
     
     
 	private static final long serialVersionUID = 4872238025782129277L;
-	protected ArrayList<TempFile> fileDeleteList = new ArrayList<TempFile>();
+	protected ConcurrentLinkedQueue<TempFile> deleteQueue = new ConcurrentLinkedQueue<TempFile>();
+	protected ConcurrentHashMap<String,TempFile> deleteMap = new ConcurrentHashMap<String,TempFile>();
 	ScheduledExecutorService scheduler;
 	ScheduledFuture<?> scheduledTask;
-    protected Object lock = new Object();
     protected static final Log logger = LogFactory.getLog(VolumeIndex.class.getName());
-    public static final int DELETE_WAIT = 5; // minutes
+    public static final int DELETE_WAIT = 20; // minutes
     
     public TempFiles() {
-		 scheduler = Executors.newScheduledThreadPool(1); 
+    	scheduler = Executors.newScheduledThreadPool(1,ThreadUtil.getDaemonThreadFactory("tempfiles"));
+		 
     }
     
     public void startDaemon() {
-   	 	scheduledTask = scheduler.scheduleAtFixedRate(this, 5, 5, TimeUnit.SECONDS);
+   	 	scheduledTask = scheduler.scheduleAtFixedRate(this, 1, 1, TimeUnit.SECONDS);
     }
     
     public void stopDaemon() {
@@ -52,10 +49,16 @@ public class TempFiles implements Serializable, Runnable {
     }
     
 	 public void markForDeletion(File file) {
-		 synchronized(lock) {
-		     fileDeleteList.add(new TempFile(file));
-			 file.deleteOnExit(); // just in case
-		 }
+		 	 TempFile tempFile = deleteMap.get(file.getPath());
+		 	 if (tempFile!=null) {
+		 		deleteQueue.remove(tempFile);
+		 		deleteMap.remove(tempFile);
+		 	 } else {
+		 		 tempFile = new TempFile(file);
+		 		 deleteQueue.add(new TempFile(file));
+		 		 deleteMap.put(tempFile.getFile().getPath(),tempFile);
+		 		 file.deleteOnExit(); // just in case
+		 	 }
 	 }
 	 
 	 @Override
@@ -72,6 +75,7 @@ public class TempFiles implements Serializable, Runnable {
 			 this.file = file;
 			 created = System.currentTimeMillis();
 		 }
+	
 		 
 		 public File getFile() { return file; } 
 		 
@@ -81,21 +85,41 @@ public class TempFiles implements Serializable, Runnable {
 			 return elapsedmins > DELETE_WAIT;
 		 }
 	 }
+	 
+	 private static long deleteOldTempFiles(File file) {
+         long size = 0;
+         if(file.isDirectory()) {
+             File[] files = file.listFiles();
+             if(files != null) {
+                 for(int i = 0; i < files.length; i++) {
+                     long modified = files[i].lastModified();
+                     long now = System.currentTimeMillis()-modified;
+                     float elapsedmins = now/(60*1000F);
+                     if (elapsedmins > DELETE_WAIT)
+                    	 files[i].delete();
+                     	 try { Thread.sleep(10); } catch (Exception e) {} 
+                 }
+                 return size;
+             } else return 0;
+         } else return file.length();
+    }
 
         public void run() {
-        	
         	Thread.currentThread().setName("deleteHelper");
-        	synchronized(lock) {
-        		  for (Iterator it = fileDeleteList.iterator (); it.hasNext (); ) {
-        			  	TempFile temp = (TempFile)it.next();
-        			  	if (temp.getOld()) {
-        			  		logger.debug("removing temporary file {tempfile='"+temp.getFile().getAbsolutePath()+"'");
-        			  		it.remove();
-        			  		try { temp.getFile().delete(); } catch (Exception e) {}
-	        			}
-        		  }
-        	  }
+        	if (deleteQueue.size()>0) {
+	        	TempFile temp = deleteQueue.peek();
+	    		if (temp!=null && temp.getOld()) {
+			  		logger.debug("removing temporary file {tempfile='"+temp.getFile().getAbsolutePath()+"'}");
+			  		deleteQueue.poll();
+			  		deleteMap.remove(temp);
+			  		try { temp.getFile().delete(); } catch (Exception e) {}
+				} 
+        	}
         }
-	
-
+        
+        /*  // delete any stray files in the temp dir
+        		  String tmpdir = System.getProperty("java.io.tmpdir");
+        		  if (tmpdir!=null) 
+        			  deleteOldTempFiles(new File(tmpdir));*/
+        
 }

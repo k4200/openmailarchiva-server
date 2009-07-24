@@ -1,8 +1,8 @@
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+/* Copyright (C) 2005-2007 Jamie Angus Band 
+ * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+ * 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -12,7 +12,6 @@
  * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
-
 package com.stimulus.archiva.domain;
 
 import java.io.*;
@@ -32,12 +31,12 @@ public class FileSystem {
     protected String 	loggingLevel;
     protected String 	installDirectory;
     protected static String productName = "MailArchiva";
-
+    
     public FileSystem() {
     	 tempFiles = new TempFiles();
        	 tempFiles.startDaemon();
     }
-
+    
 
     public static String getProductName() {
     	return productName;
@@ -57,14 +56,14 @@ public class FileSystem {
 
     	String javavm =  System.getProperty("java.version")+" "+System.getProperty("java.vendor")+" " + System.getProperty("java.vm.name")+" "+System.getProperty("java.vm.version");
     	String os =  System.getProperty("os.name") + " " + System.getProperty("os.version") + " " + System.getProperty("os.arch");
-
+    	
     	logger.debug("java runtime environment (JRE) {javaversion='"+javavm+"'}");
     	logger.debug("guest operating system {os='"+os+"'}");
-    	logger.debug("java home {java.home='"+System.getProperty("java.home")+"'}");
+    	logger.debug("java home {java.home='"+System.getProperty("java.home")+"'}");	
     }
-
-    public TempFiles getTempFiles() { return tempFiles; }
-
+    
+    public TempFiles getTempFiles() { return tempFiles; } 
+    
     public void setApplicationPath(String applicationPath) {
 
         if (applicationPath.endsWith(Character.toString(File.separatorChar)))
@@ -73,7 +72,7 @@ public class FileSystem {
             this.applicationPath = applicationPath;
         logger.debug("setApplicationPath {path='"+applicationPath+"'}");
     }
-
+  
     public boolean checkPath(String path, String dirname) {
     	if (new File(path).exists() && new File(path).isDirectory()) {
     		logger.debug(dirname+" path is present {path='"+Config.getFileSystem().getNoArchivePath()+"'}");
@@ -84,18 +83,18 @@ public class FileSystem {
     		return false;
     	}
     }
-
+    
     public String getDir(String path) {
     	File dir = new File(path);
     	if (!dir.exists())
     		dir.mkdirs();
 	    return path;
     }
-
+    
     public boolean checkAllSystemPaths() {
-
+    	
     	boolean check = true;
-
+    	
     	check = check && checkPath(getApplicationPath(),"application");
     	check = check && checkPath(getConfigurationPath(),"configuration");
     	check = check && checkPath(getViewPath(),"view");
@@ -104,12 +103,12 @@ public class FileSystem {
     	check = check && checkPath(getClassesPath(),"classes");
     	check = check && checkPath(getLogPath(),"debug log");
     	return check;
-
+    	
     }
     public String getApplicationPath() {
         return applicationPath;
     }
-
+    
     public String getApplicationName() {
     	if (applicationPath==null) {
     		logger.error("attempt to build application name, but application path has a null value!");
@@ -119,98 +118,98 @@ public class FileSystem {
     	if (dotpos==-1) dotpos = 0;
     	return applicationPath.substring(dotpos+1,applicationPath.length());
     }
-
+  
     public String getConfigurationPath() {
         return getDir(applicationPath + File.separatorChar + "WEB-INF"+File.separatorChar + "conf");
     }
-
+  
     public String getViewPath() {
         return getDir(applicationPath + File.separatorChar + "temp");
     }
-
-
+  
+  
     public String getBinPath() {
         return applicationPath + File.separatorChar + "WEB-INF"+File.separatorChar + "bin";
     }
-
+    
     public String getNoIndexPath() {
   	  return getDir(applicationPath + File.separatorChar + "WEB-INF"+File.separatorChar + "noindex");
     }
-
+    
     public String getNoArchivePath() {
   	  return getDir(applicationPath + File.separatorChar + "WEB-INF"+File.separatorChar + "noarchive");
     }
-
+    
     public String getQuarantinePath() {
   	  return getDir(applicationPath + File.separatorChar + "WEB-INF"+File.separatorChar + "quarantine");
     }
-
+ 
     public String getClassesPath() {
   	  return applicationPath + File.separatorChar + "WEB-INF"+ File.separatorChar + "classes";
     }
-
+    
     public String getLogPath() {
     	return getDir(System.getProperty("catalina.home")+File.separator+"logs");
     }
-
+    
     public String getDebugLogPath() {
  	   return System.getProperty("catalina.home")+File.separator+"logs"+File.separator+Config.getFileSystem().getApplicationName()+"_debug.log";
     }
-
+    
     public String getAuditLogPath() {
  	   return System.getProperty("catalina.home")+File.separator+"logs"+File.separator+Config.getFileSystem().getApplicationName()+"_audit.log";
     }
-
+    
     public String getKeyStorePath() {
     	return System.getProperty("catalina.home")+File.separator+".keystore";
     }
-
-
+    
+  
     public void setLoggingPath(String loggingPath) { this.loggingPath = loggingPath.toLowerCase(Locale.ENGLISH); }
-
+    
     public String getLoggingPath() { return loggingPath; }
-
+  
     public void setLoggingLevel(String loggingLevel) { this.loggingLevel = loggingLevel; }
-
+  
     public String getLoggingLevel() { return loggingLevel; }
-
+  
     public void setAuditPath(String auditPath) { this.auditPath = auditPath.toLowerCase(Locale.ENGLISH); }
-
+  
     public String getAuditPath() { return auditPath; }
-
-
-
+    
+    
+  
     public void clearViewDirectory() {
         if (applicationPath==null)
             return;
         logger.debug("clearing view directory {directory='"+getViewPath()+"'}");
         clearDirectory(getViewPath());
     }
-
+    
     public void initLogging() {
-    	//PrintStream stdout = System.out;
-        //PrintStream stderr = System.err;
-        LoggingOutputStream los;
-        los = new com.stimulus.util.LoggingOutputStream(logger);
-        System.setOut(new PrintStream(los, true));
-        System.setErr(new PrintStream(los, true));
+    	//PrintStream stdout = System.out;                                       
+        //PrintStream stderr = System.err;                                       
+        LoggingOutputStream los;                                               
+        los = new com.stimulus.util.LoggingOutputStream(logger);          
+        System.setOut(new PrintStream(los, true));           
+        System.setErr(new PrintStream(los, true));       
     }
-
-
+    
+    
     public void initCrypto() {
     	if (java.security.Security.getProvider("BC") == null) {
     		logger.debug("bouncycastle crypto api not installed. installing...");
     		java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider ());
     	}
     }
-
-
+  
+  	
     public void clearTempDirectory() {
 	    	  String tmpDir = getTempPath();
 	    	  logger.debug("clearing temporary directory {directory='"+tmpDir+"'}");
 	    	  clearDirectory(tmpDir);
     }
-
+    
     public boolean checkStartupPermissions() {
     	logger.debug("checking for required file and directory permissions...");
     	boolean config = checkReadWriteDeleteAccess(getConfigurationPath());
@@ -227,19 +226,19 @@ public class FileSystem {
     	}
     	return success;
     }
-
+    
     public boolean checkReadWriteDeleteAccess(String dirLocation) {
     	logger.debug("checking file permissions (dirLocation='"+dirLocation+"'}");
     	boolean read = true;
     	boolean write = true;
     	boolean delete = true;
-    	BufferedWriter out = null;
-
+    	BufferedWriter out = null; 
+    	
     	if (!new File(dirLocation).exists()) {
     		logger.error("directory does not exist {dir='"+dirLocation+"'");
     		return false;
     	}
-
+    	
     	File testFile = new File(dirLocation+File.separator+"writetest");
     	try {
     		FileWriter fwrite = new FileWriter(testFile);
@@ -256,7 +255,7 @@ public class FileSystem {
     	try {
     	    FileReader fread = new FileReader(testFile);
     	    in = new BufferedReader(fread);
-    	    in.readLine();
+    	    in.readLine(); 
     	} catch (IOException io) {
     		logger.error("read permission test failed. please enable read access to "+dirLocation+".");
     		write = false;
@@ -279,11 +278,11 @@ public class FileSystem {
     	}
     	return read && write && delete;
     }
-
+    
     public String getTempPath() {
   	  return System.getProperty("java.io.tmpdir");
     }
-
+    
     //deliberately non recursive
     public void clearDirectory(String path) {
         File indexDir = new File(path);
@@ -296,7 +295,7 @@ public class FileSystem {
                   	filepath = path + children[i];
                   else
                   	filepath = path + File.separatorChar + children[i];
-
+             
                   logger.debug("deleting file {path='" + filepath +"'}");
                   boolean success = new File(filepath).delete();
                   if (!success)
@@ -306,5 +305,5 @@ public class FileSystem {
               }
         }
     }
-
+    
 }

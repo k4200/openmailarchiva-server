@@ -85,7 +85,8 @@ public class RAFDataStream extends TTFDataStream
      * @return An signed short.
      * @throws IOException If there is an error reading the data.
      */
-    public short readSignedShort() throws IOException
+    @Override
+	public short readSignedShort() throws IOException
     {
         return raf.readShort();
     }
@@ -95,7 +96,8 @@ public class RAFDataStream extends TTFDataStream
      * @return The current position in the stream.
      * @throws IOException If an error occurs while reading the stream.
      */
-    public long getCurrentPosition() throws IOException
+    @Override
+	public long getCurrentPosition() throws IOException
     {
         return raf.getFilePointer();
     }
@@ -105,7 +107,8 @@ public class RAFDataStream extends TTFDataStream
      * 
      * @throws IOException If there is an error closing the resources.
      */
-    public void close() throws IOException
+    @Override
+	public void close() throws IOException
     {
         raf.close();
         raf = null;
@@ -116,7 +119,8 @@ public class RAFDataStream extends TTFDataStream
      * @return An unsigned byte.
      * @throws IOException If there is an error reading the data.
      */
-    public int read() throws IOException
+    @Override
+	public int read() throws IOException
     {
         return raf.read();
     }
@@ -127,7 +131,8 @@ public class RAFDataStream extends TTFDataStream
      * @return An unsigned short.
      * @throws IOException If there is an error reading the data.
      */
-    public int readUnsignedShort() throws IOException
+    @Override
+	public int readUnsignedShort() throws IOException
     {
         return raf.readUnsignedShort();
     }
@@ -137,7 +142,8 @@ public class RAFDataStream extends TTFDataStream
      * @return An unsigned byte.
      * @throws IOException If there is an error reading the data.
      */
-    public long readLong() throws IOException
+    @Override
+	public long readLong() throws IOException
     {
         return raf.readLong();
     }
@@ -148,7 +154,8 @@ public class RAFDataStream extends TTFDataStream
      * @param pos The position to seek to.
      * @throws IOException If there is an error seeking to that position.
      */
-    public void seek(long pos) throws IOException
+    @Override
+	public void seek(long pos) throws IOException
     {
         raf.seek( pos );
     }
@@ -164,7 +171,8 @@ public class RAFDataStream extends TTFDataStream
      * 
      * @throws IOException If there is an error reading from the stream.
      */
-    public int read(byte[] b,
+    @Override
+	public int read(byte[] b,
             int off,
             int len)
      throws IOException
@@ -175,7 +183,8 @@ public class RAFDataStream extends TTFDataStream
     /**
      * {@inheritDoc}
      */
-    public InputStream getOriginalData() throws IOException
+    @Override
+	public InputStream getOriginalData() throws IOException
     {
         return new FileInputStream( ttfFile );
     }

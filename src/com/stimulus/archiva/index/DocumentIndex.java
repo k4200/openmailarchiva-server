@@ -1,18 +1,3 @@
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
- */
-
 package com.stimulus.archiva.index;
 
 import org.apache.tools.zip.*;
@@ -49,12 +34,12 @@ public class DocumentIndex {
 	  protected static final Log logger = LogFactory.getLog(VolumeIndex.class.getName());
 	  protected Indexer indexer;
 	  protected Charset utf8_charset = Charset.forName("UTF-8");
-
+	  
 	  public DocumentIndex(Indexer indexer) {
 		  this.indexer = indexer;
 	  }
-
-
+	  
+	  
 	  public void indexEmailField(Document doc, EmailField field, String value) {
 			 EmailField.SearchMethod searchMethod = field.getSearchMethod();
 	  		 logger.debug("index {field='"+field.getIndex()+"',value='"+value+"'}");
@@ -67,50 +52,50 @@ public class DocumentIndex {
 	  		 	doc.add(new Field(field.getIndex(),value,Field.Store.NO,Field.Index.TOKENIZED));
 	  		 }
 	  }
-
+	  
 	  protected void write(Email message, Document doc, IndexInfo indexInfo) throws MessagingException,IOException,ExtractionException
 	  {
 		 try {
 			  logger.debug("writeMessageToDocument() begin");
 		      if (message.getEmailID()==null)
 			  	     throw new MessagingException("failed to index message as unique ID is null");
-
+		      
 		      /*
 		      try { message.getEmailID().getVolume().load(); } catch (Exception e) {
 		    	  e.printStackTrace();
 		      }*/
-
+		  
 		  	 String uniqueID 	= message.getEmailID().getUniqueID();
 		  	 String volID		= message.getEmailID().getVolume().getID();
 		  	 if (uniqueID==null || volID==null) {
 		  		logger.error("failed to index message. uniqueid or volumeid is null.");
 		  		return;
 		  	 }
-
-		  	 doc.add(new Field("ver","2",Field.Store.YES,Field.Index.UN_TOKENIZED));
+		  	 
+		  	 doc.add(new Field("ver","2",Field.Store.YES,Field.Index.UN_TOKENIZED));    
 		  	 if (uniqueID!=null) {
-		  		 doc.add(new Field("uid",uniqueID,Field.Store.YES,Field.Index.UN_TOKENIZED));
+		  		 doc.add(new Field("uid",uniqueID,Field.Store.YES,Field.Index.UN_TOKENIZED)); 
 		  	 }
 		  	 if (volID!=null) {
-		  		 doc.add(new Field("vol",volID,Field.Store.YES,Field.Index.UN_TOKENIZED));
+		  		 doc.add(new Field("vol",volID,Field.Store.YES,Field.Index.UN_TOKENIZED));   
 		  	 }
-
+		  	
 		  	EmailFields emailFields = Config.getConfig().getEmailFields();
 		     for (EmailField field : emailFields.getAvailableFields().values()) {
-
+		    	 
 		    	 String value = "";
 		    	 EmailFieldValue efv2 = message.getFields().get(field.getIndex());
 		    	 if (efv2!=null && efv2.getValue()!=null) {
 		    		 value = efv2.getValue();
 		    	 }
-
+		    	
 		    	if ( Compare.equalsIgnoreCase(field.getName(), "body") ||
 		  			 Compare.equalsIgnoreCase(field.getName(), "attachments") ||
-		  			 Compare.equalsIgnoreCase(field.getName(), "attachname"))
+		  			 Compare.equalsIgnoreCase(field.getName(), "attachname"))	 
 		  			 continue; // we handle this later
-
+	
 		    	indexEmailField(doc,field,value);
-
+		  		
 		  	 }
 		  	 if (indexer.getIndexMessageBody()) {
 		  		 logger.debug("writeBodyParts() begin");
@@ -123,17 +108,17 @@ public class DocumentIndex {
 		  		 }
 		  		 logger.debug("writeBodyParts() end");
 		  	 }
-
+		  	
 			 String lang = doc.get("lang");
 			 if (lang==null) {
 		        	lang = indexer.getIndexLanguage();
 		        	logger.debug("neglected to detect language during indexing. using default language. {defaultlanguage='"+lang+"'}");
 		        	if (lang!=null) {
-		        		doc.add(new Field("lang",lang,Field.Store.YES,Field.Index.UN_TOKENIZED));
+		        		doc.add(new Field("lang",lang,Field.Store.YES,Field.Index.UN_TOKENIZED));  
 		        	}
 		        } else {
 		        	logger.debug("language detected during indexing {language='"+lang+"'}");
-		      }
+		      } 
 			 logger.debug("writeMessageToDocument() end");
 		  } catch (Throwable e) {
 			  logger.error("hard error occurred during Index write:"+e.getMessage(),e);
@@ -141,8 +126,8 @@ public class DocumentIndex {
 		  }
 	  }
 
-
-
+	
+	  
 	  protected void writeBodyPartsToDocument(Part p, Document doc, IndexInfo indexInfo) throws MessagingException, IOException {
 		  	if (p.isMimeType("multipart/alternative")) {
 				 logger.debug("body part is alternative");
@@ -167,7 +152,7 @@ public class DocumentIndex {
 			    	 writeBodyPartsToDocument(mp.getBodyPart(i),doc,indexInfo);
 			     }
 	  		} else if (p.isMimeType("application/ms-tnef")) { // winmail.dat
-	        	Part tnefpart = TNEFMime.convert(null, p, false);
+	        	Part tnefpart = TNEFMime.convert(null, p, false); 
 	        	if (tnefpart!=null) {
 	        		writeBodyPartsToDocument(tnefpart,doc,indexInfo);
 	        	}
@@ -176,7 +161,7 @@ public class DocumentIndex {
 				 extractAndIndex(p,doc,indexInfo);
 			}
 	  }
-
+	  
 	  protected void setCharset(Part p, IndexInfo indexInfo) {
 		  Charset charset = null;
 		  try {
@@ -192,15 +177,15 @@ public class DocumentIndex {
 			  charset = indexInfo.getCharset();
 		  }
 	  }
-
-
+	  
+	  
 	  protected void extractAndIndex( Part p, Document doc,IndexInfo indexInfo) throws MessagingException {
 		  logger.debug("extractAndIndex() start");
 		  String disposition = p.getDisposition();
 		  String mimetype = getNormalizedMimeType(p.getContentType());
 		  setCharset(p,indexInfo);
 		  Charset charset = indexInfo.getCharset();
-		  String filename = p.getFileName();
+		  String filename = p.getFileName(); 
 		  if (filename!=null) {
 			  try {
 				  filename = MimeUtility.decodeText(filename);
@@ -222,7 +207,7 @@ public class DocumentIndex {
 							  	 Compare.equalsIgnoreCase(mimetype, "application/x-zip-compressed") ||
 							  	 Compare.equalsIgnoreCase(mimetype, "application/x-compress") ||
 							  	 Compare.equalsIgnoreCase(mimetype, "application/x-compressed")) {
-							extractAndIndexZipFile(is, doc,charset,indexInfo);
+							extractAndIndexZipFile(is, doc,charset,indexInfo);  	 
 				  	  } else if (Compare.equalsIgnoreCase(mimetype, "application/x-tar")) {
 				  		  	extractAndIndexTarGZipFile(is,doc,charset,indexInfo);
 			  		  } else if (Compare.equalsIgnoreCase(mimetype, "application/gzip") ||
@@ -252,12 +237,12 @@ public class DocumentIndex {
 		              addLanguage(languages, doc, detectReader);
 		              //detectReader.close();
 		              /*Reader test = Extractor.getText(getInputStreamFromPart((MimePart)p),mimetype,tempFiles);
-		              BufferedReader b = new BufferedReader(test);
+		              BufferedReader b = new BufferedReader(test); 
 		              String line = b.readLine();
 		              while (line != null) {
-		                System.out.println("(" + line + ")");
-		                line = b.readLine();
-		              }   */
+		                System.out.println("(" + line + ")"); 
+		                line = b.readLine(); 
+		              }   */ 
 				  }
 			  }
 			  if (filename!=null) {
@@ -274,8 +259,8 @@ public class DocumentIndex {
 		  }
 		  logger.debug("extractAndIndex() end");
 	  }
-
-
+	  
+	
 	  protected void octetStream(InputStream is, Document doc,String filename, Charset charset, IndexInfo indexInfo) throws ArchivaException {
 		  int dot = filename.lastIndexOf('.');
         if (dot==-1) return;
@@ -297,11 +282,11 @@ public class DocumentIndex {
 				  }
 			  } catch (Throwable io) {
 				  throw new ArchivaException("failed to extract message content: "+io.getMessage(),io,logger,ChainedException.Level.DEBUG);
-		      }
+		      } 
 		  }
 	  }
-
-
+	  
+	  
 	  protected void extractAndIndexGZipFile(InputStream is, Document doc,String filename, Charset charset, IndexInfo indexInfo ) throws ArchivaException {
 		  logger.debug("extractAndIndexGZipFile()");
 		  GZIPInputStream gis = null;
@@ -331,7 +316,7 @@ public class DocumentIndex {
 	    	  indexInfo.addSourceStream(gis);
 	      }
 	  }
-
+	  
 	  protected void extractAndIndexTarGZipFile(InputStream is, Document doc, Charset charset, IndexInfo indexInfo) throws ArchivaException {
 		  logger.debug("extractAndIndexTarGZipFile()");
 		  InputStream gis = null;
@@ -344,7 +329,7 @@ public class DocumentIndex {
 			  indexInfo.addSourceStream(gis);
 		  }
 	  }
-
+	  
 	  protected void extractAndIndexTarFile(InputStream is, Document doc, Charset charset,IndexInfo indexInfo) throws ArchivaException {
 		  logger.debug("extractAndIndexTarFile()");
 		  TarInputStream tis = null;
@@ -376,7 +361,7 @@ public class DocumentIndex {
 			  indexInfo.addSourceStream(tis);
 		  }
 	  }
-
+	  
 	  protected void extractAndIndexZipFile(InputStream is, Document doc, Charset charset,IndexInfo indexInfo)  throws ArchivaException {
 		  ZipFile zipFile = null;
 		  try {
@@ -412,7 +397,7 @@ public class DocumentIndex {
        		indexInfo.addZipFile(zipFile);
        	}
 	  }
-
+	  
 	  protected void addLanguage(String[] languages, Document doc, Reader detectReader) {
 		    String lang;
         	if (indexer.getIndexLanguageDetection() && doc.get("lang")==null) {
@@ -422,10 +407,10 @@ public class DocumentIndex {
           		  logger.debug("detected language from the email header. {language='"+lang+"'}");
           	  } else {
           		  logger.debug("email did not contain language header field. analyzing text to determine language.");
-
-          		  if (languageIdentifier==null)
+          		  
+          		  if (languageIdentifier==null) 
           		   languageIdentifier= new LanguageIdentifier();
-
+          		  
           		  lang = languageIdentifier.identify(detectReader);
           	  }
             } catch (Exception e) {
@@ -433,11 +418,11 @@ public class DocumentIndex {
           	  return;
             }
             if (lang!=null)
-          	  doc.add(new Field("lang",lang,Field.Store.YES,Field.Index.UN_TOKENIZED));
+          	  doc.add(new Field("lang",lang,Field.Store.YES,Field.Index.UN_TOKENIZED));  
         	}
 	  }
-
-
+	  
+	  
 	  protected String getNormalizedMimeType(String mimeType)
 	  {
 	  	// check this code may be a dodgy
@@ -448,6 +433,6 @@ public class DocumentIndex {
 		mimeType.trim();
 	  	return mimeType;
 	  }
-
-
+	
+	  
 }

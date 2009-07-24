@@ -1,9 +1,8 @@
-
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+/* Copyright (C) 2005-2007 Jamie Angus Band 
+ * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+ * 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -13,6 +12,13 @@
  * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
+
+
+/** 
+* MessageStorage.java - stores messages on the file system  
+* @author  Jamie Band
+* @version 1.0 
+*/ 
 
 package com.stimulus.archiva.store;
 
@@ -67,7 +73,7 @@ public class MessageStore extends Archiver implements Serializable
 	 static enum Action { STRIP, COMBINE };
 
 	 public MessageStore() {
-
+	    
 	 }
 
 	 public void init() throws MessageStoreException {
@@ -82,7 +88,7 @@ public class MessageStore extends Archiver implements Serializable
 	    try {
              KeySpec keySpec = new PBEKeySpec(passPhrase.toCharArray(), salt, iterationCount);
              key = SecretKeyFactory.getInstance(algorithm).generateSecret(keySpec);
-
+           
              paramSpec = new PBEParameterSpec(salt, iterationCount);
 
          } catch (java.security.NoSuchAlgorithmException e)	{
@@ -92,21 +98,21 @@ public class MessageStore extends Archiver implements Serializable
          }
 	 }
 
-
-	 protected File getFileFromHashValue(Volume volume, String hash, String extension) {
-		 String filename = volume.getPath() + File.separatorChar +  hash.substring(0, 3) +
+	
+	 protected File getFileFromHashValue(Volume volume, String hash, String extension) { 
+		 String filename = volume.getPath() + File.separatorChar +  hash.substring(0, 3) + 
 		 		File.separator + hash.substring(3, 6) + File.separator + hash + extension;
 		 logger.debug("getMessageFileName() { return='"+filename+"'");
 		 return new File(filename);
 	 }
-
+	 
 	 protected File getLegacyFileFromHashValue(Volume volume, String hash, int directoryLength, String extension) { // legacy
-		 String filename = volume.getPath() + File.separatorChar + hash.substring(0, directoryLength) +
+		 String filename = volume.getPath() + File.separatorChar + hash.substring(0, directoryLength) + 
 		 		File.separator + hash + extension;
 		 logger.debug("getMessageFileName() { return='"+filename+"'");
 		 return new File(filename);
 	 }
-
+	 
     public File getExistingFile(Volume volume, String hash, String extension) throws MessageStoreException
     {
         File file = getFileFromHashValue(volume,hash,extension);
@@ -125,14 +131,14 @@ public class MessageStore extends Archiver implements Serializable
 	            		if (!file.exists()) {
 	            			return getFileFromHashValue(volume,hash,extension);
 	            		}
-	            	}
+	            	}            	
 	            }
 	        }
         }
         logger.debug("getMessageFileName() {return='" + file.getAbsolutePath() + "'}");
         return file;
     }
-
+    
     public File getNewFile(Volume volume, String hash, String extension) throws MessageStoreException {
     	prepareStore(volume);
         createDirectories(volume,hash);
@@ -141,12 +147,12 @@ public class MessageStore extends Archiver implements Serializable
     	return file;
     }
 
-    /**
+    /** 
       * Retrieve the file location of a message that could not be indexed
 	  * @param emailID The email ID
 	  * @return The file location message not processed
-	  */
-
+	  */  
+    
     protected File getNoIndexFile(EmailID emailID) throws MessageStoreException {
         if (emailID==null || emailID.getUniqueID()==null)
             throw new MessageStoreException("assertion failure: null emailID or uniqueId",logger);
@@ -154,19 +160,19 @@ public class MessageStore extends Archiver implements Serializable
         logger.debug("getNoIndexFileName() {return='" + filename + "'}");
         return new File(filename);
     }
-
-
+    
+  
 	  protected File getNoArchiveFile() throws MessageStoreException {
 		  String file = UUID.randomUUID().toString() + ".eml";
 	      logger.debug("getNoArchiveFile() {return='" + file + "'}");
 	      return new File(Config.getFileSystem().getNoArchivePath()  + File.separatorChar + file);
 	  }
-
-    /**
-	   * Create the directory where a volume is stored
+   
+    /** 
+	   * Create the directory where a volume is stored 
 	   * @param volume The volume
 	   * @return The directory
-	   */
+	   */  
 
     public void prepareStore(Volume volume) throws MessageStoreException {
 
@@ -186,12 +192,12 @@ public class MessageStore extends Archiver implements Serializable
        }
     }
 
-    /**
+    /** 
 	   * Create the directory where a message is stored
 	   * @param emailID The email ID
 	   * @return The message directory
-	   */
-
+	   */  
+    
     private void createDir(String directory) throws MessageStoreException  {
     	 logger.debug("createDir() {messageDir='" + directory + "'}");
          File todayDir = new File(directory);
@@ -221,22 +227,22 @@ public class MessageStore extends Archiver implements Serializable
         return messageDirLevel2;
     }
 
-
-
-    /**
+    
+   
+    /** 
 	   * Insert a new message in the store
 	   * @param emailID The email ID
 	   * @param in The message contents
 	   * @param compress Is message compressed
 	   * @param encrypt Should encrypt message
-	   */
-
+	   */  
+    
     public boolean insertMessage(Email email) throws MessageStoreException
     {
     	EmailID emailId = email.getEmailId();
-
+       
        logger.debug("insertMessage {"+ emailId + "}");
-
+       
        if (emailId==null) {
     	   logger.fatal("assertion failure. emailId is null");
     	   return false;
@@ -245,12 +251,12 @@ public class MessageStore extends Archiver implements Serializable
     	   logger.fatal("assertion failure. volume is null");
     	   return false;
        }
-
+      
       if (!isDefaultPassPhraseModified())
            throw new MessageStoreException("failed to archive message. encryption password is not set. {"+emailId+"}",logger);
 
        File messageFile = getNewFile(emailId.getVolume(),emailId.getUniqueID(),messageFileExtension);
-
+      
        if (messageFile.exists()) {
     	   logger.debug("no need to archive. message already exists in the store. {"+emailId+"}");
     	   return false;
@@ -273,11 +279,11 @@ public class MessageStore extends Archiver implements Serializable
        return true;
     }
 
-    /**
+    /** 
 	   * Retrieves a unique file identifier for a message
 	   * @param emailID The email ID
-	   */
-
+	   */  
+    
     protected String getUniqueIdFromFileName(String fileName)
     {
         int lastIndex = fileName.lastIndexOf('.');
@@ -289,8 +295,8 @@ public class MessageStore extends Archiver implements Serializable
         logger.debug("getUniqueIdFromFileName {ret='" + uid + "'}");
         return uid;
     }
-
-
+    
+    
     public boolean isMessageExist(EmailID emailID) {
     	try {
     		File messageFile = getExistingFile(emailID.getVolume(),emailID.getUniqueID(),messageFileExtension);
@@ -299,33 +305,33 @@ public class MessageStore extends Archiver implements Serializable
     		return false;
     	}
     }
-
-
-
-    /**
+    
+ 
+    
+    /** 
 	   * Retrieve a message from the store
 	   * @param emailID The email ID
 	   * @param decompress Should decompress message
 	   * @param decrypt Should dencrypt message
 	   * @param headersOnly Should return just headers
 	   * @return An email message
-	   */
-
+	   */  
+    
     public Email retrieveMessage(EmailID emailID) throws MessageStoreException {
     	if (emailID==null || emailID.getVolume()==null || emailID.getUniqueID()==null)
             throw new MessageStoreException("assertion failure: null emailID, volume or uniqueId",logger);
 
         logger.debug("retrieveMessage() {"+emailID+"'}");
-
-
+     
+     
         Email message = null;
         try {
-
+        	
    			  File messageFile = getExistingFile(emailID.getVolume(),emailID.getUniqueID(),messageFileExtension);
    			  logger.debug("returning input stream {filename='" + messageFile + "'}");
-
+   		     
 	   		  message = new Email(emailID,getRawMessageInputStream(messageFile, true, true));
-
+  
             logger.debug("retrieved message {"+message+"}");
         } catch (java.io.FileNotFoundException fnfe) {
         	throw new MessageStoreException("The message is currently not accessible on the storage device.",fnfe,logger);
@@ -335,20 +341,20 @@ public class MessageStore extends Archiver implements Serializable
         return message;
 
     }
-
-
-
+    
+   
+    
     public void copyEmail(File source, File dest) throws MessageStoreException {
-
+       
         logger.debug("copyEmail()");
         FileChannel in = null, out = null;
 
-        try {
-
+        try {   
+        	
              in = new FileInputStream(source).getChannel();
              out = new FileOutputStream(dest).getChannel();
              in.transferTo( 0, in.size(), out);
-
+            
         } catch (Exception e) {
             throw new MessageStoreException("failed to copy email {src='"+source+"=',dest='"+dest+"'",e,logger);
         } finally {
@@ -356,7 +362,7 @@ public class MessageStore extends Archiver implements Serializable
              if (out != null) try { out.close(); } catch (Exception e) {};
         }
     }
-
+    
 
     public void backupMessage(File file) throws MessageStoreException {
     	logger.debug("backupMessage()");
@@ -367,7 +373,7 @@ public class MessageStore extends Archiver implements Serializable
     		throw new MessageStoreException("failed to copy message to noarchive queue",logger);
     	}
     }
-
+    
     public void backupMessage(Email email) throws MessageStoreException {
     	logger.debug("backupMessage()");
     	File noArchiveFile = getNoArchiveFile();
@@ -382,25 +388,25 @@ public class MessageStore extends Archiver implements Serializable
     		try { fos.close(); } catch (Exception e) {}
     	}
     }
-
-    /**
-	   * Copy a message to a error directory if the message cannot be indexed
+    
+    /** 
+	   * Copy a message to a error directory if the message cannot be indexed 
 	   * @param emailID The email ID
-	   */
+	   */  
 	  public void backupMessage(EmailID emailID) throws MessageStoreException {
 	      if (emailID==null || emailID.getVolume()==null || emailID.getUniqueID()==null)
 	          throw new MessageStoreException("assertion failure: null emailID, volume or uniqueId",logger);
 	      logger.debug("backupMessage() {"+emailID+"'");
-	      copyEmail(getExistingFile(emailID.getVolume(),emailID.getUniqueID(),messageFileExtension),getNoIndexFile(emailID));
+	      copyEmail(getExistingFile(emailID.getVolume(),emailID.getUniqueID(),messageFileExtension),getNoIndexFile(emailID));   
 	  }
-
-
+	  
+	
 	  public void copyEmailToQuarantine(File sourceFile) throws MessageStoreException {
 	  	logger.debug("copyEmailToQuarantine() {sourceFile='"+sourceFile+"'}");
-	      copyEmail(sourceFile,getQuarantineFile(sourceFile.getName()));
+	      copyEmail(sourceFile,getQuarantineFile(sourceFile.getName()));   
 	  }
-
-
+  
+	  
 	  public File getQuarantineFile(String filename) {
 		  return  new File(Config.getFileSystem().getQuarantinePath() + File.separatorChar + filename);
 	  }
@@ -412,27 +418,27 @@ public class MessageStore extends Archiver implements Serializable
     	}
     	return file.listFiles().length;
     }
-
-
+    
+    
     public class RecoverFileFilter implements FileFilter {
     	   RecoverMessage recover;
            int total = 0;
            int success = 0;
            int failed = 0;
-
+		   
 	       public RecoverFileFilter(RecoverMessage recover){
 	    	   this.recover = recover;
 	       };
-
+	       
 	       public boolean accept(File file) {
 	    	   Email message = null;
                try {
-
+             	  
              	  logger.debug("retrieved inputstream {path='" + file.getPath() +"'}");
              	  if (recover.recover(file)) {
 			  	    	success++;
 	  	            	logger.info("message has been rearchived {"+message+", filepath='" + file.getPath() +"'}");
-
+		  	  	        
 			  	      } else {
 			  	    	failed++;
 			  	    	logger.error("failed to rearchive message.");
@@ -440,18 +446,18 @@ public class MessageStore extends Archiver implements Serializable
               } catch (Exception io) {
    	  	        logger.error("failed to recover message. {filename='"+file.getPath()+"'}",io);
    	  	        failed++;
-   	  	      }
+   	  	      } 
 	          return false;
 	       }
 	       public int getTotal() { return total; }
 	       public int getSuccess() { return success; }
 	       public int getFailed() { return failed; }
-
+	       
 	       public void end() {
 	    	   recover.end(failed,success,total);
 	       }
 	}
-
+    
     public void recoverMessages(RecoverMessage recover) throws MessageStoreException {
     	recover.start();
     	String notarchiveddir = Config.getFileSystem().getNoArchivePath();
@@ -468,11 +474,11 @@ public class MessageStore extends Archiver implements Serializable
         noarchiveDir.listFiles(new RecoverFileFilter(recover));
        recoverFilter.end();
     }
-
+    
     public int getNoQuarantinedMessages() {
     	return new File(Config.getFileSystem().getQuarantinePath()).listFiles().length;
     }
-
+    
     public void quarantineMessages() {
     	String notarchiveddir = Config.getFileSystem().getNoArchivePath();
     	logger.debug("quarantineEmails {noarchivedpath='"+notarchiveddir+"'}");
@@ -484,9 +490,9 @@ public class MessageStore extends Archiver implements Serializable
               	logger.warn("there are messages that require rearchival {notarchiveddirectory='"+notarchiveddir+"'}");
               for (int i=0; i<children.length; i++) {
                   String filepath = notarchiveddir+File.separatorChar+children[i];
-                  logger.debug("attempting to quarantine file {path='" + filepath +"'}");
+                  logger.debug("attempting to quarantine file {path='" + filepath +"'}");	 
 	              try {
-	            	  copyEmailToQuarantine(new File(filepath));
+	            	  copyEmailToQuarantine(new File(filepath)); 
 	              } catch (Exception e) {
 	            	  logger.error("failed to quarantine email (filepath='"+filepath+"'}",e);
 	            	  continue;
@@ -496,7 +502,7 @@ public class MessageStore extends Archiver implements Serializable
 			  	      boolean deleted;
 			  	      deleted = delFile.delete();
 			  	      if (!deleted)
-			  	    	  delFile.renameTo(File.createTempFile("oldrecovery", "tmp"));
+			  	    	  delFile.renameTo(File.createTempFile("oldrecovery", "tmp"));   
 			  	      delFile.deleteOnExit();
 	              } catch (IOException io) {
 	            	  logger.error("failed to delete email {filepath='"+filepath+"'");
@@ -504,18 +510,18 @@ public class MessageStore extends Archiver implements Serializable
               }
         }
     }
-
-
-
-
-
-    /**
+    
+   
+    
+  
+  
+    /** 
 	   * Get a raw input stream for a message
 	   * @param emailID The email ID
 	   * @param decompress Should decompress message
 	   * @param decrypt Should decrypt message
 	   * @return An inputstream containing the message
-	   */
+	   */  
    public InputStream getRawMessageInputStream(File messageFile, boolean decompress, boolean decrypt)  throws IOException,MessageStoreException {
        if (messageFile==null )
            throw new MessageStoreException("assertion failure: null messageFileName",logger);
@@ -524,7 +530,7 @@ public class MessageStore extends Archiver implements Serializable
        Cipher dcipher = null;
        if(decrypt) {
            try {
-
+              
                dcipher = Cipher.getInstance(key.getAlgorithm());
                dcipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
     	   } catch (Exception e) {
@@ -538,10 +544,10 @@ public class MessageStore extends Archiver implements Serializable
 
         return is;
     }
-
+   
    public InputStream getMessageInputStream(EmailID emailID) throws IOException, MessageStoreException {
-
-	   Email email = retrieveMessage(emailID);
+	   
+	   Email email = retrieveMessage(emailID); 
 	   File file = File.createTempFile("raw", ".tmp");
 	   tempfiles.markForDeletion(file);
 	   try {
@@ -549,21 +555,21 @@ public class MessageStore extends Archiver implements Serializable
 	   } catch (Exception e) {}
 		   return getRawMessageInputStream(file, false, false);
    }
-
-   /**
+   
+   /** 
 	   * Get a raw output stream for a message
 	   * @param messageFileName The file name of the message
 	   * @param compress Should compress message
 	   * @param encrypt Should encrypt message
 	   * @return An outputstream directed to the message
-	   */
-
+	   */  
+   
    public OutputStream getRawMessageOutputStream(File messageFile,boolean compress, boolean encrypt) throws IOException,MessageStoreException {
        if (messageFile==null)
            throw new MessageStoreException("assertion failure: null messageFileName",logger);
 
        OutputStream os = new BufferedOutputStream(new FileOutputStream(messageFile));
-       Cipher ecipher = null;
+       Cipher ecipher = null; 
        if (encrypt) {
            try {
                ecipher = Cipher.getInstance(key.getAlgorithm());
@@ -583,46 +589,46 @@ public class MessageStore extends Archiver implements Serializable
 
        return os;
    }
-   /**
+   /** 
 	   * Generic handler for returning the status of the reindexing operation
 	   * @param ProcessMessage The process that must be executed
-	   */
+	   */  
 
     public void processMessages(ProcessMessage process ) throws ProcessException
     {
         if (process==null)
             throw new ProcessException("assertion failure: null procress",logger);
-
-
+        
+        
         logger.debug("start(). starting to process messages for indexing.");
-
+      
   		String storePath =  process.workingVolume.getPath();
     	File storeDirectory = new File(storePath);
-
+      
     	if(storeDirectory != null && storeDirectory.isDirectory())
         	recurseMessages(storeDirectory, process);
     }
 
-
-
-
+   
+    
+   
 	   public class MessageDirFilter implements FileFilter
 	   {
 		   ProcessMessage process;
-
+		   
 	       public MessageDirFilter(ProcessMessage process){
 	    	   this.process = process;
 	       };
-
+	       
 	       public boolean accept(File file) {
 	           if ( file.isFile()) {
 	        	   if (file.getName().endsWith(messageFileExtension)) {
 		        		logger.debug("unique file name:"+file.getName());
 	                	Email email = null;
 	                	EmailID emailID = EmailID.getEmailID(process.workingVolume, getUniqueIdFromFileName(file.getName()));
-
+	      
 	                	try {
-	                    	process.process(emailID);
+	                    	process.process(emailID);  
 	                	} catch (Exception e) {
 	                    	logger.error("failed to process message during re-indexing {"+emailID+"}",e);
 	                    }  catch (OutOfMemoryError ome) {
@@ -635,26 +641,26 @@ public class MessageStore extends Archiver implements Serializable
 	           return false;
 	       }
 	   }
-
+	   
 	   private static long getFileOrDirectorySize(File file) {
 		   SizeCounter counter = new SizeCounter();
 		   file.listFiles(counter);
 		   return counter.getTotal();
     }
-
-
+	   
+   
     protected void recurseMessages(File file, ProcessMessage process) throws ProcessException
     {
     	MessageDirFilter messageDirFilter = new MessageDirFilter(process);
     	file.listFiles(messageDirFilter);
     }
 
-
+     
     public boolean findSignature(Object part) throws Exception {
     	boolean foundSignature = false;
     	if (part instanceof Multipart) {
     		Multipart multipart = (Multipart)part;
-    		for (int i=0, n=multipart.getCount(); i<n; i++)
+    		for (int i=0, n=multipart.getCount(); i<n; i++) 
     			if (findSignature(multipart.getBodyPart(i)))
     				foundSignature =true;
     	}  else if (part instanceof MimeMessage) {
@@ -668,7 +674,7 @@ public class MessageStore extends Archiver implements Serializable
     	}
     	return foundSignature;
     }
-
+  
 	public void writeCorruptedEmail(MimeMessage message, File file) throws MessageStoreException {
 		logger.debug("writeCorruptedEmail");
 		InputStream is = null;
@@ -692,7 +698,7 @@ public class MessageStore extends Archiver implements Serializable
 				} catch (Exception e) {}
 		}
 	}
-
+	
 	public void saveEmailChanges(MimeMessage message) throws MessagingException {
 		logger.debug("saveEmailChanges");
 		String[] messageId = message.getHeader("Message-Id");
@@ -701,15 +707,15 @@ public class MessageStore extends Archiver implements Serializable
 		if (messageId!=null && messageId.length>0)
 			message.setHeader("Message-Id", messageId[0]);
 	}
-
+		
     public String getHeader(MimeBodyPart mbp, String name) throws MessagingException {
     	String header[] = mbp.getHeader(name);
     	if (header != null && header.length>0)
     		return header[0];
-    	else
+    	else 
     		return null;
     }
-
+   
 
   public File getExistingAttachmentFilePath(Volume volume, String hash) throws MessageStoreException {
 	  logger.debug("getAttachmentFilePath() {"+volume+",hash='"+hash+"'}");
@@ -722,38 +728,38 @@ public class MessageStore extends Archiver implements Serializable
   	}
   	return attachFile;
   }
-
-
+  
+ 
 
     public static void copy(File source, File dest) throws IOException {
 	     FileChannel in = null, out = null;
-	     try {
+	     try {          
 	          in = new FileInputStream(source).getChannel();
 	          out = new FileOutputStream(dest).getChannel();
-
+	 
 	          long size = in.size();
 	          MappedByteBuffer buf = in.map(FileChannel.MapMode.READ_ONLY, 0, size);
-
+	 
 	          out.write(buf);
-
+	 
 	     } finally {
 	          if (in != null)          in.close();
 	          if (out != null)     out.close();
 	     }
 	}
+ 
+	
 
-
-
-
+    
     protected void updateDiskSpace(Volume volume, long fileLength) {
     	// we have written to the drive, update disk space counters
 			long indexChange = (long)(fileLength*0.1); // rough approximation index %1 size store
 			logger.debug("inc volume store disk space {storeinc='"+fileLength+"',indexinc='"+indexChange+"'}");
 			volume.incUsedSpace(indexChange,fileLength);
     }
-
-
-
+    
+    
+  
 	public byte[] writeEmail(Email message, File file, boolean compress, boolean encrypt) throws  MessageStoreException {
 		logger.debug("writeEmail");
 		OutputStream fos = null;
@@ -762,8 +768,8 @@ public class MessageStore extends Archiver implements Serializable
 			fos = getRawMessageOutputStream(file,compress,encrypt);
 			DigestOutputStream dos = new DigestOutputStream(fos,sha);
 			message.writeTo(dos);
-
-		    byte[] digest = sha.digest();
+			
+		    byte[] digest = sha.digest(); 
 		    if (digest==null) {
 		    	throw new MessageStoreException("failed to generate email digest. digest is null.",logger,ChainedException.Level.DEBUG);
 		    }
@@ -784,7 +790,7 @@ public class MessageStore extends Archiver implements Serializable
 		}
 		/*
 		try {
-			//System.out.println("WRITEMAIL:"+message.getContent()+"XXXXXXXXXXXXXXXXXXXXXX");
+			//System.out.println("WRITEMAIL:"+message.getContent()+"XXXXXXXXXXXXXXXXXXXXXX");	
 			FileOutputStream fos2 = new FileOutputStream("c:\\test.eml");
 			message.writeTo(fos2);
 			fos2.close();
@@ -809,11 +815,11 @@ public class MessageStore extends Archiver implements Serializable
 		los.writeln();
 		os = MimeUtility.encode(os, part.getEncoding());
 		part.getDataHandler().writeTo(os);
-		os.flush();
+		os.flush(); 
     }
 
-
-
-
+   
+    
+    
 }
 

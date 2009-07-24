@@ -1,20 +1,4 @@
-
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
- */
-
- package com.stimulus.archiva.authentication;
+package com.stimulus.archiva.authentication;
 
 import com.stimulus.util.*;
 
@@ -47,21 +31,21 @@ public class BasicIdentity extends Identity implements Serializable,Props, Clone
 	protected static final String basicRoleKey  		= "role";
     protected static final String basicUsernameKey 	= "email";
     protected static final String basicPasswordKey 	= "password";
-
+    
     public BasicIdentity() {
     }
 	 @Override
 	public void newRoleMap() throws ConfigurationException {
 	   	 addRoleMap(new BasicRoleMap(Roles.ADMINISTRATOR_ROLE.getName(),"",""));
 	 }
-
-
+	
+	 
 	 public void addRoleMap(String role, String username, String password) throws ConfigurationException {
 		addRoleMap(new BasicRoleMap(role,username, password));
 	 }
-
-
-
+	 
+	 
+	 
     public Document createDomDocument() {
         try {
             DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -71,7 +55,7 @@ public class BasicIdentity extends Identity implements Serializable,Props, Clone
         }
         return null;
     }
-
+    
     public void writeXmlFile(Document doc, String filename) {
         File f = null;
     	try {
@@ -86,7 +70,7 @@ public class BasicIdentity extends Identity implements Serializable,Props, Clone
             xformer.setOutputProperty(OutputKeys.INDENT, "yes");
             xformer.transform(source, result);
             os.close();
-
+            
          } catch (Exception io) {
         	 if (f!=null)
          		f.delete();
@@ -96,17 +80,17 @@ public class BasicIdentity extends Identity implements Serializable,Props, Clone
         File newFile = new File(filename);
         newFile.delete();
         f.renameTo(newFile);
-
+         
     }
-    public void saveSettings(String prefix, Settings prop, String suffix) {
+    public void saveSettings(String prefix, Settings prop, String suffix) {	
     	saveXMLFile();
     }
-
-    public boolean loadSettings(String prefix, Settings prop, String suffix) {
+    
+    public boolean loadSettings(String prefix, Settings prop, String suffix) { 
     	loadXMLFile();
     	return true;
     }
-
+    
     public void saveXMLFile() {
     	logger.debug("saving users.conf");
     	Document doc = createDomDocument();
@@ -127,9 +111,9 @@ public class BasicIdentity extends Identity implements Serializable,Props, Clone
 	    	users.appendChild(user);
 	    }
 	    String filename = Config.getFileSystem().getConfigurationPath() + File.separatorChar + "users.conf";
-	    writeXmlFile(doc,filename);
+	    writeXmlFile(doc,filename); 
     }
-
+  
 	 public boolean loadXMLFile() {
 		   logger.debug("loading users.conf");
 		  clearAllRoleMaps();
@@ -157,7 +141,7 @@ public class BasicIdentity extends Identity implements Serializable,Props, Clone
 			      int len = attrs.getLength();
 		          for (int j=0; j<len; j++) {
 		              Attr attr = (Attr)attrs.item(j);
-
+		              
 		              if (Compare.equalsIgnoreCase(attr.getNodeName(),basicUsernameKey))
 		            	  email = attr.getNodeValue();
 		              if (Compare.equalsIgnoreCase(attr.getNodeName(),basicRoleKey))
@@ -185,60 +169,60 @@ public class BasicIdentity extends Identity implements Serializable,Props, Clone
 		       	  } catch (ConfigurationException ce) {
 		       		  logger.error("could not load users in users.conf {fileName='"+filename+"'}.",ce);
 		       		  return false;
-		       	  }
+		       	  }  
 				}
 	      }
 		  return true;
 	 }
-
-
+	 
+	
 	 public class BasicRoleMap extends RoleMap implements Props, Cloneable  {
 
 		String loginPassword;
 		String username;
-
+		
 		public BasicRoleMap(String role, String username, String loginPassword) {
 			setRole(role);
 			setUsername(username);
 			this.loginPassword = loginPassword;
 		}
-
+		
 	    public String getLoginPassword() {
 	  	  return loginPassword;
 	    }
-
+	    
 	    public void setLoginPassword(String loginPassword) {
 	  	  	this.loginPassword = loginPassword.trim();
 		  	try {
 			     MessageDigest sha = MessageDigest.getInstance("SHA-1");
 	     		byte[] input = sha.digest(ByteUtil.mergeByteArrays(loginPassword.getBytes("UTF-8"),Config.getConfig().getSalt()));
-	     		this.loginPassword = Base64.encodeToString(input,false);
-
+	     		this.loginPassword = Base64.encodeToString(input,false); 
+				 
 			} catch (Exception e) {
 				logger.error("failed to setPassPhrase:"+e.getMessage(),e);
 			}
 	    }
-
+	    
 	    public void setUsername(String username) {
 	    	this.username = username.trim();
 	    }
-
+	    
 	    public String getUsername() {
 	    	return username;
 	    }
-
+	    
 	    public void saveSettings(String prefix, Settings prop, String suffix) {
-
+	    	
 	    }
 	    public boolean loadSettings(String prefix, Settings prop, String suffix) {
 	    	return true;
 	    }
-
+	    
 	    public BasicRoleMap clone() {
 	    	return new BasicRoleMap(role,username,loginPassword);
 	    }
 	}
-
+   
 	 		public BasicIdentity clone() {
 	 			BasicIdentity basicIdentity = new BasicIdentity();
 	 			for (RoleMap roleMap : getRoleMaps()) {
@@ -246,5 +230,5 @@ public class BasicIdentity extends Identity implements Serializable,Props, Clone
 	 			}
 	 			return basicIdentity;
 	 		}
-
+	 
 }

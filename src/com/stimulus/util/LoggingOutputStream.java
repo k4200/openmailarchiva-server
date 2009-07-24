@@ -2,7 +2,7 @@ package com.stimulus.util;
 
 import java.io.ByteArrayOutputStream; 
 import java.io.IOException; 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
  
 /** 
  * An OutputStream that writes contents to a Logger upon each call to flush() 
@@ -11,7 +11,7 @@ public class LoggingOutputStream extends ByteArrayOutputStream {
  
  private String lineSeparator; 
  
- private Logger logger; 
+ private Log logger; 
  
  
  /** 
@@ -19,7 +19,7 @@ public class LoggingOutputStream extends ByteArrayOutputStream {
  * @param logger Logger to write to 
  * @param level Level at which to write the log message 
  */ 
- public LoggingOutputStream(Logger logger) { 
+ public LoggingOutputStream(Log logger) { 
 	 super(); 
 	 this.logger = logger; 
 	 lineSeparator = System.getProperty("line.separator"); 

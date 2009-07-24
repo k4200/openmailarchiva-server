@@ -36,11 +36,9 @@ import java.io.IOException;
  * <p>Created: Apr 21, 2004 5:08:38 PM
  *
  *
- * @version $Id: SortComparator.java 564236 2007-08-09 15:21:19Z gsingers $
+ * @version $Id: SortComparator.java 747019 2009-02-23 13:59:50Z mikemccand $
  * @since   1.4
- */
-/* addition: the original version of this class did not handle null values in the index. 
- * now, we have modified the class to deal with null values
+ * @deprecated Please use {@link FieldComparatorSource} instead.
  */
 public abstract class SortComparator
 implements SortComparatorSource {
@@ -54,9 +52,6 @@ implements SortComparatorSource {
     return new ScoreDocComparator() {
 
       public int compare (ScoreDoc i, ScoreDoc j) {
-    	 if (cachedValues[i.doc]==null || cachedValues[j.doc]==null) {
-    		return -1;
-    	 }
         return cachedValues[i.doc].compareTo (cachedValues[j.doc]);
       }
 

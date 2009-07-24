@@ -1,9 +1,9 @@
 
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+/* Copyright (C) 2005-2007 Jamie Angus Band 
+ * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+ * 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -14,22 +14,21 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-
 package com.stimulus.archiva.exception;
 
 import java.io.Serializable;
 import org.apache.commons.logging.*;
 
 public class ChainedException extends Exception implements Serializable {
-
-
+	
+	
   public enum Level { DEBUG, WARN, INFO, FATAL, TRACE, ERROR };
-
+  
   private static final long serialVersionUID = 7945849551205785581L;
   private Throwable cause = null;
-
+  
   protected static Log logger = LogFactory.getLog(ChainedException.class.getName());
-
+  
   public ChainedException() {
     super();
   }
@@ -39,7 +38,7 @@ public class ChainedException extends Exception implements Serializable {
   }
 
   public ChainedException(String message, Throwable cause) {
-
+	  
     super(message);
     this.cause = cause;
   }
@@ -72,19 +71,19 @@ public class ChainedException extends Exception implements Serializable {
 		  logger.warn(message);
 	  }
   }
-
+  
   public static Level getLoggingLevel(Log logger) {
 	  if (logger.isDebugEnabled())
 		  return Level.DEBUG;
-	  else if (logger.isInfoEnabled())
+	  else if (logger.isInfoEnabled()) 
 		  return Level.INFO;
-	  else if (logger.isWarnEnabled())
+	  else if (logger.isWarnEnabled()) 
 		  return Level.WARN;
-	  else if (logger.isErrorEnabled())
+	  else if (logger.isErrorEnabled()) 
 	  	  return Level.ERROR;
-	  else if (logger.isFatalEnabled())
+	  else if (logger.isFatalEnabled()) 
 		  return Level.FATAL;
-
+	 
 	  return Level.DEBUG;
   }
 
@@ -110,6 +109,6 @@ public void printStackTrace(java.io.PrintWriter pw) {
     super.printStackTrace(pw);
     logger.debug(cause);
   }
-
+ 
 }
 

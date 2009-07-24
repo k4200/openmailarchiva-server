@@ -1,8 +1,8 @@
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+/* Copyright (C) 2005-2007 Jamie Angus Band 
+ * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+ * 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -36,12 +36,12 @@ public class DisplayDate extends DisplayField implements Serializable {
 		super(efv);
 		this.locale = locale;
 	}
-
+	
 	@Override
 	public String getDisplay() {
 		if (efv.getValue()==null || efv.getValue().length()<1)
 			return "";
-
+		
 		String dateStr = efv.getValue().substring(1,efv.getValue().length()-1);
 		Date sent;
 		try {
@@ -52,8 +52,8 @@ public class DisplayDate extends DisplayField implements Serializable {
 		}
 		return DateUtil.getShortDate(sent,locale);
 	}
-
-
-
+	
+	
+	
 
 }

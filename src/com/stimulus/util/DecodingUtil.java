@@ -39,15 +39,9 @@ public class DecodingUtil implements Serializable
 		strMimeAddresses = strMimeAddresses.replaceAll("_=$", "?=");
 		try
 		{
-
 			strWord = MimeUtility.decodeWord(strMimeAddresses);
-		}
-		catch (UnsupportedEncodingException e)
-		{
-		}
-		catch (ParseException e)
-		{
-		}
+		} catch (UnsupportedEncodingException e) {
+		} catch (ParseException e) { }
 		return strWord;
 	}
 

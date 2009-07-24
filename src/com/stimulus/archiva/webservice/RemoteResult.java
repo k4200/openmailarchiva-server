@@ -1,19 +1,4 @@
-
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
- */
- package com.stimulus.archiva.webservice;
+package com.stimulus.archiva.webservice;
 
 import java.io.IOException;
 
@@ -36,28 +21,28 @@ import com.stimulus.archiva.webservice.*;
 
 public class RemoteResult extends Search.Result {
 
-
+	 
   	protected static final Log logger = LogFactory.getLog(RemoteResult.class.getName());
   	SimpleAPIStub.SearchResult searchResult;
-
+  	
   	public RemoteResult(SimpleAPIStub.SearchResult searchResult) {
   		this.searchResult = searchResult;
   	}
-
+  			
   	public EmailID getEmailId() throws MessageSearchException {
-
+  		
   		String uid = null;
   		String volid = null;
-
+  		
   		uid = searchResult.getEmailId();
   		volid = searchResult.getVolumeId();
-
+  		
   		if (uid==null)  {
 			  logger.warn("found message with null ID during construction of search results");
 			  return null;
 		  	}
   		Volume volume = null;
-		  try {
+		  try { 
 			 if (volid==null) // legacy
 				 volume = Config.getConfig().getVolumes().getLegacyVolume(uid);
 			 else
@@ -66,9 +51,9 @@ public class RemoteResult extends Search.Result {
 			  logger.error("failed to lookup the volume from index information");
 		  }
 	  	  return EmailID.getEmailID(volume,uid);
-
+	  		
   	}
-
+  
   	public EmailFieldValue getFieldValue(String key) throws MessageSearchException {
   		String[] fields = searchResult.getFields();
   		String[] values = searchResult.getFieldValues();
@@ -81,8 +66,8 @@ public class RemoteResult extends Search.Result {
   		logger.error("failed to retrieve email field {key='"+key+"'}");
   		return null;
   	}
+  
 
-
-
+  	
   }
-
+  

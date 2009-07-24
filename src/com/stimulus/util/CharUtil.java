@@ -46,23 +46,16 @@ public class CharUtil {
 			}
 			String charset = getCharSetFromContentType(contentType);
 			if (charset==null)
-				return Charset.forName("UTF-8");
+				return null;
+			
 			try {
 				String javaCharset = MimeUtility.javaCharset(charset);
 				Charset cs = Charset.forName(CharUtil.getCharset(javaCharset));
 				return cs;
 			} catch (Exception e) {
-				return Charset.forName("UTF-8");
+				return null;
 			}
     		
-	  }
-	  public static InputStream getInputStreamFromPart(MimePart mpb) throws IOException, MessagingException {
-			
-		  Charset charset = getCharsetFromPartContent(mpb);
-		  if (charset==null) {
-			  	return mpb.getInputStream();
-		  } 
-		  return CharUtil.getCharEncodedStream( mpb.getInputStream(),charset);
 	  }
 	
 	public static String getEncodedStringFromPartContent(MimePart mpb) throws IOException, MessagingException {
@@ -73,50 +66,10 @@ public class CharUtil {
 			 return decode(charset,(String)mpb.getContent());
 	}
 	
-	public static String encode(Charset encoding, String inStr) throws IOException {
-		Charset koi = Charset.forName("KOI8-R");
-		ByteBuffer bbuf = encoding.encode(CharBuffer.wrap(inStr));
-		return bbuf.asCharBuffer().toString();
-	}
-	public static String decode(Charset encoding, InputStream is) {
-		try { 
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		Reader r = new InputStreamReader(is, "KOI8-R");
-		 Writer w = new BufferedWriter(new OutputStreamWriter(bos, "UTF-8"));
-		
-	    char[] buffer = new char[4096];
-	    int len;
-	    while ((len = r.read(buffer)) != -1)
-	      // Read a block of input.
-	      w.write(buffer, 0, len); // And write it out.
-	    r.close(); // Close the input.
-	    w.close(); // Flush and close output.
-	    return bos.toString("UTF-8");
-		} catch (IOException io) {
-			io.printStackTrace();
-			return "";
-		}
-	}
 	public static String decode(Charset encoding, String inStr) {
-		try { 
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			Reader r = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(inStr.getBytes()), "KOI8-R"));
-		    Writer w = new BufferedWriter(new OutputStreamWriter(bos, "KOI8-R"));
-	
-		    char[] buffer = new char[4096];
-		    int len;
-		    while ((len = r.read(buffer)) != -1)
-		      // Read a block of input.
-		      w.write(buffer, 0, len); // And write it out.
-		    r.close(); // Close the input.
-		    w.close(); // Flush and close output.
-		    return bos.toString("UTF-8");
-		} catch (IOException io) {
-			io.printStackTrace();
-			return "";
-		}
-	    
-}
+		ByteBuffer cb = ByteBuffer.wrap(inStr.getBytes());
+		return encoding.decode(cb).toString();
+	}
 	
 	public static void convert(Charset inputEncoding, Charset outputEncoding,InputStream inStream, OutputStream outStream) throws IOException {
 			ReadableByteChannel in = Channels.newChannel(inStream);
@@ -131,15 +84,6 @@ public class CharUtil {
     		while (outBuffer.hasRemaining()) out.write(outBuffer);
     	}
 		}
- 
-	// bad coding but little choice
-  	public static InputStream getCharEncodedStream(InputStream is, Charset outputEncoding) throws IOException {
-	  	ByteArrayOutputStream bos = new ByteArrayOutputStream();
-	  	CharUtil.convert(outputEncoding,Charset.forName("UTF-8"),is,bos);
-	  	byte[] out = bos.toByteArray();
-	  	bos = null;
-	  	return new ByteArrayInputStream(out);
-	}
  
 	
 	public static InputStream getTransferDecodedStream(MimePart mpb, InputStream encodedStream) { 

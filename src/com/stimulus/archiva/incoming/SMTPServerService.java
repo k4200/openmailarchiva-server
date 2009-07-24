@@ -1,18 +1,3 @@
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
- */
-
 package com.stimulus.archiva.incoming;
 
 import com.stimulus.archiva.exception.*;
@@ -30,25 +15,25 @@ import java.util.*;
 import java.net.*;
 
 public class SMTPServerService implements Service, Props, SimpleMessageListener, StopBlockTarget {
-
+	
 	static List<String> MECHANISMS = new ArrayList<String>(1);
-
+	
 	static {
 		MECHANISMS.add("PLAIN");
 	}
-
+	
 	private static final int IDLE_TIMEOUT = 300000; // 5 minutes
 	protected static final String smtpAuthKey 			   	   	= "agent.authentication";
 	protected static final String smtpUsernameKey 			   	= "agent.username";
 	protected static final String smtpPasswordKey 			  	 = "agent.password";
 	protected static final String smtpTLSKey 			   	   	= "agent.tls";
 	protected static final String smtpPortKey 			   	   	= "agent.port";
-	protected static final String smtpIpAddressKey 	   			= "agent.milter.ipaddress";
+	protected static final String smtpIpAddressKey 	   			= "agent.milter.ipaddress";  
 	protected static final String smtpEnableKey 			   	= "agent.enable";
 	protected static final String smtpSocketBackLogKey			= "subsmtp.socket.backlog";
 	protected static final String smtpMaxConnectionsKey			= "subsmtp.maxconnections";
 	protected static final String smtpDeferredSizeKey			= "subsmtp.deferredsz";
-
+	
 	protected static final String defaultSMTPAuth				= "no";
 	protected static final String defaultSMTPUsername  	    	= "admin";
 	protected static final String defaultSMTPPassword			= "password";
@@ -61,7 +46,7 @@ public class SMTPServerService implements Service, Props, SimpleMessageListener,
 	protected static final String defaultSMTPSocketBackLog			= "50";
 	protected static final String defaultSMTPCertAlias			= null;
 	protected static final String defaultSMTPAuthCerts			= "no";
-
+	
 	protected static Log logger = LogFactory.getLog(SMTPServerService.class);
 	protected int port							= 8091;
 	protected boolean smtpAuth    				= false;
@@ -69,7 +54,7 @@ public class SMTPServerService implements Service, Props, SimpleMessageListener,
 	protected String  smtpPassword 				=  "";
 	protected boolean smtpTLS					= false;
 	protected boolean smtpEnable 				= false;
-
+	
 	protected SMTPServer  smtpServer 			= null;
 	protected String ipAddress = "";
 	protected ServiceDelegate serviceDelegate;
@@ -77,23 +62,23 @@ public class SMTPServerService implements Service, Props, SimpleMessageListener,
 	protected int smtpDeferredSize = 5242880;
 	protected int smtpMaxConnections = 1000;
 	protected String certAlias;
-
-
-
-
+	
+	
+	
+	
  	public SMTPServerService() {
 	    serviceDelegate = new ServiceDelegate("smtp", this, logger);
 	}
-
+	
 	 public String getServiceName() {
 		 return serviceDelegate.getServiceName();
 	 }
-
+	
 	 public boolean isAlive() {
 		 boolean alive = (smtpServer!=null && smtpServer.isRunning());
 		 return serviceDelegate.isAlive(alive);
 	}
-
+	 
 	 public void startup() {
 		 if (!getSMTPEnable()) {
 				logger.info("smtp server not started. it is disabled. not listening.");
@@ -102,7 +87,7 @@ public class SMTPServerService implements Service, Props, SimpleMessageListener,
 			//int archiveThreads = Config.getConfig().getArchiver().getArchiveThreads();
 			logger.debug(getServiceName()+" started");
 			smtpServer = new SMTPServer(new SimpleMessageListenerAdapter(this));
-
+			
 			//smtpServer.setName(Config.getConfig().getProductName()+Config.getConfig().getApplicationVersion());
 			UsernamePasswordValidator validator = new MailArchivaUsernamePasswordValidator();
 			EasyAuthenticationHandlerFactory fact = new EasyAuthenticationHandlerFactory(validator);
@@ -117,7 +102,7 @@ public class SMTPServerService implements Service, Props, SimpleMessageListener,
 				}
 				smtpServer.setBindAddress(bindAddress);
 			}
-
+			
 			smtpServer.setPort(port);
 			smtpServer.setHideTLS(!smtpTLS);
 			smtpServer.setBacklog(smtpSocketBackLog);
@@ -134,7 +119,7 @@ public class SMTPServerService implements Service, Props, SimpleMessageListener,
 				logger.warn("please ensure that you do not have more than one instance of MailArchiva running");
 			}
 	 }
-
+	
 	 public void prepareShutdown() {
 		 if (isAlive()) {
 			 if (smtpServer!=null) {
@@ -144,7 +129,7 @@ public class SMTPServerService implements Service, Props, SimpleMessageListener,
 			 serviceDelegate.prepareShutdown();
 		 }
 	 }
-
+	 
 	 public void shutdown() {
 		 if (isAlive()) {
 			 if (smtpServer!=null) {
@@ -155,10 +140,10 @@ public class SMTPServerService implements Service, Props, SimpleMessageListener,
 			 serviceDelegate.shutdown();
 		 }
 	 }
-
+	 
 	 public void reloadConfig() {
 		 boolean started = serviceDelegate.getStatus()==Status.STARTED;
-
+		
 		 if (smtpEnable && !started) {
 			 startup();
 			 serviceDelegate.reloadConfig();
@@ -172,75 +157,75 @@ public class SMTPServerService implements Service, Props, SimpleMessageListener,
 			 serviceDelegate.reloadConfig();
 			 return;
 		 }
-
+		
 		 if (!smtpEnable && started) {
 			 prepareShutdown();
 			 shutdown();
 			 serviceDelegate.reloadConfig();
 			 return;
 		 }
-
-
+		
+			
 	 }
-
-
+	
+	 
 	 public Status getStatus() {
 		 return serviceDelegate.getStatus();
 	 }
-
-
-
-
+	 
+	
+	
+	 
     public void setSMTPPort(int smtpPort) {
     	this.port = smtpPort;
     }
-
+    
     public int getSMTPPort() { return port; }
-
+    
     public boolean getSMTPEnable() {
     	return smtpEnable;
     }
-
+    
     public void setSMTPEnable(boolean smtpEnable) {
     	this.smtpEnable = smtpEnable;
     }
-
-
-    public void setSMTPUsername(String username) {
-    	this.smtpUsername = username;
+    
+    
+    public void setSMTPUsername(String username) { 
+    	this.smtpUsername = username; 
     }
-
+    
     public String getSMTPUsername() { return smtpUsername; }
-
+    
     public void setSMTPPassword(String password) {
     	this.smtpPassword = password;
     }
-
-    public String getSMTPPassword() {
+    
+    public String getSMTPPassword() { 
     	return smtpPassword;
     }
-
+    
     public void setSMTPTLS(boolean enabled) {
     	this.smtpTLS = enabled;
     }
-
+    
     public boolean getSMTPTLS() { return smtpTLS; }
-
+    
     public void setSMTPAuth(boolean enabled) {
     	this.smtpAuth = enabled;
     }
-
-    public boolean getSMTPAuth() {
+    
+    public boolean getSMTPAuth() { 
     	return smtpAuth;
     }
-
-
+    
+    
     public void setIpAddress(String ipAddress) {
     	this.ipAddress = ipAddress;
     }
-
+    
     public String getIpAddress() { return ipAddress; }
-
+    
     public boolean loadSettings(String prefix, Settings prop, String suffix) {
     	logger.debug("loading smtp server settings");
         setSMTPPort(ConfigUtil.getInteger(prop.getProperty(smtpPortKey),defaultSMTPPort));
@@ -274,8 +259,8 @@ public class SMTPServerService implements Service, Props, SimpleMessageListener,
 	    prop.setProperty(smtpPortKey, Integer.toString(getSMTPPort()));
 	    prop.setProperty(smtpEnableKey, ConfigUtil.getYesNo(getSMTPEnable()));
 	    prop.setProperty(smtpIpAddressKey, ipAddress);
-
-
+	    
+	    
 	    if (getSMTPPassword()!=null) {
 	        // if raw password is hash value, we know to see the passphrase
 	        try {
@@ -283,11 +268,11 @@ public class SMTPServerService implements Service, Props, SimpleMessageListener,
         	} catch (MessageStoreException mse) {
         		logger.error("failed to save active directory service account pass phrase",mse);
         	}
-
+	       
         }
-
+	    
     }
-
+    
     public boolean accept(String from, String recipient, SocketAddress socket) {
     	InetAddress address = ((InetSocketAddress)socket).getAddress();
     	return Config.getConfig().getAgent().isAllowed(address);
@@ -296,7 +281,7 @@ public class SMTPServerService implements Service, Props, SimpleMessageListener,
 	public void deliver(String from, String recipient, InputStream data) throws TooMuchDataException, IOException {
 		Config.getStopBlockFactory().detectBlock("smtp server",Thread.currentThread(),this,IDLE_TIMEOUT);
 		try {
-		   Config.getConfig().getFetchMessageCallback().store(data,from);
+		   Config.getConfig().getFetchMessageCallback().store(data,from);	
 	   } catch (ArchiveException ae) {
 		   logger.error("failed to archive message:"+ae.getMessage(),ae);
 		   if (ae.getRecoveryDirective()!=ArchiveException.RecoveryDirective.ACCEPT) {
@@ -308,29 +293,29 @@ public class SMTPServerService implements Service, Props, SimpleMessageListener,
 			Config.getStopBlockFactory().endDetectBlock(Thread.currentThread());
 		}
 	}
-
-
+	
+	
 
 	class MailArchivaUsernamePasswordValidator implements UsernamePasswordValidator
 	{
 		public void login(String username, String password) throws LoginFailedException
 		{
-			if (!smtpAuth)
+			if (!smtpAuth) 
 				return;
-
+			
 			boolean authenticated = username.equalsIgnoreCase(smtpUsername) && password.equalsIgnoreCase(password);
 			if (!authenticated) {
 				throw new LoginFailedException("username and/or password is incorrect.");
 			}
 		}
 	}
-
+	
 	/** Always accept everything */
 	public boolean accept(String from, String recipient)
 	{
 		return true;
 	}
-
+	
 	 public void handleBlock(Thread thread) {
 
          synchronized (this) {
@@ -340,6 +325,6 @@ public class SMTPServerService implements Service, Props, SimpleMessageListener,
              }
          }
     }
-
-
+	 
+	
 }

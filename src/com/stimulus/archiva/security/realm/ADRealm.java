@@ -1,9 +1,9 @@
 
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+/* Copyright (C) 2005-2007 Jamie Angus Band 
+ * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+ * 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -13,6 +13,7 @@
  * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
+
 package com.stimulus.archiva.security.realm;
 
 import java.util.regex.*;
@@ -38,7 +39,7 @@ import com.stimulus.util.*;
 
 public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
 
-
+  
 	private static final long serialVersionUID = 1735467638548884618L;
 	protected static final Log logger = LogFactory.getLog(ADRealm.class.getName());
 	protected static final Log audit = LogFactory.getLog("com.stimulus.archiva.audit");
@@ -54,7 +55,7 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
 			   Principal masterPrincipal = authenticateMaster(config,username,password);
 			   if (masterPrincipal!=null) {
 				   return masterPrincipal;
-			   }
+			   } 
 		   }
 		   return authenticate(config, username, password);
 	   }  catch (ArchivaException ae) {
@@ -62,7 +63,7 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
        }
 	   return null;
    }
-
+   
    public Principal authenticateMaster(Config config, String username, String password) {
 	   String masterUsername = config.getAuthentication().getMasterLoginUsername();
 	   String masterPassword = config.getAuthentication().getMasterLoginPassword();
@@ -73,7 +74,7 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
 	   }
 	   return null;
    }
-
+   
    public Principal authenticate(Config config, String username, String password) throws ArchivaException {
 	   Authentication auth = config.getAuthentication();
 	   Authentication.AuthMethod authMethod = auth.getAuthMethod();
@@ -83,21 +84,21 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
        } else if (authMethod == Authentication.AuthMethod.ACTIVEDIRECTORY) {
     	   logger.debug("authenticate: active directory authentication enabled");
     	   return authActiveDirectory(config,username,password);
-       }
+       } 
        return null;
    }
-
+   
    public Principal authBasic(Config config, String username, String password) throws ArchivaException {
 	   logger.debug("authenticating user to web console using basec authentication {username='"+username+"'}");
 	   // if there are no role maps defined default to ADMIN access
        if (config.getAuthentication().isLegacyMasterPassword()) {
     	   if (config.getBasicIdentity().getRoleMaps().size()==0) {
         	   logger.info("SECURITY WARNING!! there are no users defined for basic authentication. anonymous user is granted admin rights.");
-        	   if (username.equalsIgnoreCase("admin") &&
+        	   if (username.equalsIgnoreCase("admin") && 
         		   password.equalsIgnoreCase("admin")) {
         		   return new MailArchivaPrincipal(username,Roles.MASTER_ROLE.getName());
         	   } else
-        		   throw new ArchivaException("failed to authenticate user. username/password incorrect. {username='"+username+"'}",logger,ChainedException.Level.WARN);
+        		   throw new ArchivaException("failed to authenticate user. username/password incorrect. {username='"+username+"'}",logger,ChainedException.Level.WARN);  	
            }
 	   }
        username = getExpandedLoginName(config,username);
@@ -109,16 +110,16 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
        try {
   		 MessageDigest sha = MessageDigest.getInstance("SHA-1");
   	     byte[] input = sha.digest(ByteUtil.mergeByteArrays(password.getBytes("UTF-8"),Config.getConfig().getSalt()));
-  	     passwordDigest = Base64.encodeToString(input,false);
+  	     passwordDigest = Base64.encodeToString(input,false); 
   	   } catch (Exception e) {
        	 logger.error("failed to generate password digest during basic authentication:"+e.getMessage(),e);
 	   }
-
+		  
        for (Identity.RoleMap rolemap : config.getBasicIdentity().getRoleMaps()) {
 	         BasicIdentity.BasicRoleMap rm = (BasicIdentity.BasicRoleMap)rolemap;
 	         logger.debug("find role {username='"+rm.getUsername()+"'}");
-	         logger.debug("username:'"+username+"'}");
-
+	         logger.debug("username:'"+username+"'}");    
+	        
 		         if (rm.getUsername().toLowerCase(Locale.ENGLISH).equals(username.toLowerCase(Locale.ENGLISH))) {
 		        	 if ((rm.getLoginPassword().endsWith("=") && rm.getLoginPassword().equals(passwordDigest)) ||
 		        		 (!rm.getLoginPassword().endsWith("=") && rm.getLoginPassword().equals(password))) {
@@ -131,11 +132,11 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
 	                     logger.debug("successfully authenticated user using basic credentials {uname='"+username+"',role='"+role+"'}");
 		        	 }
 		        }
-
+	       
        }
-
-       if (role==null)
-           throw new ArchivaException("failed to authenticate user as no role could be assigned {username='"+username+"'}",logger,ChainedException.Level.WARN);
+     
+       if (role==null) 
+           throw new ArchivaException("failed to authenticate user as no role could be assigned {username='"+username+"'}",logger,ChainedException.Level.WARN);  	
         else {
         	 logger.debug("auth user is assigned a role {uname='"+username+"',role='"+role.getName()+"'}");
         	 List<String> emailAddresses = new ArrayList<String>();
@@ -150,11 +151,11 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
        if (config.getAuthentication().isLegacyMasterPassword()) {
 	       if (identity.getRoleMaps().size()==0) {
 	    	   logger.info("SECURITY WARNING!! there are no role mappings defined for active directory authentication. anonymous user is granted admin rights.");
-	    	   if (username.equalsIgnoreCase("admin") &&
+	    	   if (username.equalsIgnoreCase("admin") && 
 	    		   password.equalsIgnoreCase("admin")) {
 	    		   return new MailArchivaPrincipal(username,Roles.MASTER_ROLE.getName());
 	    	   } else
-	    		   throw new ArchivaException("failed to authenticate user. warning: there are no role mapping defined. {username='"+username+"'}",logger,ChainedException.Level.ERROR);
+	    		   throw new ArchivaException("failed to authenticate user. warning: there are no role mapping defined. {username='"+username+"'}",logger,ChainedException.Level.ERROR);  	
 	       }
        }
        username = getExpandedLoginName(config,username);
@@ -162,19 +163,19 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
        validatePassword(password);
        ArrayList<AttributeValue> attributeValues = getADAttributes(config,identity, username, password);
        Roles.Role userRole = getLDAPRole(config,identity,attributeValues);
-       if (userRole==null)
-          throw new ArchivaException("failed to authenticate user as no role could be assigned {username='"+username+"'}",logger,ChainedException.Level.WARN);
+       if (userRole==null) 
+          throw new ArchivaException("failed to authenticate user as no role could be assigned {username='"+username+"'}",logger,ChainedException.Level.WARN);  	
        else {
     	   List<String> emailAddresses = getEmailAddresses(username, identity.getEmailAttribute(),identity.getEmailValue(),attributeValues);
     	   return new MailArchivaPrincipal(username,userRole.getName(),emailAddresses);
        }
    }
-
-
+    
+ 
    public List<String> getEmailAddresses(String username, String emailAttribute, String emailValue, ArrayList<AttributeValue> attributeValues) {
 	   List<String> emailAddresses = new ArrayList<String>();
-
-		   logger.debug("getEmailAddresses(): analyzing email attribute {attribute='"+emailAttribute+"'}");
+	   
+		   logger.debug("getEmailAddresses(): analyzing email attribute {attribute='"+emailAttribute+"'}");   
 		   for (AttributeValue attributeValue: attributeValues) {
 			   if (Compare.equalsIgnoreCase(attributeValue.getAttribute(), emailAttribute)) {
 				   String patternStr = emailValue;
@@ -200,15 +201,15 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
 					    		}
 					    	}
 				    	}
-
+				    	
 				    }
-			   }
+			   }		
 		}
 	    return emailAddresses;
 	}
-
-
-
+	  
+   
+   
    protected LoginContext kereberosLogin(Config config, ADIdentity identity, String username, String password) throws ArchivaException {
 	   logger.debug("kerberosLogin()");
 	   String domain 			= null;
@@ -218,22 +219,22 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
        String kdcAddress        =  identity.getKDCAddress();
        if (username.length()<1)
     	   throw new ArchivaException("A service account login name must be specified.",logger);
-
+       
        if (password.length()<1)
     	   throw new ArchivaException("A service account login password must be specified.",logger);
-
+       
        int at = username.lastIndexOf('@');
-
+       
        if (at==-1)
     	   throw new ArchivaException("The service account login name must be in the format username@company.local.",logger);
-
-
+       
+       
        uname = username.substring(0,at).toLowerCase(Locale.ENGLISH);
        domain = username.substring(at+1).toUpperCase(Locale.ENGLISH);
-
+       
        logger.debug("kerberosLogin() {domain='"+domain+"', uname='"+username+"',kdcAddress='"+kdcAddress+"'}");
-
-
+       
+       
        String confFile = Config.getFileSystem().getConfigurationPath()+ File.separatorChar + "login.conf";
        String krbFile = Config.getFileSystem().getConfigurationPath()+ File.separatorChar + "krb5.conf";
        beanCallbackHandler = new BeanCallbackHandler(uname, password);
@@ -248,7 +249,7 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
        System.setProperty("java.security.auth.login.config", confFile);
        try {
            serverLC = new LoginContext(confName , beanCallbackHandler);
-           serverLC.login();
+           serverLC.login();   
        } catch (Exception e) {
            throw new ArchivaException("failed to login using kerberos server. "+e.getMessage()+" {realm='"+domain+"',kdcAddress='"+kdcAddress+"'}",e,logger);
        }
@@ -282,7 +283,7 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
     	   throw new ArchivaException("failed to bind to ldap server {uname='"+username+"''}",e,logger);
        }
        try {
-    	   serverLC.logout();
+    	   serverLC.logout();   
        } catch (Exception e) {
     	   throw new ArchivaException("failed to logout from kerberos server:"+e.getMessage()+" {uname='"+username+"',kdcAddress='"+identity.getKDCAddress()+"'}",e,logger);
        }
@@ -293,21 +294,21 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
     	   env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
    	   	   env.put(Context.PROVIDER_URL, ldapAddress);
    	   	   env.put(Context.SECURITY_AUTHENTICATION, "GSSAPI");
-
+	   	   
 	        try {
 	    	       attributes = (ArrayList<AttributeValue>)Subject.doAs(serverLC.getSubject(), new GetAttributesAction(identity,username,env,bindDN));
 	        } catch (Exception e) {
 	     	   throw new ArchivaException("failed to bind to ldap server:"+e.getMessage()+" {uname='"+username+"',ldapAddress='"+identity.getLDAPAddress()+"'}",e,logger);
 	        }
-       }
+       } 
         try {
-     	   serverLC.logout();
+     	   serverLC.logout();   
         } catch (Exception e) {
      	   throw new ArchivaException("failed to logout from kerberos server:"+e.getMessage()+" {uname='"+username+"',kdcAddress='"+identity.getKDCAddress()+"'}",e,logger);
-        }
+        }   
         logger.debug("getADAttributes() return");
        return attributes;
-
+      
    }
    public String getExpandedLoginName(Config config, String username) {
 	   Authentication auth = config.getAuthentication();
@@ -318,13 +319,13 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
 	   }
 	   return username;
    }
-
+   
    public void validatePassword(String password) throws ArchivaException {
-
+	 
        if (password==null || password.length()<1) {
     	   throw new ArchivaException("invalid password. it cannot be empty.",logger,ChainedException.Level.DEBUG);
        }
-
+       
    }
    public void validateLoginName(String username) throws ArchivaException {
 	   int at = username.lastIndexOf('@');
@@ -332,7 +333,7 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
 	       throw new ArchivaException("invalid login name. must be username@domain",logger,ChainedException.Level.DEBUG);
 	   }
    }
-
+   
    /**
     * Test for role membership.
     *
@@ -346,21 +347,21 @@ public class ADRealm extends SimpleSecurityRealmBase implements Serializable {
 public boolean isUserInRole(Principal principal, String rolename) {
        if (principal==null)
     	   return false;
-
+       
        MailArchivaPrincipal cp = (MailArchivaPrincipal)principal;
        String userRole = cp.getRole();
        Roles.Role role = Config.getConfig().getRoles().getRole(userRole);
-       if (role==null)
+       if (role==null) 
     	   return false;
-
-       if (rolename.equals("configure") &&
+       
+       if (rolename.equals("configure") && 
            (role.getName().equalsIgnoreCase("administrator") ||
 			role.getName().equalsIgnoreCase("master")))
 			return true;
-
+      
        if (rolename.equals("search"))
     	   return true;
-
+       
        return false;
 
    }
@@ -374,7 +375,7 @@ public boolean isUserInRole(Principal principal, String rolename) {
        public BeanCallbackHandler(String name, String password)
        {
     	   logger.debug("BeanCallbackHandler() {uname='"+name+"'}");
-
+           
            this.name = name;
            this.password = password;
        }//BeanCallbackHandler
@@ -411,7 +412,7 @@ public boolean isUserInRole(Principal principal, String rolename) {
        Roles roles = config.getRoles();
        for (Identity.RoleMap rm: identity.getRoleMaps()) {
     	   LDAPIdentity.LDAPRoleMap adrm = (LDAPIdentity.LDAPRoleMap)rm;
-
+    	   
     	   for (AttributeValue attributeValue: attributeValues) {
     		  if (Compare.equalsIgnoreCase(attributeValue.getAttribute(), adrm.getAttribute())) {
     			   String value = attributeValue.getValue().trim();
@@ -426,10 +427,10 @@ public boolean isUserInRole(Principal principal, String rolename) {
                     	   role = newRole;
                        }
         		   }
-
+    			   
     		   }
-    	   }
-       }
+    	   }   
+       }   
        if (role==null)
            logger.debug("failed to assign a user role for authenticated user. will assume default role");
        else
@@ -437,21 +438,21 @@ public boolean isUserInRole(Principal principal, String rolename) {
 
        return role;
    }
-
+   
    public static class AttributeValue {
-
+	   
 	   private String attribute;
 	   private String value;
-
+	   
 	   public AttributeValue(String attribute, String value) {
 		   this.attribute = attribute.trim();
 		   this.value = value.trim();
 	   }
-
+	   
 	   public String getValue() { return this.value; }
 	   public String getAttribute() { return this.attribute; }
    }
-
-
-
+	 
+	
+	
 }

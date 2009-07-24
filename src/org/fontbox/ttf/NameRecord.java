@@ -217,7 +217,8 @@ public class NameRecord
      * 
      * @return A string for this class.
      */
-    public String toString()
+    @Override
+	public String toString()
     {
         return 
             "platform=" + platformId + 

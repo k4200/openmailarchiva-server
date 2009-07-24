@@ -1,8 +1,8 @@
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+/* Copyright (C) 2005-2007 Jamie Angus Band 
+ * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+ * 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -25,7 +25,7 @@ import com.stimulus.util.Crypto;
 
 public class Authentication implements Props {
 
-
+	
     protected static final String defaultAuthMethod = "basic";
 
     protected AuthMethod	authMethod = AuthMethod.BASIC;
@@ -41,36 +41,36 @@ public class Authentication implements Props {
 	protected String masterLoginUsername = defaultMasterLoginUsername;
 	protected boolean legacyMasterPassword = false;
 	protected static final Log logger = LogFactory.getLog(Authentication.class);
-
-
+	
+	
 	public boolean isLegacyMasterPassword() {
 		return legacyMasterPassword;
 	}
-
+	
 	public void setDefaultLoginDomain(String domain) {
 		defaultLoginDomain = domain;
 	}
-
+	
 	public String getDefaultLoginDomain() {
 		return defaultLoginDomain;
 	}
-
+	
 	public void setMasterLoginPassword(String masterLoginPassword) {
 		this.masterLoginPassword = masterLoginPassword;
 	}
-
+	
 	public String getMasterLoginPassword() {
 		return masterLoginPassword;
 	}
-
+	
 	public void setMasterLoginUsername(String masterLoginUsername) {
 		this.masterLoginUsername = masterLoginUsername;
 	}
-
+	
 	public String getMasterLoginUsername() {
 		return masterLoginUsername;
 	}
-
+	
 	public boolean isDefaultMasterLoginModified() {
 		  if (masterLoginPassword==null)
 			  return false;
@@ -78,13 +78,13 @@ public class Authentication implements Props {
 		  logger.debug("default password {modified='"+modified+"'}");
 		  return modified;
 	}
-
+	
     public void setAuthMethod(AuthMethod authMethod) {
   	  this.authMethod = authMethod;
     }
-
+    
     public void setAuthMethod(String loginMethod) {
-  		  	AuthMethod newAuthMethod = AuthMethod.BASIC;
+  		  	AuthMethod newAuthMethod = AuthMethod.BASIC;	
   		  	try {
   		  		newAuthMethod = AuthMethod.valueOf(loginMethod.trim().toUpperCase(Locale.ENGLISH));
   		  	} catch (IllegalArgumentException iae) {
@@ -93,7 +93,7 @@ public class Authentication implements Props {
   			}
   		  	setAuthMethod(newAuthMethod);
     }
-
+    
     public AuthMethod getAuthMethod() {
     	  return authMethod;
     }
@@ -108,13 +108,13 @@ public class Authentication implements Props {
         	} catch (MessageStoreException mse) {
         		logger.error("failed to save active directory service account pass phrase",mse);
         	}
-
+	       
         }
 	    if (getMasterLoginUsername()!=null) {
 	    	prop.setProperty(masterLoginUsernameKey,getMasterLoginUsername());
 	    }
 	}
-
+	
 	public boolean loadSettings(String prefix, Settings prop, String suffix) {
 		logger.debug("loading authentication settings");
 		   String newAuthMethod = "basic";
@@ -129,21 +129,21 @@ public class Authentication implements Props {
    	    		logger.error("failed to set auth method field. auth method is set to an illegal value {field='"+newAuthMethod+"'}");
    	    		logger.info("auth method field is set to 'to' by default (error recovery)");
    	  	}
-   	  	defaultLoginDomain = prop.getProperty(defaultLoginDomainKey);
+   	  	defaultLoginDomain = prop.getProperty(defaultLoginDomainKey); 
    	  	if (defaultLoginDomain==null) {
    	  		List<Domains.Domain> domains = Config.getConfig().getDomains().getDomains();
-   	  		if (domains!=null && domains.size()>0)
+   	  		if (domains!=null && domains.size()>0) 
    	  			defaultLoginDomain = domains.get(0).getName();
    	  		else defaultLoginDomain = "";
-   	  	}
-
+   	  	} 
+   	  	
    	  	String encPassword = prop.getProperty(masterLoginPasswordKey);
    	  	if (encPassword==null && newAuthMethod!=null) {
    	  		legacyMasterPassword = true;
    	  	} else {
    	  		legacyMasterPassword = false;
    	  	}
-
+   	 
 	   	String encryptedPassword = ConfigUtil.getString(prop.getProperty(masterLoginPasswordKey),defaultMasterLoginPassword);
 	 	if (!encryptedPassword.endsWith("=")) {
 	 		setMasterLoginPassword(encryptedPassword);
@@ -158,8 +158,8 @@ public class Authentication implements Props {
 	 	 setMasterLoginUsername(username);
 	 	 return true;
     }
-
-
-
-
+	
+	
+	
+	
 }

@@ -1,22 +1,18 @@
 package com.stimulus.util;
 
-import java.util.Hashtable;
-
+import java.util.*;
 import java.util.concurrent.*;
+
 import org.apache.commons.logging.*;
 
 public class StopBlockFactory implements Runnable {
 
-	ScheduledExecutorService scheduler;
-	ScheduledFuture<?> scheduledTask;
-	Hashtable<Thread,StopBlock> stopBlocks = new Hashtable<Thread,StopBlock>();
+	ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1,ThreadUtil.getDaemonThreadFactory("stopblock"));
+	ScheduledFuture<?> scheduledTask = scheduler.scheduleAtFixedRate(this, 500, 500, TimeUnit.MILLISECONDS);
+	WeakHashMap<Thread,StopBlock> stopBlocks = new WeakHashMap<Thread,StopBlock>();
 	protected static Log logger = LogFactory.getLog(StopBlockFactory.class.getName());
 
 	public StopBlockFactory() {
-		 stopBlocks = new Hashtable<Thread,StopBlock>();
-		 scheduler = Executors.newScheduledThreadPool(1);
-		 scheduledTask = scheduler.scheduleAtFixedRate(this, 500, 500, TimeUnit.MILLISECONDS);
-	
 	}
 	
 	public void detectBlock(String description, Thread thread, StopBlockTarget target, int timeout) {

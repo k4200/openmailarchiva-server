@@ -1,18 +1,3 @@
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
- */
-
 package com.stimulus.archiva.incoming;
 
 import java.net.*;
@@ -22,7 +7,7 @@ import com.stimulus.archiva.domain.*;
 
 
 public class Server extends Thread {
-
+	
     protected ServerSocketChannel serverSocketChannel;
     protected boolean running;
     protected int port;
@@ -31,15 +16,15 @@ public class Server extends Thread {
     protected RequestQueue requestQueue;
     protected static Log logger = LogFactory.getLog(Server.class);
     protected static int MAX_BIND_ATTEMPTS = 20;
-
+  
     public Server( 		   String ipAddress,
-    					   int port,
+    					   int port, 
                            int backlog,
                            String requestHandlerClassName,
                            FetchMessageCallback callback,
                            int maxQueueLength,
                            int minThreads,
-                           int maxThreads,
+                           int maxThreads, 
                            String serverName) {
     	this.ipAddress = ipAddress;
         this.port = port;
@@ -55,7 +40,7 @@ public class Server extends Thread {
     }
 
     public int getPort() { return port; }
-
+    
     public void startup() {
     	int attempts = 0;
 		while (attempts < MAX_BIND_ATTEMPTS) {
@@ -82,14 +67,14 @@ public class Server extends Thread {
 	        attempts++;
 		}
     }
-
+ 
 
     public void prepareShutdown() {
     	if (isAlive()) {
     		this.running = false;
     	}
     }
-
+    
     public void shutdown() {
     	if (isAlive()) {
 	        try {
@@ -104,7 +89,7 @@ public class Server extends Thread {
     	}
     }
 
-
+   
     @Override
 	public void run()
     {
@@ -112,7 +97,7 @@ public class Server extends Thread {
         this.running = true;
         while( running ) {
             try {
-
+            	
                 SocketChannel s = serverSocketChannel.accept();
                 InetAddress addr = s.socket().getInetAddress();
                 logger.debug("received a new connection {hostaddress='"+addr.getHostAddress()+"',hostname='"+addr.getHostName()+"'");
@@ -127,9 +112,9 @@ public class Server extends Thread {
             }
         }
         logger.debug("shutting down the request queue");
-
+      
         this.requestQueue.shutdown();
     }
-
-
+    
+   
 }

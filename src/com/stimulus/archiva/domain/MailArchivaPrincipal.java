@@ -1,8 +1,9 @@
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+
+/* Copyright (C) 2005-2007 Jamie Angus Band 
+ * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+ * 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -30,7 +31,7 @@ public class MailArchivaPrincipal implements Principal, Serializable
 	protected String ipAddress = null;
 
 	public static MailArchivaPrincipal SYSTEM_PRINCIPAL = new MailArchivaPrincipal("system",Roles.SYSTEM_ROLE.getName());
-
+	
 	 public MailArchivaPrincipal(String name, String role) {
 		 this(name,role,null);
 	 }
@@ -47,33 +48,33 @@ public class MailArchivaPrincipal implements Principal, Serializable
 	     this.role = role;
 	     this.emailAddresses = emailAddresses;
 	     this.ipAddress = ipAddress;
-
+	    
 	 }
-
-
+	 
+	
 	 public String getName()
 	 {
 	     return name;
 	 }
-
+	
 	 public String getRole()
 	 {
 	     return role;
 	 }
-
+	 
 	 public String getIpAddress() {
 		 return ipAddress;
 	 }
-
+	 
 	 public void setIpAddress(String ipAddress) {
 		 this.ipAddress = ipAddress;
 	 }
-
+	 
 	 public List<String> getEmailAddresses() {
 		 return emailAddresses;
 	 }
-
-
+	 
+	
 	 @Override
 	public boolean equals(Object obj)  {
 	     if(obj instanceof MailArchivaPrincipal)
@@ -81,7 +82,7 @@ public class MailArchivaPrincipal implements Principal, Serializable
 	     else
 	         return false;
 	 }
-
+	
 	 @Override
 	public String toString() {
 		 if (emailAddresses!=null && emailAddresses.size()>0)

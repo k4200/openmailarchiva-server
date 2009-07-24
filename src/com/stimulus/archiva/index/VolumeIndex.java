@@ -1,8 +1,8 @@
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+/* Copyright (C) 2005-2007 Jamie Angus Band 
+ * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+ * 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -12,7 +12,6 @@
  * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
-
 package com.stimulus.archiva.index;
 
 import java.io.File;
@@ -41,20 +40,20 @@ import org.apache.lucene.store.AlreadyClosedException;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class VolumeIndex extends Thread {
-
+	
 		 protected static final Log logger = LogFactory.getLog(VolumeIndex.class.getName());
 		 public static final int indexOpenTime = 2000;
 	   	 IndexWriter writer = null;
 	   	 Volume volume;
 	   	  protected static ScheduledExecutorService scheduler;
 		 protected static ScheduledFuture<?> scheduledTask;
-
+		 
 		 ReentrantLock indexLock = new ReentrantLock();
 		 ArchivaAnalyzer analyzer 	= new ArchivaAnalyzer();
 		 Indexer indexer = null;
 		 File indexLogFile;
 		 PrintStream indexLogOut;
-
+		 
 	  	  public VolumeIndex(Indexer indexer, Volume volume) {
 	  		  logger.debug("creating new volume index {"+volume+"}");
 	  		  this.volume = volume;
@@ -72,7 +71,7 @@ public class VolumeIndex extends Thread {
 	  		  }
 	  		  startup();
 	  	  }
-
+		
 	  	protected File getIndexLogFile(Volume volume) {
 	  		 try {
 	  			  String indexpath = volume.getIndexPath();
@@ -87,7 +86,7 @@ public class VolumeIndex extends Thread {
 	  			  return null;
 	  		  }
 	  	}
-
+	  	
  		public void deleteMessage(EmailID emailID) throws MessageSearchException {
 			  if (emailID == null)
 		            throw new MessageSearchException("assertion failure: null emailID",logger);
@@ -102,14 +101,14 @@ public class VolumeIndex extends Thread {
 					  writer.deleteDocuments(new Term("uid",emailID.getUniqueID()));
 				  } catch (Exception e) {
 					  throw new MessageSearchException("failed to delete email from index.",e,logger);
-				  }
+				  } 
 			  } catch (InterruptedException ie) {
 				  throw new MessageSearchException("failed to delete email from index. interrupted.",logger);
 			  } finally {
 				  indexLock.unlock();
 			  }
 		}
-
+		
 		  protected void openIndex() throws MessageSearchException {
 			 Exception lastError = null;
 			 try {
@@ -121,7 +120,7 @@ public class VolumeIndex extends Thread {
 		    		logger.debug("openIndex() index will be opened. it is currently closed.");
 		    	} else {
 		    		logger.debug("openIndex() did not bother opening index. it is already open.");
-		    		return;
+		    		return; 
 		    	}
 		    	logger.debug("opening index for write {"+volume+"}");
 				indexer.prepareIndex(volume);
@@ -129,7 +128,7 @@ public class VolumeIndex extends Thread {
 				boolean writelock;
 				int attempt = 0;
 				int maxattempt = 10;
-
+				
 				do {
 					writelock = false;
 					try {
@@ -157,24 +156,24 @@ public class VolumeIndex extends Thread {
 				  indexLock.unlock();
 			}
 		}
-
+		
 		public void indexMessage(Email message) throws MessageSearchException  {
-
+      
 			long s = (new Date()).getTime();
 			if (message == null)
 			    throw new MessageSearchException("assertion failure: null message",logger);
 			logger.debug("indexing message {"+message+"}");
-
+			
 			Document doc = new Document();
 			try {
-
+			 
 			   DocumentIndex docIndex = new DocumentIndex(indexer);
 			   String language = doc.get("lang");
 			   if (language==null)
 				   language = indexer.getIndexLanguage();
 			   IndexInfo indexInfo = new IndexInfo();
-
-			   docIndex.write(message,doc,indexInfo);
+			   
+			   docIndex.write(message,doc,indexInfo); 
 			    try {
 					boolean isLocked = indexLock.tryLock(10,TimeUnit.MINUTES);
 					  if (!isLocked) {
@@ -189,7 +188,7 @@ public class VolumeIndex extends Thread {
 					  indexInfo.cleanup();
 				}
 		   		doc = null;
-
+			  
 			   logger.debug("message indexed successfully {"+message+",language='"+language+"'}");
 			} catch (MessagingException me) {
 			   throw new MessageSearchException("failed to decode message during indexing",me,logger, ChainedException.Level.DEBUG);
@@ -205,11 +204,11 @@ public class VolumeIndex extends Thread {
 			    throw new MessageSearchException("failed to index message",e,logger, ChainedException.Level.DEBUG);
 			}
 			logger.debug("indexing message end {"+message+"}");
-
+			
 			long e = (new Date()).getTime();
 		    logger.debug("indexing time {time='"+(e-s)+"'}");
 		}
-
+			
 		protected void closeIndex() {
 	 		try {
 	 			 boolean isLocked = indexLock.tryLock(10,TimeUnit.MINUTES);
@@ -231,9 +230,9 @@ public class VolumeIndex extends Thread {
 				 logger.error("failed to close index. interrupted.");
 			} finally {
 				  indexLock.unlock();
-			}
+			}		
 	   	}
-
+	
 		  public void deleteIndex() throws MessageSearchException {
 			  	 logger.debug("delete index {indexpath='"+volume.getIndexPath()+"'}");
 		  		 try {
@@ -246,7 +245,7 @@ public class VolumeIndex extends Thread {
 					 } catch (Exception cie) {
 						 logger.error("failed to delete index {index='"+volume.getIndexPath()+"'}",cie);
 						 return;
-					 }
+					 } 
 					 try {
 					   writer.close();
 	              	 } catch (Exception e) {
@@ -259,7 +258,7 @@ public class VolumeIndex extends Thread {
 					  indexLock.unlock();
 				}
 		  }
-
+		
 		  public void startup() {
 			logger.debug("volumeindex is starting up");
 			File lockFile = new File(volume.getIndexPath()+File.separatorChar + "write.lock");
@@ -279,22 +278,22 @@ public class VolumeIndex extends Thread {
 	            }
 	        }, indexOpenTime, indexOpenTime,TimeUnit.MILLISECONDS);
 			Runtime.getRuntime().addShutdownHook(this);
-
+			
 		  }
-
+		  
 		  public void shutdown() {
 			  logger.debug("volumeindex is shutting down");
 			  scheduler.shutdownNow();
 		      closeIndex();
 		  }
-
+		  
 		  @Override
 		public void run() {
 			  closeIndex();
 		  }
-
-
+		  
+	 
 }
 
-
+	
 

@@ -1,20 +1,4 @@
-
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
- */
-
- package com.stimulus.archiva.security.realm;
+package com.stimulus.archiva.security.realm;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -37,13 +21,13 @@ import com.stimulus.archiva.security.realm.ADRealm.AttributeValue;
 
 
 class ADAction implements java.security.PrivilegedAction {
-
+	
 	private String uname;
 	private String domain;
 	private ADIdentity identity;
 	protected static final Log logger = LogFactory.getLog(ADRealm.class.getName());
 	protected static final Log audit = LogFactory.getLog("com.stimulus.archiva.audit");
-
+	
 	public ADAction(ADIdentity identity, String uname, String domain) {
 	    this.identity = identity;
 	    this.uname = uname;
@@ -72,7 +56,7 @@ class ADAction implements java.security.PrivilegedAction {
 	}
 
 	// Active Directory Authentication
-
+	 
 	 private ArrayList<AttributeValue> getADAttributeValuePairs()  {
 		 	logger.debug("getADAttributeValuePairs()");
 	     	String filter = "(&(sAMAccountName=" + uname + ")(objectClass=user))";
@@ -86,12 +70,12 @@ class ADAction implements java.security.PrivilegedAction {
 	 	   	env.put(Context.SECURITY_AUTHENTICATION, "GSSAPI");
 	 	   	return getLDAPAttributes(env,filter);
 	 }
-
+ 
 	  private ArrayList<AttributeValue> getLDAPAttributes(Hashtable<String,String> env, String filter) {
 		  		String ldapAddress =  identity.getLDAPAddress();
 	    		if (!ldapAddress.toLowerCase(Locale.ENGLISH).startsWith("ldap://"))
 	    			ldapAddress = "ldap://" + ldapAddress;
-		  			ArrayList<AttributeValue> attributeValues = new ArrayList<AttributeValue>();
+		  			ArrayList<AttributeValue> attributeValues = new ArrayList<AttributeValue>();   	
 				  try {
 		    	   	 /* Create initial context */
 		    	   	 DirContext ctx = new InitialDirContext(env);
@@ -102,9 +86,9 @@ class ADAction implements java.security.PrivilegedAction {
 		    	   	String[] attributearraytype = new String[ADIdentity.ATTRIBUTES.size()];
 		    	   	 //constraints.setReturningAttributes((String[])ADIdentity.ATTRIBUTES.toArray(attributearraytype));
 		    	   	 // look for user with sAMAccountName set to the username
-
+		    	 
 		    		NamingEnumeration results = null;
-
+		    		
 		    	   	logger.debug("search for ldap attributes {domain='"+convertDomainToDN(domain)+"',filter='"+filter+"'}");
 		    	   	//NamingEnumeration results2 = null;
 		    	   	try {
@@ -112,11 +96,11 @@ class ADAction implements java.security.PrivilegedAction {
 		    	   	} catch (javax.naming.PartialResultException pre) {}
 		    	   	logger.debug("retrieved results {hasMore='"+results.hasMore()+"'}");
 		    	   	 while (results != null && results.hasMore()) {
-
+	
 		                    SearchResult si = (SearchResult)results.next();
 		                    /* print its name */
 		                    logger.debug("retrieving LDAP attributes {name='"+si.getName()+"'}");
-
+	
 		                    Attributes attrs = si.getAttributes();
 		                    if (attrs == null) {
 		                        logger.debug("no attributes found");
@@ -131,7 +115,7 @@ class ADAction implements java.security.PrivilegedAction {
 		                                logger.debug("LDAP attribute: "+ attrId + " = " + value);
 		                                attributeValues.add(new AttributeValue(attrId,value));
 		                            }
-
+	
 		                        }
 		                    }
 		    	   	 }

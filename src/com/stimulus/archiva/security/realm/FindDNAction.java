@@ -1,20 +1,4 @@
-
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
- */
-
- package com.stimulus.archiva.security.realm;
+package com.stimulus.archiva.security.realm;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -33,18 +17,18 @@ import com.stimulus.archiva.exception.ChainedException;
 import com.stimulus.archiva.security.realm.ADRealm.AttributeValue;
 
 public class FindDNAction implements java.security.PrivilegedAction {
-
+	
 	protected static final Log logger = LogFactory.getLog(FindDNAction.class.getName());
 	protected String loginName;
 	protected LDAPIdentity identity;
 	protected Hashtable<String,String> env;
-
+	
 	public FindDNAction(LDAPIdentity identity, String loginName, Hashtable<String,String> env) throws ArchivaException {
 	    this.identity = identity;
 	    this.loginName = loginName;
 	    this.env = env;
 	}
-
+	
 
 	// LDAP Authentication
 	public Object run()  {
@@ -55,8 +39,8 @@ public class FindDNAction implements java.security.PrivilegedAction {
 			return null;
 		}
 	}
-
-	 public String findUserDN() throws ArchivaException {
+	
+	 public String findUserDN() throws ArchivaException {  	
 			try {
 						logger.debug("findUserDN() {'"+identity.toString()+"'}");
 						DirContext ctx = new InitialDirContext(env);
@@ -74,7 +58,7 @@ public class FindDNAction implements java.security.PrivilegedAction {
 			            }
 			            logger.debug("findUserDN() return {userdn='"+userDN+"'}");
 			            return userDN;
-
+			           
 			} catch (javax.naming.AuthenticationException ae) {
 				throw new ArchivaException("failed to authenticate with LDAP service account. verify that the service DN and password is correct.",logger,ChainedException.Level.WARN);
 			} catch (javax.naming.CommunicationException ce) {
@@ -89,5 +73,5 @@ public class FindDNAction implements java.security.PrivilegedAction {
 			}
 			return null;
 	 }
-
+	
 }

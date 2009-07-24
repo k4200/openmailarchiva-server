@@ -1,4 +1,7 @@
-/* Copyright (C) 2005-2007 Jamie Angus Band
+package com.stimulus.archiva.presentation;
+
+
+/* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
@@ -13,7 +16,6 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-package com.stimulus.archiva.presentation;
 
 import org.apache.commons.logging.*;
 import org.apache.struts.actions.DownloadAction;
@@ -33,15 +35,15 @@ public class DownloadLogBean extends DownloadAction implements Serializable {
 
     protected static final Log logger = LogFactory.getLog(DownloadLogBean.class.getName());
     private static final long serialVersionUID = -7626214241615451185L;
-
+    
     @Override
-	protected StreamInfo getStreamInfo(ActionMapping mapping, ActionForm form,
-            						   HttpServletRequest request,
+	protected StreamInfo getStreamInfo(ActionMapping mapping, ActionForm form, 
+            						   HttpServletRequest request, 
             						   HttpServletResponse response)
     									throws Exception {
 
     	String fileName = ((ConfigBean)form).getLogFile();
-
+    	
     	if (fileName==null) {
     		logger.error("failed to download log file as the filename is null");
     		return null;
@@ -51,7 +53,7 @@ public class DownloadLogBean extends DownloadAction implements Serializable {
         	String codedfilename = URLEncoder.encode(fileName, "UTF8");
         	response.setContentType("application/x-download");
         	response.setHeader("Content-Disposition","attachment;filename=" + codedfilename);
-        } else if (null != agent && -1 != agent.indexOf("Mozilla")) {
+        } else if (null != agent && -1 != agent.indexOf("Mozilla")) {    
         	String codedfilename = MimeUtility.encodeText(fileName, "UTF8", "B");
         	response.setContentType("application/x-download");
         	response.setHeader("Content-Disposition","attachment;filename=" + codedfilename);

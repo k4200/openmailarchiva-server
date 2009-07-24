@@ -1,9 +1,9 @@
 
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+/* Copyright (C) 2005-2007 Jamie Angus Band 
+ * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+ * 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -13,6 +13,7 @@
  * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
+
 
 package com.stimulus.archiva.service;
 import org.apache.commons.logging.*;
@@ -47,10 +48,10 @@ public class ConfigurationService implements Serializable {
       ADRealm ar = new ADRealm();
       return ar.getADAttributes(config,(ADIdentity)identity,username,password);
   }
-  public static List<LogFiles.LogFile> getLogFiles() {
+  public static List<LogFiles.LogFile> getLogFiles() { 
 	  return Config.getConfig().getLogFiles().getLogFiles();
   }
-
+  
   public static String viewLog(String logFile) {
 	  return Config.getConfig().getLogFiles().viewLog(logFile);
   }
@@ -58,22 +59,22 @@ public class ConfigurationService implements Serializable {
   public static void sendLog(String logFile) {
 	  Config.getConfig().getLogFiles().sendLog(logFile);
   }*/
-
+  
   public static File exportLog(String logFile) throws ArchivaException {
 	  return Config.getConfig().getLogFiles().exportLog(logFile);
   }
   public static void setLoggingLevel(ChainedException.Level level) {
 	  Config.getConfig().getLogFiles().setLoggingLevel(level);
   }
-
+  
   public static ChainedException.Level getLoggingLevel() {
 	  return Config.getConfig().getLogFiles().getLoggingLevel();
   }
-
+  
   public static void deleteLog(String logFile) {
 	  Config.getConfig().getLogFiles().deleteLog(logFile);
   }
-
+  
   public static MailArchivaPrincipal authenticate(String username, String password) {
 	    ADRealm ar = new ADRealm();
 	    MailArchivaPrincipal cgp = null;
@@ -84,7 +85,7 @@ public class ConfigurationService implements Serializable {
 	          return null;
 	      }
   }
-
+  
   public static String testAuthenticate(Config config, String username, String password)  {
       ADRealm ar = new ADRealm();
       //Principal p = ar.authenticate(username,password);
@@ -100,19 +101,19 @@ public class ConfigurationService implements Serializable {
       } catch (ArchivaException ae) {
           return "Authentication failed. "+ae.getMessage()+".";
       }
-  }
+  } 
 
     public static void testMailboxConnection(MailboxConnection connection, IAPTestStatus testStatus) {
 	  IAPService service = new IAPService();
 	  service.testConnection(connection,testStatus);
   }
-
-
+  
+  
   public static abstract class IAPTestStatus implements IAPRunnable.IAPTestCallback {
 	  public abstract void statusUpdate(String result);
   }
-
-
-
+  
+ 
+  
 }
 

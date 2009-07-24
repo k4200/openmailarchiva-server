@@ -40,7 +40,11 @@ import java.util.Locale;
  */
 public class LocaleBasedSortComparator extends SortComparator {
   
-  private final Collator collator;
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -7575053695020105L;
+private final Collator collator;
   
   /**
    * Creates a new instance of LocaleBasedSortComparator
@@ -56,7 +60,8 @@ public class LocaleBasedSortComparator extends SortComparator {
    * @param  termtext the text
    * @return a {@link java.text.CollationKey collation key}
    */
-  protected Comparable getComparable(String termtext) {
+  @Override
+protected Comparable getComparable(String termtext) {
     return collator.getCollationKey(termtext);
   }
   
@@ -65,7 +70,8 @@ public class LocaleBasedSortComparator extends SortComparator {
    * @param  o the other comparator
    * @return see {@link Collator#equals(Object)}
    */
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o instanceof LocaleBasedSortComparator) {
       return collator.equals(((LocaleBasedSortComparator) o).collator);
     }
@@ -76,7 +82,8 @@ public class LocaleBasedSortComparator extends SortComparator {
    * The hashcode.
    * @return see {@link Collator#hashCode()}
    */
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return collator.hashCode();
   }
 }

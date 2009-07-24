@@ -57,7 +57,8 @@ public class IndexToLocationTable extends TTFTable
      * @param data The stream to read the data from.
      * @throws IOException If there is an error reading the data.
      */
-    public void initData( TrueTypeFont ttf, TTFDataStream data ) throws IOException
+    @Override
+	public void initData( TrueTypeFont ttf, TTFDataStream data ) throws IOException
     {
         HeaderTable head = ttf.getHeader();
         MaximumProfileTable maxp = ttf.getMaximumProfile();

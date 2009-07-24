@@ -1,18 +1,3 @@
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
- */
-
 package com.stimulus.archiva.incoming;
 
 import java.io.*;
@@ -52,7 +37,7 @@ public class MilterRequestHandler implements RequestHandler, JilterHandler, Stop
 		includeBCC = false;
 		rcpts = new ArrayList<String>();
 		bos = new ByteArrayOutputStream();
-
+		
 		InetAddress address = socket.socket().getInetAddress();
 		boolean isAllowed = Config.getConfig().getAgent().isAllowed(address);
 		if (!isAllowed) {
@@ -62,7 +47,7 @@ public class MilterRequestHandler implements RequestHandler, JilterHandler, Stop
 			}
 			return;
 		}
-
+	
 		ByteBuffer dataBuffer = ByteBuffer.allocateDirect(4096);
 		JilterProcessor processor = new JilterProcessor(this);
         try {
@@ -89,7 +74,7 @@ public class MilterRequestHandler implements RequestHandler, JilterHandler, Stop
             }
         }
 	}
-
+	
 	public JilterStatus abort() {
 		logger.debug("abort");
 		return JilterStatus.SMFIS_CONTINUE;
@@ -147,13 +132,13 @@ public class MilterRequestHandler implements RequestHandler, JilterHandler, Stop
 				logger.debug("jilter envrcpt() {to='"+strRecipient+"'}");
 				String recipient = strRecipient.toLowerCase(Locale.ENGLISH).trim().replaceAll("<","").replaceAll(">","");
 				rcpts.add(recipient);
-
+				
 				logger.debug("jilter add recipient {recipient='"+recipient+"'}");
 			}
 		}
  		return JilterStatus.SMFIS_CONTINUE;
 	}
-
+	
 	protected boolean shouldIgnoreBCCAddress(String address) {
 		MilterServerService milterService = Config.getConfig().getMilterServerService();
 		List<String> ignoreAddresses = milterService.getIgnoreBCCAddress();
@@ -171,8 +156,8 @@ public class MilterRequestHandler implements RequestHandler, JilterHandler, Stop
 				for (String ignoreAddress : ignoreAddresses) {
 					if (ignoreAddress.equalsIgnoreCase(mailAddress))
 						return true;
-				}
-
+				}	
+					
 			}
 		}
 		return false;
@@ -181,11 +166,11 @@ public class MilterRequestHandler implements RequestHandler, JilterHandler, Stop
 	public JilterStatus eoh() {
 		logger.debug("jilter eoh()");
 		// includeBCC is false if RCPT TO does not contain at least one field in TO, FROM and CC
-		// this is a safety check as sometimes, RCPT TO is something differently entirely
+		// this is a safety check as sometimes, RCPT TO is something differently entirely 
 		// and does not contain the actual recipients in the email
-
+		
 		MilterServerService milterService = Config.getConfig().getMilterServerService();
-
+		
 		if (milterService.getIncludeBCC() && includeBCC) {
 			logger.debug("including BCC addresses");
 			// check to see if address is flagged to ignore
@@ -199,7 +184,7 @@ public class MilterRequestHandler implements RequestHandler, JilterHandler, Stop
 					}
 				}
 			}
-
+			
 			if (rcpts.size()>0) {
 				try {
 					for (int j = 0; j < rcpts.size(); j++) 	{
@@ -229,7 +214,7 @@ public class MilterRequestHandler implements RequestHandler, JilterHandler, Stop
 		byte[] messageBytes = bos.toByteArray();
 		bos = new ByteArrayOutputStream();
 		ByteArrayInputStream bis = new ByteArrayInputStream(messageBytes);
-		try {
+		try {	
 			logger.debug("jilter store callback execute");
 			Config.getStopBlockFactory().detectBlock("milter server",Thread.currentThread(),this,IDLE_TIMEOUT);
     		callback.store(bis,host);
@@ -242,7 +227,7 @@ public class MilterRequestHandler implements RequestHandler, JilterHandler, Stop
 			} else  if (e.getRecoveryDirective()==ArchiveException.RecoveryDirective.RETRYLATER) {
 				logger.debug("jilter temp fail");
 				return JilterStatus.SMFIS_TEMPFAIL;
-			}
+			}  
 		} catch (Throwable oome) {
 			logger.error("failed to store message:"+oome.getMessage(),oome);
 			return JilterStatus.SMFIS_REJECT;
@@ -263,7 +248,7 @@ public class MilterRequestHandler implements RequestHandler, JilterHandler, Stop
 	}
 
 	public JilterStatus header(String headerf, String headerv) {
-
+		
 		logger.debug("jilter header {name='"+headerf+"',value='"+ headerv+"'}");
 		StringBuffer header = new StringBuffer();
 		header.append(headerf);
@@ -294,18 +279,18 @@ public class MilterRequestHandler implements RequestHandler, JilterHandler, Stop
 						includeBCC = includeBCC | rcpts.remove(mailAddress);
 						logger.debug("jilter del recipient {recipient='"+mailAddress+"'}");
 					}
-				}
+				}	
 			}
 		}
 		return JilterStatus.SMFIS_CONTINUE;
 	}
-
-
+	
+	
 	public JilterStatus helo(String helohost, Properties properties) {
 		logger.debug("jilter helo() "+helohost);
 		return JilterStatus.SMFIS_CONTINUE;
 	}
-
+	
 	 public void handleBlock(Thread thread) {
 
     	 try {
@@ -315,7 +300,7 @@ public class MilterRequestHandler implements RequestHandler, JilterHandler, Stop
              }
          } catch (Exception e) {
              // ignored
-         }
+         } 
          synchronized (this) {
              if (thread != null) {
             	 logger.debug("interrupt thread()");
@@ -323,6 +308,6 @@ public class MilterRequestHandler implements RequestHandler, JilterHandler, Stop
              }
          }
     }
-
-
+    
+	
 }

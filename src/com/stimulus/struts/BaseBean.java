@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Locale;
 import javax.servlet.ServletRequest;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.*;
 import org.apache.struts.Globals;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionForm;
@@ -37,7 +37,7 @@ import com.stimulus.archiva.domain.MailArchivaPrincipal;
 public abstract class BaseBean extends ActionForm implements Serializable {
 
   private static final long serialVersionUID = 1324834450703716122L;
-  protected static Logger logger = Logger.getLogger(BaseBean.class.getName());	
+  protected static Log logger = LogFactory.getLog(BaseBean.class.getName());	
 	
   @Override
 public void reset(ActionMapping mapping, ServletRequest request) {
@@ -147,14 +147,19 @@ public ActionErrors validate(ActionMapping mapping, HttpServletRequest request) 
   
   protected Locale getLocale() {
 	  Locale locale = Locale.getDefault();
+	  String country = locale.getCountry();
 	  ActionContext context = ActionContext.getActionContext();
 	  if (context!=null) {
 		  HttpServletRequest request = context.getRequest();
-	      if (request!=null)
+	      if (request!=null) 
 	  	  	locale = request.getLocale();
 	  }
-	  if (locale.getCountry().equalsIgnoreCase("ZA"))
-	  		locale = Locale.UK; // bug in JVM concerning date formatting in South Africa
+	  if (locale.getCountry().length()<1 && locale.getLanguage().length()>0) {
+		  locale = new Locale(locale.getLanguage(),Locale.getDefault().getCountry());
+	  }
+	  String country2 = locale.getCountry();
+	  //if (locale.getCountry().equalsIgnoreCase("ZA"))
+	  //		locale = Locale.UK; // bug in JVM concerning date formatting in South Africa
       return locale;
   }
   

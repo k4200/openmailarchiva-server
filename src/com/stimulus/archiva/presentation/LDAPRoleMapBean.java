@@ -1,5 +1,5 @@
 
-/* Copyright (C) 2005-2007 Jamie Angus Band
+/* Copyright (C) 2005-2007 Jamie Angus Band 
  * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
@@ -29,12 +29,12 @@ import com.stimulus.struts.BaseBean;
 public class LDAPRoleMapBean extends BaseBean implements Serializable {
 
 	/**
-	 *
+	 * 
 	 */
 	private static final long serialVersionUID = -8245556520189616857L;
 	protected static Log logger = LogFactory.getLog(LDAPRoleMapBean.class.getName());
 	protected LDAPRoleMap roleMap;
-
+	
 
     public LDAPRoleMapBean(LDAPRoleMap roleMap) {
         this.roleMap = roleMap;
@@ -55,14 +55,14 @@ public class LDAPRoleMapBean extends BaseBean implements Serializable {
 	  	public String getRegEx() { return roleMap.getRegEx(); }
 	  	public void setRegEx(String regex) { roleMap.setRegEx(regex); }
 	  	public String getDomain() { return roleMap.getRegEx(); }
-
+	 
 	    public static List<LDAPRoleMapBean> getLDAPRoleMapBeans(List<RoleMap> roleMaps) {
 			  List<LDAPRoleMapBean> LDAPRoleMapBeans = new LinkedList<LDAPRoleMapBean>();
 			  for (RoleMap roleMap: roleMaps)
 				  LDAPRoleMapBeans.add(new LDAPRoleMapBean((LDAPRoleMap)roleMap));
 			  return LDAPRoleMapBeans;
 		}
+	    
 
-
-
+	 
 }

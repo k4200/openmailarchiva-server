@@ -1,8 +1,8 @@
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+/* Copyright (C) 2005-2007 Jamie Angus Band 
+ * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+ * 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -20,16 +20,16 @@ import com.stimulus.archiva.domain.fields.EmailFieldValue;
 
 public class DisplayPriority extends DisplayField implements Serializable {
 
-
+	
 	/**
-	 *
+	 * 
 	 */
 	private static final long serialVersionUID = 4615827437297129388L;
 
 	public DisplayPriority(EmailFieldValue efv) {
 		super(efv);
 	}
-
+	
 	@Override
 	public String getDisplay() {
 	  switch(Integer.valueOf(getValue())) {
@@ -41,6 +41,6 @@ public class DisplayPriority extends DisplayField implements Serializable {
           default: return "normal";
       }
 	}
-
-
+	
+	
 }

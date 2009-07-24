@@ -1,20 +1,4 @@
-
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
- */
-
- package com.stimulus.archiva.search;
+package com.stimulus.archiva.search;
 
 import java.io.IOException;
 
@@ -39,14 +23,14 @@ public class LuceneResult extends Search.Result {
   	Document doc = null;
   	ScoreDoc scoreDoc;
   	Searcher searcher;
-
+  	
   	protected static final Log logger = LogFactory.getLog(LuceneResult.class.getName());
-
+  	
   	public LuceneResult(Searcher searcher, ScoreDoc scoreDoc) {
   		this.scoreDoc = scoreDoc;
   		this.searcher = searcher;
   	}
-
+  			
   	public EmailID getEmailId() throws MessageSearchException {
   		Document doc = getDocument();
   		String uid 	  = doc.get("uid");
@@ -56,7 +40,7 @@ public class LuceneResult extends Search.Result {
 			  return null;
 		  	}
   		Volume volume = null;
-  		  try {
+  		  try { 
   			 if (name==null) // legacy
   				 volume = Config.getConfig().getVolumes().getLegacyVolume(uid);
   			 else
@@ -65,20 +49,20 @@ public class LuceneResult extends Search.Result {
   			  logger.error("failed to lookup the volume from index information");
   		  }
 	  	  return EmailID.getEmailID(volume,uid);
-
+	  		
   	}
   	protected Document getDocument() throws MessageSearchException {
   		try {
-
+  			
   			if (doc==null)
 	    			doc = searcher.doc(scoreDoc.doc);
   			return doc;
   		} catch (Exception e) {
   			throw new MessageSearchException("failed to retrieve document from hits:"+e.getMessage(),e,logger,ChainedException.Level.DEBUG);
-
+  			
   		}
   	}
-
+  	
   	public EmailFieldValue getFieldValue(String key) throws MessageSearchException {
   		Document doc = getDocument();
   		String value = "";
@@ -97,13 +81,13 @@ public class LuceneResult extends Search.Result {
 				  value = doc.get(field.getIndex()+"s");
 			    }
 			    return new EmailFieldValue(field,value);
-  		}
+  		} 
   		logger.error("failed to retrieve email field {key='"+key+"'}");
   		return null;
   	}
+  	
 
-
-
+  	
     private static double round(double val, int places)
 	{
 		long factor = (long) Math.pow(10, places);
@@ -116,8 +100,8 @@ public class LuceneResult extends Search.Result {
 	{
 		return (float) round((double) val, places);
 	}
+	  
 
-
-
+  	
   }
-
+  

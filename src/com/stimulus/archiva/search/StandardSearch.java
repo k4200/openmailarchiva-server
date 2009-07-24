@@ -1,9 +1,9 @@
 
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
+/* Copyright (C) 2005-2007 Jamie Angus Band 
+ * MailArchiva Open Source Edition Copyright (c) 2005-2007 Jamie Angus Band
  * This program is free software; you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
+ * 2 of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -47,13 +47,13 @@ import com.stimulus.archiva.exception.*;
 public class StandardSearch extends Search  implements Serializable, Config.UpdateObserver {
 
 	private static final long serialVersionUID = 2998075692858439809L;
-
-	protected String			compiledQuery = "";
+	
+	protected String			compiledQuery = ""; 
 	protected static final Log logger = LogFactory.getLog(StandardSearch.class.getName());
 	protected Searcher searchers = null;
 	protected Date lastSentAfter  = new Date();
 	protected Date lastSentBefore = new Date();
-	protected Analyzer analyzer;
+	protected Analyzer analyzer; 
 	protected boolean queryModified = true;
 	protected boolean sortModified = true;
     protected boolean searchersModified = true;
@@ -65,24 +65,24 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 	protected ArrayList<Result> results = new ArrayList<Result>();
 	protected int totalHits = 0;
 	protected String filterQuery = "";
-
+	
 	public StandardSearch() {
 	    newCriteria();
 	    reset();
 	}
-
+	
 	public void updateConfig() {
 		reset();
 	}
-
+	
 	public void reset() {
 		super.reset();
 		init();
 		viewFilter.clearCriteria();
 		viewFilter.newCriteria();
 	}
-
-
+	
+	
 	public void init() {
 		queryModified = true;
 		sortModified = true;
@@ -91,7 +91,7 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 		setSearchQuery(null);
 		setFilterQuery(null);
 		totalHits = 0;
-
+		
 	}
 	public void setSearchQuery(String searchQuery) {
 		if (searchQuery!=null) {
@@ -99,13 +99,13 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 		} else {
 			this.searchQuery = null;
 		}
-
+		
 	}
-
+	
 	public String getSearchQuery() {
 		return searchQuery;
 	}
-
+	
 	public void setFilterQuery(String filterQuery) {
 		if (filterQuery!=null) {
 			this.filterQuery = filterQuery.trim();
@@ -113,19 +113,19 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 			this.filterQuery = null;
 		}
 	}
-
+	
 	public String getFilterQuery() {
 		return filterQuery;
 	}
-
-
+	
+	
 	public synchronized void searchMessage() throws MessageSearchException {
-
+	
 		logger.debug("standard search executed {query='"+getSearchQuery()+"'}");
-
+		
 		// this a gui operation, must come back fast
 		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-
+		
 		if (getSearchQuery()==null) {
 			setSearchQuery(compileSearchQuery(viewFilter.getCriteria()));
 		}
@@ -134,13 +134,13 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 			queryModified = true;
 			oldQuery = getSearchQuery();
 		}
-
+		
 		if (queryModified) {
 			analyzer = AnalyzerFactory.getAnalyzer(getLanguage(),AnalyzerFactory.Operation.SEARCH);
-			query = getQuery(analyzer);
+			query = getQuery(analyzer); 
 			queryModified = false;
 		}
-
+		
 		if (sortModified) {
 			sort = getSortPreference();
 			sortModified = false;
@@ -150,9 +150,9 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
         	queryFilter = getFilter(analyzer);
         	filterModified = false;
         //}
-
-	        try {
-
+     
+	        try { 
+				
 				if ((openIndex==OpenIndex.SEARCH) || (openIndex==OpenIndex.SESSION && searchersModified)) {
 					try {
 						if (searchers!=null) {
@@ -167,17 +167,17 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 				    		return;
 				    	}
 				    	searchersModified = false;
-
+	
 					} catch (MessageSearchException mse) {
 						logger.error("failed to create volume searchers:"+mse.getMessage(),mse);
 						init();
 						return;
-					}
+					}  
 				}
-
+	
 				search(query, queryFilter, sort);
-
-
+				
+			
 			} catch (MessageSearchException mse) {
 				logger.debug("standard search no volumes available for searching:"+mse.getMessage(),mse);
 				init();
@@ -186,22 +186,22 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 				searchQuery=null;
 				filterQuery=null;
 			}
-
+      
 	 }
-
+	
 	  protected Query getQuery(Analyzer analyzer) throws MessageSearchException {
 		  	QueryParser queryParser = new QueryParser("body",analyzer);
-
+		  	
 	  		Query query;
 	  		String dateQuery = getDateFilter();
 	  		if (getSearchQuery().length()>0) {
 	  			setSearchQuery(and(getSearchQuery(),dateQuery));
-	  		} else {
+	  		} else { 
 	  			setSearchQuery(dateQuery);
 	  		}
-
+	  		
 	  		if (getSearchQuery()!=null && getSearchQuery().length()>0) {
-
+		  			
 		  		try {
 		  			query = queryParser.parse(getSearchQuery());
 		  			logger.debug("successfully parsed search query {query='"+getSearchQuery()+"'}");
@@ -214,8 +214,8 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 	  			query = new MatchAllDocsQuery();
 	  		}
 	  		return query;
-	  }
-
+	  }  
+	  
 	 protected Filter getFilter(Analyzer analyzer) throws MessageSearchException {
 		  Filter queryFilter;
 			try {
@@ -227,7 +227,7 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 				filterQuery = and(filterQuery,flagF);
 				filterQuery = and(filterQuery,priorityF);
 				filterQuery = and(filterQuery,userRoleF);
-			    logger.debug("standard search: parsing filter query {query='"+filterQuery+"'}");
+			    logger.debug("standard search: parsing filter query {query='"+filterQuery+"'}"); 
 			    if (filterQuery.length()==0)
 			    	return null;
 			    QueryParser filterQueryParser = new QueryParser("to",analyzer);
@@ -240,7 +240,7 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 			}
 			return queryFilter;
 	  }
-
+	
 	protected String and(String prevClause, String nextClause) {
 		if (prevClause.isEmpty())
 			return nextClause;
@@ -248,10 +248,10 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 			return prevClause;
 		return prevClause + " AND " + nextClause;
 	}
-
+		
 	  protected Sort getSortPreference() {
 		  Sort sort;
-		  String sortField = getSortField();
+		  String sortField = getSortField(); 
 		  SortOrder so = getSortOrder();
 		  boolean sortOrder;
 		  if (so==SortOrder.DESCENDING)
@@ -260,13 +260,13 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 			  sortOrder = false;
 		  else
 			  return null;
-
+		  
 		  Locale locale = new Locale(language);
-		  if (sortField.equals("size") || sortField.equals("priority"))
+		  if (sortField.equals("size") || sortField.equals("priority"))  
 			  sort = new Sort(new SortField[]{new SortField(sortField,SortField.FLOAT,sortOrder)});
 		  else if (sortField.equals("attach"))
 			  sort = new Sort(new SortField[]{new SortField(sortField,SortField.INT,!sortOrder)});
-		  else if (sortField.equals("score"))
+		  else if (sortField.equals("score"))  
 			  sort = new Sort(SortField.FIELD_SCORE);
 		  else if (sortField.equals("subject") || sortField.equals("to") || sortField.equals("from"))
 			  sort = new Sort(new SortField[]{new SortField(sortField+"s",sortOrder)});
@@ -277,29 +277,29 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 		  else if (sortField.equals("receiveddate"))
 			  sort = new Sort(new SortField[]{new SortField(sortField,sortOrder)});
 		  else return null;
-		  return sort;
+		  return sort;  	  
 	  }
-
+		  
 
 	  /* date search filter */
-
-	  protected String getDateFilter() {
-
+    
+	  protected String getDateFilter() {	
+		  
 		  if (getAfter()==null && getBefore()==null)
 			  return "";
-
+		  
 		  Date sentAfter = defaultDate(getAfter(),new Date(0));
 		  Date sentBefore = defaultDate(getBefore(), new Date());
 		  if (getDateType()==DateType.SENTDATE) {
-			  return "sentdate:[d"+DateUtil.convertDatetoString(sentAfter) + " TO d" + DateUtil.convertDatetoString(sentBefore)+"]";
+			  return "sentdate:[d"+DateUtil.convertDatetoString(sentAfter) + " TO d" + DateUtil.convertDatetoString(sentBefore)+"]";	
 		  } else if (getDateType()==DateType.ARCHIVEDATE) {
-			  return "archivedate:[d"+DateUtil.convertDatetoString(sentAfter) + " TO d" + DateUtil.convertDatetoString(sentBefore)+"]";
+			  return "archivedate:[d"+DateUtil.convertDatetoString(sentAfter) + " TO d" + DateUtil.convertDatetoString(sentBefore)+"]";	
 		  } else {
-			  return "receiveddate:[d"+DateUtil.convertDatetoString(sentAfter) + " TO d" + DateUtil.convertDatetoString(sentBefore)+"]";
+			  return "receiveddate:[d"+DateUtil.convertDatetoString(sentAfter) + " TO d" + DateUtil.convertDatetoString(sentBefore)+"]";	
 		  }
-
+		  
 	  }
-
+	  
 	  protected Date defaultDate(Date date, Date defaultDate) {
 		  if (date==null)
 			  return defaultDate;
@@ -307,7 +307,7 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 			  return date;
 	  }
 	  /* attachment filter */
-
+	  
 	  protected String getAttachmentFilter() {
 			Attachment attachment = getAttachment();
 			if (attachment!=Attachment.EITHER) {
@@ -318,19 +318,19 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 			}
 			return "";
 	  }
-
+	  
 	  /* flag filter */
-
-	  protected String getFlagFilter() {
+	  
+	  protected String getFlagFilter() {		
 	  		Flag flag = getFlag();
 	  		if (flag!=Flag.ANY) {
 	  			return "flag:"+flag.toString().toLowerCase(Locale.ENGLISH);
 	  		}
 	  		return "";
 	  }
-
+	  
 	  /* priority filter */
-
+	
 	  protected String getPriorityFilter() {
 		Priority priority = getPriority();
 		if (priority!=Priority.ANY) {
@@ -339,18 +339,18 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 		return "";
 	  }
 	  /* user role filter */
-
+	  
 	  protected String getUserRoleFilter() {
-
+		  
 		  if (getPrincipal()==MailArchivaPrincipal.SYSTEM_PRINCIPAL)
 			  return "";
-
+		  
 		  String roleStr = ((MailArchivaPrincipal)getPrincipal()).getRole();
 		  Roles.Role role = Config.getConfig().getRoles().getRole(roleStr);
 		  String filterQuery = compileSearchQuery(role.getViewFilter().getCriteria());
 
 		  if (filterQuery.contains("%email%")) {
-
+			  
 			  List<String> emailAddresses = ((MailArchivaPrincipal)getPrincipal()).getEmailAddresses();
 			  if (emailAddresses !=null && emailAddresses.size()>0) {
 				  	  String newFilterQuery = "";
@@ -358,53 +358,53 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 						  newFilterQuery += "(" + filterQuery.replaceAll("%email%",email.trim()) + ") ";
 					  }
 					  filterQuery = newFilterQuery.trim();
-			  }
-
+			  } 
+			 
 		  }
-
-
+		 
+			  	
 	  	 if (filterQuery.length()>0 && !filterQuery.endsWith(")"))
 	  		 filterQuery = "(" + filterQuery + ")";
-
+	  
 		  logger.debug("getUserRoleFilter() {filterQuery='"+filterQuery+"'}");
-
+		  
 		  return filterQuery;
 	  }
 
-
+	  
 	  public boolean shouldSearch(Volume v) {
 
       	 if (v.getStatus()!=Volume.Status.ACTIVE &&
       		 v.getStatus()!=Volume.Status.CLOSED) // we still want to display the messages
       		return  false;
-
+      	 
 		  if (getBefore()==null || getAfter()==null)
 			  return true;
-
+		  
 		  if (this.getDateType()==DateType.SENTDATE || this.getDateType()==DateType.RECEIVEDDATE) {
 			  return true;
 		  } else if (this.getDateType()==DateType.ARCHIVEDATE) {
-
+			  	  
 			  	 /*Calendar closedDate = Calendar.getInstance();
 		 		 File store = new File(v.getPath());
 		 		 if (!store.exists())
 		 			 return true;
-
+		 			 
 		 		//closedDate.setTimeInMillis(store.lastModified());
-		 		 *
+		 		 * 
 		 		 */
 		 		logger.debug("should search check {datetype='"+getDateType()+"',closeDate='"+v.getClosedDate()+"',after='"+getAfter()+"',createdDate='"+v.getCreatedDate()+"',before='"+getBefore()+"'}");
 		 		if (v.getClosedDate()!=null && v.getClosedDate().before(getAfter()))
 		 			return false;
 		 		if (v.getCreatedDate()!=null && v.getCreatedDate().after(getBefore()))
 		 			return false;
-
+		 		 
 		  }
 		  return true;
 	  }
-
+	  
 	  protected Searcher getVolumeSearchers() throws MessageSearchException {
-
+		  	
 		    logger.debug("getVolumeSearchers()");
 		  	boolean searcherPresent = false;
 			Hashtable<String,String> remoteServers = new Hashtable<String,String>();
@@ -421,8 +421,8 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 			            			try {
 				            			volsearcher = new IndexSearcher(volume.getIndexPath());
 				            			logger.debug("adding volume to search {indexpath='"+volume.getIndexPath()+"'}");
-				            			searchers.add(volsearcher);
-				            			searcherPresent = true;
+				            			searchers.add(volsearcher); 
+				            			searcherPresent = true; 
 				            		} catch (Exception e) {
 				            			logger.error("failed to volume to search{"+volume+"}: "+e.getMessage(),e);
 				            		}
@@ -432,12 +432,12 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 			    } catch (Exception io) {
 			    	logger.error("failed to open index for search {"+volume+"}.",io);
 			    }
-
+				    
 			}
-
+		
 			if (!searcherPresent)
 				return null;
-
+			
 			for (String remotePath : remoteServers.values()) {
 				try {
 					Searchable volsearcher = (Searchable)Naming.lookup(remotePath);
@@ -457,29 +457,29 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 			}
 			return searcher;
 	  }
-
+	  
 		public List<Result> getResults() {
 			return results;
 		}
-
+		
 		public int getResultSize() {
 			if (results!=null)
 				return results.size();
 			else
 				return 0;
 		}
-
+		
 		public int getTotalHits() {
 			return totalHits;
 		}
-
-
+		
+	
 	  protected void search(Query query, Filter queryFilter, Sort sort) throws MessageSearchException  {
 		  try {
 			   logger.debug("start search  {searchquery='"+getSearchQuery()+"'}");
-
+			   
 			   Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-			   results.clear();
+			   results.clear(); 
 			   totalHits = getMaxSearchResults();
 			   TopFieldDocs topDocs = searchers.search(query,queryFilter,totalHits,sort);
 			   totalHits = topDocs.scoreDocs.length;
@@ -491,18 +491,18 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 			throw new MessageSearchException("failed to execute search query {searchquery='"+getSearchQuery()+"}",io,logger,ChainedException.Level.DEBUG);
 		  }
 	  }
-
-
-
+	  
+	 
+	
 		public String compileSearchQuery(List<Criteria> criteria)
 		{
-
+			
 			StringBuffer sQuery = new StringBuffer();
 		 	boolean operator = true;
 			if (criteria.size()>1) {
 	  				sQuery.append("(");
 			}
-
+			
 	  	  	for (Criteria c : criteria) {
 	  	  		if (c.getQuery().length()<1)
 	  	  			continue;
@@ -520,7 +520,7 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 	  	  				sQuery.append(" (" + constructedQuery + ") ");
 	  	  			}
 	  	  		}
-
+	  	  		  
 	  	  	}
 	  	  	if (criteria.size()>1) {
 				sQuery.append(")");
@@ -529,28 +529,28 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 		}
 
 	    /* criteria */
-
+	    
 	    public void clearCriteria() {
 	    	viewFilter.clearCriteria();
 	    	queryModified = true;
 	    }
-
+	    
 	    public void newCriteria() {
 	          logger.debug("newCriteria()");
 	          viewFilter.addCriteria(new Criteria("subject"));
 	          queryModified = true;
 	    }
-
+	    
 	    public List<Criteria> getCriteria() {
 	    	return viewFilter.getCriteria();
 	    }
-
+	    
 	    public void deleteCriteria(int id) {
-	      logger.debug("deleteToCriteria() {index='"+id+"'}");
+	      logger.debug("deleteToCriteria() {index='"+id+"'}");  
 	      viewFilter.deleteCriteria(id);
 	    	queryModified = true;
 	    }
-
+	    
 	    protected void finalize() throws Throwable {
 	    	Config.getConfig().unregisterUpdateObserver(this);
 	    	results = null;
@@ -561,9 +561,9 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 			logger.error("failed to close search indexes (opened for read)",io);
 		 }*/
 	   }
-
-
-
+	    
+	 
+	    
 		  public long getTotalMessageCount(Volume volume) throws MessageSearchException {
 			  if (volume == null)
 		            throw new MessageSearchException("assertion failure: null volume",logger);
@@ -582,9 +582,9 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 		      }
 			  return count;
 		  }
-
+		  
 		// sort modified
-
+		  
 		 public void setSortField(String field)
 		 {
 			 if (getSortField()!=field) {
@@ -592,7 +592,7 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 				 sortModified = true;
 			 }
 		 }
-
+		  
 		public void setSortOrder(SortOrder sortOrder)
 		{
 			if (getSortOrder()!=sortOrder) {
@@ -600,18 +600,18 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 				sortModified = true;
 			}
 		}
-
+		
 		  public void setLanguage(String language) {
 		    	if (getLanguage().compareTo(language)!=0) {
 		    		super.setLanguage(language);
-		    		sortModified = true;
+		    		sortModified = true;	
 		    		searchersModified = true;
 		    	}
 		    }
-
+		  
 		// date modified
-
-
+	
+		  
 		public void setAfter(Date sentAfter)
 		{
 			if (getAfter()==null || sentAfter==null || getAfter().compareTo(sentAfter)!=0) {
@@ -620,7 +620,7 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 				queryModified = true;
 			}
 		}
-
+		
 		public void setBefore(Date sentBefore)
 		{
 			if (getBefore()==null || sentBefore==null || getBefore().compareTo(sentBefore)!=0) {
@@ -629,7 +629,7 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 				queryModified = true;
 			}
 		}
-
+		
 		public void setDateType(DateType dateType) {
 			if (getDateType()!=dateType) {
 				super.setDateType(dateType);
@@ -638,31 +638,31 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 				sortModified = true;
 			}
 		}
-
+		
 		public void setMaxSearchResults(int maxSearchResults) {
 			if (getMaxSearchResults()!=maxSearchResults) {
 				super.setMaxSearchResults(maxSearchResults);
 				searchersModified = true;
 			}
 		}
-
-
+		
+		
 		// filter modified
-
+		
 		public void setFlag(Flag flag) {
 			if (getFlag()!=flag) {
 				super.setFlag(flag);
 	    		filterModified = true;
 			}
 		}
-
+		 
 	    public void setPriority(Priority priority) {
 	    	if (getPriority()!=priority) {
 	    		super.setPriority(priority);
 	    		filterModified = true;
 	    	}
 	    }
-
+	    
 	    public void setAttachment(Attachment attach) {
 	    	if (getAttachment()!=attach) {
 	    		super.setAttachment(attach);
@@ -676,7 +676,7 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 	    		filterModified = true;
 	    	}
 		}
-
-
+	
+	 
 
 }

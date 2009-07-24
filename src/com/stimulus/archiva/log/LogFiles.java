@@ -1,18 +1,3 @@
-/* Copyright (C) 2005-2009 Jamie Angus Band
- * MailArchiva Open Source Edition Copyright (c) 2005-2009 Jamie Angus Band
- * This program is free software; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation; either version
- * 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program;
- * if not, see http://www.gnu.org/licenses or write to the Free Software Foundation,Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
- */
-
 package com.stimulus.archiva.log;
 
 import java.io.*;
@@ -42,9 +27,9 @@ public class LogFiles {
 	protected static DateFormat formatter = DateUtil.getShortDateFormat();
 
 	public LogFiles() {
-
+		
 	}
-
+	
 	public List<LogFile> getLogFiles() {
 		List<LogFile> logFiles = new ArrayList<LogFile>();
 		String logPath = Config.getFileSystem().getLogPath();
@@ -56,19 +41,19 @@ public class LogFiles {
 		 Collections.sort(logFiles,Collections.reverseOrder());
 		return logFiles;
 	}
-
-
+	
+	
 	public class LogFile implements Comparable<LogFile> {
-
+		
 		File logFile;
-
+		
 		public LogFile(File file) {
 			this.logFile = file;
 		}
 		public String getName() { return logFile.getName(); }
 		public String getModified() { return (new Date(logFile.lastModified()).toString()); }
 		public String getSize() { return logFile.length() / 1024 + "k"; }
-
+		
 		public int compareTo(LogFile l) throws ClassCastException {
 				if (logFile.lastModified() > l.logFile.lastModified())
 					return 1;
@@ -76,20 +61,20 @@ public class LogFiles {
 					return -1;
 		}
 	}
-
+		
 	 public String viewLog(String logFile) {
 		  String logPath = Config.getFileSystem().getLogPath();
 		  return Tail.tail(logPath + File.separator + logFile, 600, 400000);
 	 }
-
+	 
 	 public void deleteLog(String logFile) {
 		 String logPath = Config.getFileSystem().getLogPath();
 		 File file = new File(logPath + File.separator + logFile);
 		 file.delete();
 	 }
-
+	
 	 public File exportLog(String logFile) throws ArchivaException {
-
+		 
 		 try {
 			 	File tempFile = File.createTempFile(logFile, ".zip");
 		        ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(tempFile));
@@ -109,15 +94,15 @@ public class LogFiles {
 				throw new ArchivaException("failed to export debug log:"+e.getMessage(),e,logger);
 			}
 	 }
-
+	 
 	 /*
 	 public void sendLog(String logFile) {
-
+		  
 	    if (Config.getConfig().getSmtpServerAddress().length()<1) {
 	    	logger.error("failed to send debug log as there are no SMTP server settings defined");
 	    	return;
 	    }
-
+	    
 	    try {
 	    	SMTPSendMessage sendMessage = new SMTPSendMessage(Config.getConfig());
 	    	MimeMessage message = new MimeMessage(sendMessage.getSession());
@@ -161,7 +146,7 @@ public class LogFiles {
 		} catch (Exception e) {
 			logger.error("failed to send debug log:"+e.getMessage());
 		}
-
+		    
 	  }
 	  */
 	  private String readFile(String filename) {
@@ -188,20 +173,20 @@ public class LogFiles {
 		 }
 	     return s;
 	  }
-
+	  
 	  public void setLoggingLevel(ChainedException.Level newLevel) {
 		  Log logger = LogFactory.getLog("com.stimulus");
 		  if (logger==null) {
 			  logger.error("failed set logging level. failed to obtain logger for com.stimulus.archiva.");
 			  return;
 		  }
-
+		  
 		  ChainedException.Level oldLevel = ChainedException.getLoggingLevel(logger);
 		  if (oldLevel==null) {
 			  logger.error("the standard log4j.properties file has been modified. therefore logging cannot be controlled in the server console.");
 			  return;
 		  }
-
+		
 		  // log4j specific code
 		  org.apache.log4j.Logger logger2 = org.apache.log4j.Logger.getLogger("com.stimulus");
 		  logger2.setLevel(org.apache.log4j.Level.toLevel(newLevel.toString()));
@@ -214,20 +199,20 @@ public class LogFiles {
 			  FileWriter out = new FileWriter(file);
 			  out.write(logsource);
 			  out.close();
-		  } catch (Exception e) {
+		  } catch (Exception e) { 
 			  logger.error("failed to write new log file. "+e.getMessage()+" {filename='"+logfilename+"'");
 		  }
 	  }
-
+	  
 	  public ChainedException.Level getLoggingLevel() {
 		  Log logger = LogFactory.getLog("com.stimulus");
 		  if (logger!=null)
 			  return ChainedException.getLoggingLevel(logger);
-		  else {
+		  else {	  
 			  logger.error("the standard log4j.properties file has been modified. therefore logging cannot be controlled in the server console.");
 			  return ChainedException.Level.DEBUG;
 		  }
 	  }
-
+	  
 
 }
