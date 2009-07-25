@@ -1,0 +1,11 @@
+A D/authentication////
+A D/authenticator////
+A D/config////
+A D/dummy////
+A D/filter////
+A D/persistent////
+A D/realm////
+A D/servlet////
+R D/persistent////
+R D/dummy////
+R D/authentication////
