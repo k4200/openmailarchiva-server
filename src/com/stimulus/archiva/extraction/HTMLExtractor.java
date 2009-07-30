@@ -22,11 +22,12 @@ import java.nio.charset.Charset;
 import org.apache.commons.logging.*;
 import com.stimulus.util.*;
 import com.stimulus.archiva.index.*;
-public class HTMLExtractor implements TextExtractor,Serializable
+import net.htmlparser.jericho.*;
+import net.htmlparser.jericho.TextExtractor;
+
+public class HTMLExtractor implements com.stimulus.archiva.extraction.TextExtractor,Serializable
 {
-	/**
-	 * 
-	 */
+	
 	private static final long serialVersionUID = 7138851180242634460L;
 	protected static final Log logger = LogFactory.getLog(Extractor.class.getName());
 
@@ -36,59 +37,21 @@ public class HTMLExtractor implements TextExtractor,Serializable
 
 	public Reader getText(InputStream is, Charset charset,IndexInfo indexInfo) throws ExtractionException
 	{
-		Reader outReader = new InputStreamReader(is,charset);
-		indexInfo.addReader(outReader);
-	    return outReader;
+		 Reader r = null;
+		 try {
+			 Source source=new Source(is);
+			 r = new StringReader(source.getTextExtractor().toString());
+			 return r;
+		 } catch (IOException io) {
+			 throw new ExtractionException("failed extract text from html:"+io.getMessage(),io,logger);
+		 } finally {
+			 if (r!=null)
+				 indexInfo.addReader(r);
+			 if (is!=null)
+				 indexInfo.addSourceStream(is);
+		 }
 	}
 
-	public class RemoveHTMLReader extends FilterReader {
-		  /** A trivial constructor.  Just initialze our superclass */
-		  public RemoveHTMLReader(Reader in) { super(in); }
-
-		  boolean intag = false;    // Used to remember whether we are "inside" a tag
-
-		  /**
-		   * This is the implementation of the no-op read() method of FilterReader.
-		   * It calls in.read() to get a buffer full of characters, then strips
-		   * out the HTML tags.  (in is a protected field of the superclass).
-		   **/
-		  @Override
-		public int read(char[] buf, int from, int len) throws IOException {
-		    int numchars = 0;        // how many characters have been read
-		    // Loop, because we might read a bunch of characters, then strip them
-		    // all out, leaving us with zero characters to return.
-		    while (numchars == 0) {
-		      numchars = in.read(buf, from, len);     // Read characters
-		      if (numchars == -1) return -1;          // Check for EOF and handle it.
-		      // Loop through the characters we read, stripping out HTML tags.
-		      // Characters not in tags are copied over any previous tags in the buffer
-		      int last = from;                          // Index of last non-HTML char
-		      for(int i = from; i < from + numchars; i++) {
-		        if (!intag) {                           // If not in an HTML tag
-		          if (buf[i] == '<') intag = true;      //   check for start of a tag
-		          else buf[last++] = buf[i];            //   and copy the character
-		        }
-		        else if (buf[i] == '>') intag = false;  // Else, check for end of tag
-		      }
-		      numchars = last - from;   // Figure out how many characters remain
-		    }                           // And if it is more than zero characters
-		    return numchars;            // Then return that number.
-		  }
-
-
-		  /**
-		   * This is another no-op read() method we have to implement.  We
-		   * implement it in terms of the method above.  Our superclass implements
-		   * the remaining read() methods in terms of these two.
-		   **/
-		  @Override
-		public int read() throws IOException {
-		    char[] buf = new char[1];
-		    int result = read(buf, 0, 1);
-		    if (result == -1) return -1;
-		    else return buf[0];
-		  }
-	}
 }
 
 
