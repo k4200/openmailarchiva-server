@@ -18,10 +18,10 @@ package org.apache.james.util;
  * under the License.                                           *
  ****************************************************************/
 
+import org.apache.commons.logging.*;
+
 import java.io.IOException;
 import java.io.InputStream;
-
-import org.apache.log4j.Logger;
 
 import com.stimulus.archiva.exception.MaxMessageSizeException;
 /** 
@@ -30,7 +30,7 @@ import com.stimulus.archiva.exception.MaxMessageSizeException;
   * and when the limit is reached, a MessageSizeException is thrown.
   */
 public class SizeLimitedInputStream extends InputStream {
-	 protected static Logger logger = Logger.getLogger(SizeLimitedInputStream.class.getName());
+	 protected static Log logger = LogFactory.getLog(SizeLimitedInputStream.class.getName());
 	/**
      * Maximum number of bytes to read.
      */
