@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.apache.commons.logging.*;
 
 
-
 public class MaxMessageSizeException extends IOException {
 
 	/**
