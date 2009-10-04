@@ -69,7 +69,7 @@ public class MessageExtraction implements Serializable
 		ArrayList<String> mimeTypes 		= new ArrayList<String>();
 		String viewFileName;
 		try {
-			dumpPart(message.getUnderlyingMessage(), att, inl, imgs, nonImgs, mimeTypes, message.getSubject());
+			dumpPart(message, att, inl, imgs, nonImgs, mimeTypes, message.getSubject());
 			for (String attachFileName: att.keySet()) {
 				Part p = (Part) att.get(attachFileName);
 				writeAttachment(p, attachFileName);
