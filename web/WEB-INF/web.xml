@@ -133,21 +133,22 @@
       <session-timeout>45</session-timeout>  <!-- 15 minutes -->
    </session-config>
 
-  <taglib>
-    <taglib-uri>bean</taglib-uri>
-    <taglib-location>/WEB-INF/tld/struts-bean.tld</taglib-location>
-  </taglib>
-  
-  <taglib>
-    <taglib-uri>logic</taglib-uri>
-    <taglib-location>/WEB-INF/tld/struts-logic.tld</taglib-location>
-  </taglib>
-  
-   <taglib>
-    <taglib-uri>html</taglib-uri>
-    <taglib-location>/WEB-INF/tld/struts-html.tld</taglib-location>
-  </taglib>
+	<jsp-config>
+		<taglib>
+			<taglib-uri>bean</taglib-uri>
+			<taglib-location>/WEB-INF/tld/struts-bean.tld</taglib-location>
+		</taglib>
 
+		<taglib>
+			<taglib-uri>logic</taglib-uri>
+			<taglib-location>/WEB-INF/tld/struts-logic.tld</taglib-location>
+		</taglib>
+
+		<taglib>
+			<taglib-uri>html</taglib-uri>
+			<taglib-location>/WEB-INF/tld/struts-html.tld</taglib-location>
+		</taglib>
+	</jsp-config>
 
 </web-app>
 
