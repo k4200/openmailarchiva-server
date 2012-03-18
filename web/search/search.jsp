@@ -18,6 +18,7 @@
 <link href="common/mailarchiva.css" rel="stylesheet" type="text/css">
 <% int nocheckboxes = 0; %>
 <script language="JavaScript" src="common/CalendarPopup.js"></script>
+<script language="JavaScript" src="common/jquery-1.7.1.min.js"></script>
 
 <script type="text/javascript">
 	
@@ -299,6 +300,7 @@ cal2.setTodayText("<bean:message key="calendar.today"/>");
    
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
   <tr class="columnheadings" > 
+
 	<logic:iterate id="field" name="searchBean" property="availableFields" indexId="fieldsIndex"> 
 			<c:if test="${field.showConditional==true}">
 				<c:choose>
@@ -356,101 +358,97 @@ cal2.setTodayText("<bean:message key="calendar.today"/>");
  </table>
  
 <table class="pagetext" width="100%" border="0" cellspacing="1" cellpadding="0">
-<logic:iterate id="searchResults" offset="${searchBean.firstHitIndex}" length="${searchBean.pageSize}" name="searchBean" property="searchResults" indexId="resultsIndex" type="com.stimulus.archiva.presentation.SearchResultBean">         	
-	<c:if test="${searchResults.display==true}">
-  <tr>  
-  <td>
-  <logic:iterate id="value" name="searchResults" property="fieldValues" indexId="valueIndex"> 
-       
-      	<c:if test="${value.field.showConditional==true}">
-      	  <c:choose>
-      		<c:when test='${value.field.name == "sentdate" && searchBean.dateType=="sentdate"}'>
-      		   <td width="<c:out value='${value.field.columnSize}'/>%" valign="top">
-						<script type="text/javascript">outss("<c:out value='${value.display}'/>",250)</script>
-				</td>
-			</c:when>
-			<c:when test='${value.field.name == "archivedate" && searchBean.dateType=="archivedate"}'>
-      		   <td width="<c:out value='${value.field.columnSize}'/>%" valign="top">
-					<script type="text/javascript">outss("<c:out value='${value.display}'/>",250)</script>
-				</td>
-			</c:when>	
-			<c:when test='${value.field.name == "receiveddate" && searchBean.dateType=="receiveddate"}'>
-      		   <td width="<c:out value='${value.field.columnSize}'/>%" valign="top">
-					<script type="text/javascript">outss("<c:out value='${value.display}'/>",250)</script>
-				</td>
-			</c:when>
-		  </c:choose>
-		</c:if>
-      <c:if test="${value.field.showResults==true}">
-     	<td width="<c:out value='${value.field.columnSize}'/>%" valign="top">
-	     <c:choose>
-	        <c:when test='${value.field.name == "priority"}'>
-	            <c:if test="${value.value<3}">
-			  		<img src="images/priority.gif" alt="Priority"/>
-				</c:if>
-				<c:if test="${value.value>=3}">
-					&nbsp;
-				</c:if>
-	        </c:when>
-	        <c:when test='${value.field.name == "attach"}'>
-		        <c:if test="${value.value=='1'}">
-				  	<img src="images/attach.gif" alt="Attach"/>
-				</c:if>
-				<c:if test="${value.value=='0'}">
-					&nbsp;
-				</c:if>
-			</c:when>
-			  
-			<c:when test='${value.field.name == "subject"}'>
-				<jsp:useBean id="detailParams" class="java.util.HashMap" type="java.util.HashMap" />
-				<c:set target="${detailParams}" property="messageID" value="${searchResults.uniqueID}" />
-				<c:set target="${detailParams}" property="volumeID" value="${searchResults.volumeID}" />
-				<c:set target="${detailParams}" property="resultsIndex" value="${resultsIndex}" />
-				<c:if test="${searchResults.messageExist==true}">
-					<t:tooltip>
-	    			<t:text>
-	    		        <html:link  name="detailParams" scope="page"  page="/viewmail.do">
-		    	 		<script type="text/javascript">outss("<c:out value='${value.display}' escapeXml='false'/>",50)</script></html:link>
-		    	 	</t:text>
-		    			<t:help style="position:absolute;visibility:hidden;background-color:#d3e3f6;padding:1px;border-style:solid;border-color:black;border-width:1px;margin-top:1px;" width="300"><c:out value='${value.display}' escapeXml='false'/></t:help>
-		    		</t:tooltip>
-		    	</c:if>
-		    	<c:if test="${searchResults.messageExist==false}">
-					<t:tooltip>
-	    			<t:text>
-	    		        <script type="text/javascript">outss("<c:out value='${value.display}' escapeXml='false'/>",50)</script>
-		    	 	</t:text>
-		    			<t:help style="position:absolute;visibility:hidden;background-color:#d3e3f6;padding:1px;border-style:solid;border-color:black;border-width:1px;margin-top:1px;" width="300"><bean:message key="searchresults.volume_not_accessible"/></t:help>
-		    		</t:tooltip>
-		    	</c:if>
-			</c:when>
-			
-			<c:when test='${value.field.name == "to"}'>
-				<t:tooltip>
-	  				<t:text><script type="text/javascript">outss("<c:out value='${value.display}' escapeXml='false'/>",200)</script></t:text>
-	  				<t:help style="position:absolute;visibility:hidden;background-color:#d3e3f6;padding:1px;border-style:solid;border-color:black;border-width:1px;margin-top:1px;" width="300"><script type="text/javascript">outss("<c:out value='${value.tip}' escapeXml='false'/>",1000)</script></t:help>
-				</t:tooltip>  
-			</c:when>
-	        <c:otherwise>
-	        	<c:if test="${value.display==null}">
-	           		&nbsp;
-	           </c:if>
-	           <c:if test="${value.display!=null}">
-	           <t:tooltip>
-	  				<t:text><script type="text/javascript">outss("<c:out value='${value.display}' escapeXml='false'/>",35)</script></t:text>
-	  				<t:help style="position:absolute;visibility:hidden;background-color:#d3e3f6;padding:1px;border-style:solid;border-color:black;border-width:1px;margin-top:1px;" width="300"><script type="text/javascript">outss("<c:out value='${value.tip}' escapeXml='false'/>",1000)</script></t:help>
-				</t:tooltip>  
-	           </c:if>
-	        </c:otherwise>
-	    </c:choose>
-     </td>
-     
-      </c:if>
-     
-  </logic:iterate>
-  	
-  </tr>
-   </c:if>
+  <logic:iterate id="searchResults" offset="${searchBean.firstHitIndex}" length="${searchBean.pageSize}" name="searchBean" property="searchResults" indexId="resultsIndex" type="com.stimulus.archiva.presentation.SearchResultBean">             
+    <c:if test="${searchResults.display==true}">
+      <tr>
+
+        <logic:iterate id="value" name="searchResults" property="fieldValues" indexId="valueIndex"> 
+          <c:if test="${value.field.showConditional==true}">
+            <td>
+              <c:choose>
+                <c:when test='${value.field.name == "sentdate" && searchBean.dateType=="sentdate"}'>
+                  <td width="<c:out value='${value.field.columnSize}'/>%" valign="top">
+                    <script type="text/javascript">outss("<c:out value='${value.display}'/>",250)</script>
+                  </td>
+                </c:when>
+                <c:when test='${value.field.name == "archivedate" && searchBean.dateType=="archivedate"}'>
+                  <td width="<c:out value='${value.field.columnSize}'/>%" valign="top">
+                    <script type="text/javascript">outss("<c:out value='${value.display}'/>",250)</script>
+                  </td>
+                </c:when>    
+                <c:when test='${value.field.name == "receiveddate" && searchBean.dateType=="receiveddate"}'>
+                  <td width="<c:out value='${value.field.columnSize}'/>%" valign="top">
+                    <script type="text/javascript">outss("<c:out value='${value.display}'/>",250)</script>
+                  </td>
+                </c:when>
+              </c:choose>
+            </c:if>
+            <c:if test="${value.field.showResults==true}">
+              <td width="<c:out value='${value.field.columnSize}'/>%" valign="top">
+              <c:choose>
+                <c:when test='${value.field.name == "priority"}'>
+                  <c:if test="${value.value<3}">
+                    <img src="images/priority.gif" alt="Priority"/>
+                  </c:if>
+                  <c:if test="${value.value>=3}">
+                    &nbsp;
+                  </c:if>
+                </c:when>
+                <c:when test='${value.field.name == "attach"}'>
+                  <c:if test="${value.value=='1'}">
+                    <img src="images/attach.gif" alt="Attach"/>
+                  </c:if>
+                  <c:if test="${value.value=='0'}">
+                    &nbsp;
+                  </c:if>
+                </c:when>
+                <c:when test='${value.field.name == "subject"}'>
+                  <jsp:useBean id="detailParams" class="java.util.HashMap" type="java.util.HashMap" />
+                  <c:set target="${detailParams}" property="messageID" value="${searchResults.uniqueID}" />
+                  <c:set target="${detailParams}" property="volumeID" value="${searchResults.volumeID}" />
+                  <c:set target="${detailParams}" property="resultsIndex" value="${resultsIndex}" />
+                  <c:if test="${searchResults.messageExist==true}">
+                    <t:tooltip>
+                      <t:text>
+                        <html:link  name="detailParams" scope="page"  page="/viewmail.do">
+                          <script type="text/javascript">outss("<c:out value='${value.display}' escapeXml='false'/>",50)</script></html:link>
+                      </t:text>
+                      <t:help style="position:absolute;visibility:hidden;background-color:#d3e3f6;padding:1px;border-style:solid;border-color:black;border-width:1px;margin-top:1px;" width="300"><c:out value='${value.display}' escapeXml='false'/></t:help>
+                    </t:tooltip>
+                  </c:if>
+                  <c:if test="${searchResults.messageExist==false}">
+                    <t:tooltip>
+                      <t:text>
+                        <script type="text/javascript">outss("<c:out value='${value.display}' escapeXml='false'/>",50)</script>
+                      </t:text>
+                      <t:help style="position:absolute;visibility:hidden;background-color:#d3e3f6;padding:1px;border-style:solid;border-color:black;border-width:1px;margin-top:1px;" width="300"><bean:message key="searchresults.volume_not_accessible"/></t:help>
+                    </t:tooltip>
+                  </c:if>
+                </c:when>
+                
+                <c:when test='${value.field.name == "to"}'>
+                  <t:tooltip>
+                    <t:text><script type="text/javascript">outss("<c:out value='${value.display}' escapeXml='false'/>",200)</script></t:text>
+                    <t:help style="position:absolute;visibility:hidden;background-color:#d3e3f6;padding:1px;border-style:solid;border-color:black;border-width:1px;margin-top:1px;" width="300"><script type="text/javascript">outss("<c:out value='${value.tip}' escapeXml='false'/>",1000)</script></t:help>
+                  </t:tooltip>  
+                </c:when>
+                <c:otherwise>
+                  <c:if test="${value.display==null}">
+                     &nbsp;
+                  </c:if>
+                  <c:if test="${value.display!=null}">
+                    <t:tooltip>
+                      <t:text><script type="text/javascript">outss("<c:out value='${value.display}' escapeXml='false'/>",35)</script></t:text>
+                      <t:help style="position:absolute;visibility:hidden;background-color:#d3e3f6;padding:1px;border-style:solid;border-color:black;border-width:1px;margin-top:1px;" width="300"><script type="text/javascript">outss("<c:out value='${value.tip}' escapeXml='false'/>",1000)</script></t:help>
+                    </t:tooltip>  
+                  </c:if>
+                </c:otherwise>
+              </c:choose>
+            </td>
+          </c:if>
+        </logic:iterate>
+      </tr>
+    </c:if>
   </logic:iterate>
 </table>
 <html:hidden styleId="currentPage" name="searchBean" property="page"/>
