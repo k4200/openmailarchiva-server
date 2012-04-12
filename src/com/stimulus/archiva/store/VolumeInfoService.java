@@ -23,6 +23,7 @@ public class VolumeInfoService implements Serializable, Service, Runnable {
      protected boolean adminNotify;
      protected ServiceDelegate serviceDelegate;
      protected Calendar lastCheck = null;
+	protected boolean autoCreateVolume;
 	 
 	 public VolumeInfoService() {
 		 serviceDelegate = new ServiceDelegate("diskspace checker", this, logger);
@@ -129,6 +130,4 @@ public class VolumeInfoService implements Serializable, Service, Runnable {
     	  cal.set(Calendar.MILLISECOND, 0);
     	  return cal.getTime();
      }
-
-     
 }

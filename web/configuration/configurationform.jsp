@@ -279,6 +279,19 @@ function lookup(index) {
 	    </td>
 	    <td width="30%" align="right"></td>
 	</tr>          
+
+         
+    <tr> 
+      <td align="right" nowrap></td>
+      <td>
+      	<html:checkbox name="configBean" property="autoCreateVolume"/><html:hidden name="configBean" property="autoCreateVolume" value="no"/>
+      	<bean:message key="config.volume_autocreate"/>
+      	<html:select styleId="autoCreateEvent" name="configBean" property="autoCreateEvent"  onchange='OnChange(this);'>
+      		<html:optionsCollection name="configBean" property="autoCreateEvents" label="label" value="value"/>
+      	</html:select>
+      </td>
+      	<td align="right"></td>
+    </tr>
          
     <tr> 
       <td align="right" nowrap></td>

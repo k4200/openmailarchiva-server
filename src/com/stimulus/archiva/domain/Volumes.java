@@ -33,7 +33,20 @@ public class Volumes  implements Serializable, Props, Cloneable {
 	private static final long serialVersionUID = -1331431169000378587L;
 	
     public enum Priority { PRIORITY_HIGHER, PRIORITY_LOWER };
-    public enum AutoCreateEvent { WHENFULL, MONTHLY, QUARTERLY, YEARLY}; 
+    public enum AutoCreateEvent {
+    	WHENFULL("when full"), MONTHLY("monthly"), QUARTERLY("quarterly"), YEARLY("yearly");
+    	
+    	private String label;
+    	private AutoCreateEvent(String label) {
+    		this.label = label;
+    	}
+    	public String getLabel() {
+    		return label;
+    	}
+    	public String getValue() {
+    		return name();
+    	}
+    }; 
     
     protected static final Log logger 					= LogFactory.getLog(Volumes.class);
     protected int 				diskSpaceCheckWait 		= 24;
@@ -178,6 +191,15 @@ public class Volumes  implements Serializable, Props, Cloneable {
  		
  		 return addVolume(storePath,indexPath,volumeSize,false);
  	  }
+ 	  
+ 	 public synchronized void createNewVolumeIfNone() throws ConfigurationException {
+ 		if (getVolume(Volume.Status.UNUSED) == null && getVolume(Volume.Status.NEW) == null) {
+ 			logger.debug("no unused volume. creating one.");
+ 			Volume newVolume = newVolume();
+ 			logger.debug("saving new volume:" + newVolume.path + "," + newVolume.getStatus());
+ 			newVolume.save();
+ 		}
+ 	 }
  	  
  	 public synchronized void addVolume(Volume volume) {
  			 volumes.add(volume);
@@ -373,11 +395,23 @@ public class Volumes  implements Serializable, Props, Cloneable {
  	   public synchronized void spaceCheck() throws ConfigurationException {
  		  Volume activeVolume = getVolume(Volume.Status.ACTIVE);
  	      if (activeVolume!=null) {
- 	    	  if (activeVolume.enoughDiskSpace()) {
+ 	    	  switch (activeVolume.enoughDiskSpace()) {
+ 	    	  case ENOUGH:
  	    		//logger.debug("volume has enough disk space {"+activeVolume+"}");
- 	    	  } else {
+ 	    		  break;
+ 	    	  case LOW:
+ 	    		  if (Config.getConfig().getVolumes().getAutoCreate()) {
+ 	    			  createNewVolumeIfNone();
+ 	    		  }
+ 	    		  break;
+ 	    	  case RUNOUT:
+// 	    		  if (Config.getConfig().getVolumes().getAutoCreate()) {
+// 	    			  createNewVolumeIfNone();
+// 	    		  }
  	    		 logger.info("closing volume. volume has run out of disk space. {"+activeVolume+"}");
- 	    		 closeVolume(activeVolume);	
+ 	    		 closeVolume(activeVolume);
+ 	    		 activateUnusedVolume();
+ 	    		 break;
 	 	      }
  	      }
  	   }

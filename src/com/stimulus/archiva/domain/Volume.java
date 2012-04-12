@@ -33,7 +33,7 @@ public class Volume implements Comparable<Volume>,Serializable,Props, Cloneable
       protected static Log logger = LogFactory.getLog(Volume.class.getName());
       // EJECTED status is now deprecated, we now use ejected variable instead
       public enum Status { CLOSED,ACTIVE,UNUSED,NEW,UNMOUNTED,EJECTED };
-     
+      public enum Space {ENOUGH, LOW, RUNOUT};
       
       protected String 	path;
  	  protected String 	indexPath;
@@ -154,18 +154,18 @@ public class Volume implements Comparable<Volume>,Serializable,Props, Cloneable
     		  return freeSpace2Bytes;
       }
       
-	  public boolean enoughDiskSpace() {
+	  public Space enoughDiskSpace() {
 		 
 	
 			  Volumes volumes = Config.getConfig().getVolumes();
 			  if (volumes==null) {
 				  logger.error("volumes is null");
-				  return true;
+				  return Space.ENOUGH;
 			  }
 			  
 			  if (!Config.getConfig().getVolumes().getDiskSpaceChecking()) {
 				  logger.debug("disk space checking is disabled. Check file permissions on volume index and store path {"+toString()+"}");
-			  	  return true;
+			  	  return Space.ENOUGH;
 		  	  }
 			  
 			  File storePath = new File(getPath());
@@ -173,7 +173,7 @@ public class Volume implements Comparable<Volume>,Serializable,Props, Cloneable
 			  
 			  if (!storePath.exists() || !indexPath.exists()) {
 				  logger.debug("attempt to calculate disk space on non-existant index or store. return true.");
-				  return true;
+				  return Space.ENOUGH;
 			  }
 			
 			  long usedArchiveSpace = getUsedArchiveSpace();
@@ -190,38 +190,37 @@ public class Volume implements Comparable<Volume>,Serializable,Props, Cloneable
 			  
 			  //logger.debug("enoughDiskSpace() {usedIndexSpace='"+usedIndexSpace+"',usedArchiveSpace='"+usedArchiveSpace+"',diskSpaceWarnBytes='"+volumes.getDiskSpaceWarnBytes()+"',diskSpaceThresholdBytes='"+volumes.getDiskSpaceThresholdBytes()+"',freeArchiveSpace='"+freeArchiveSpace+"',freeindexSpace='"+freeIndexSpace+"'}");
 			  
-		     // free index space is nearly depleted
-          
-		 	 //logger.debug("free index space warn check {freeIndexSpace+DISK_SPACE_WARN='"+(freeIndexSpace-volumes.getDiskSpaceWarnBytes())+"<0'}");
-		 	 if ((freeIndexSpace-volumes.getDiskSpaceWarnBytes())<=0) {
-		 	     logger.warn("storage space is running low on volume {"+toString()+"}");
-		 	    }
 	         
 		 	 // free index space is depleted
-	         
 		 	// logger.debug("free index space threshold check {freeIndexSpace-DISK_SPACE_THRESHOLD='"+(freeIndexSpace-volumes.getDiskSpaceThresholdBytes())+"<0'}");
-		 	  
 		 	  if ((freeIndexSpace-volumes.getDiskSpaceThresholdBytes())<=0) {
 		 	     logger.warn("there is no storage space left on volume {"+toString()+"}");
-		 	    return false;
+		 	    return Space.RUNOUT;
 		 	  }
-	         // free archive space is nearly depleted
-	             
+		 	  
+			     // free index space is nearly depleted
+			 	 //logger.debug("free index space warn check {freeIndexSpace+DISK_SPACE_WARN='"+(freeIndexSpace-volumes.getDiskSpaceWarnBytes())+"<0'}");
+			 	 if ((freeIndexSpace-volumes.getDiskSpaceWarnBytes())<=0) {
+			 	     //logger.warn("storage space is running low on volume {"+toString()+"}");
+		              return Space.LOW;
+			 	 }
+		 	  
+		          
+		          // free archive is depleted
+		          //logger.debug("free archive space threshold check {freeArchiveSpace-DISK_SPACE_THRESHOLD='"+(freeArchiveSpace-volumes.getDiskSpaceThresholdBytes())+"<0'}");
+			 	 if ((freeArchiveSpace-volumes.getDiskSpaceThresholdBytes())<=0) {
+			 	    logger.warn("there is no storage space left on volume {"+toString()+"}");
+			 	   return Space.RUNOUT;
+			  	 }
+
+			 	 // free archive space is nearly depleted
 	          //logger.debug("free archive space warn check {freeArchiveSpace-DISK_SPACE_WARN='"+(freeArchiveSpace-volumes.getDiskSpaceWarnBytes())+"<0'}");
 	          if ((freeArchiveSpace-volumes.getDiskSpaceWarnBytes())<=0) {
-	              logger.warn("storage space is running low on volume {"+toString()+"}");
+	              //logger.warn("storage space is running low on volume {"+toString()+"}");
+	              return Space.LOW;
 	          }
-	          
-	          // free archive is depleted
-	          
-	          //logger.debug("free archive space threshold check {freeArchiveSpace-DISK_SPACE_THRESHOLD='"+(freeArchiveSpace-volumes.getDiskSpaceThresholdBytes())+"<0'}");
-		 	  
-		 	 if ((freeArchiveSpace-volumes.getDiskSpaceThresholdBytes())<=0) {
-		 	    logger.warn("there is no storage space left on volume {"+toString()+"}");
-		 	   return false;
-		  	 }
 		
-	 	  return true;
+	 	  return Space.ENOUGH;
 
 	  }
 
@@ -351,8 +350,9 @@ public class Volume implements Comparable<Volume>,Serializable,Props, Cloneable
            logger.debug("used store disk space {usedStoreSpace='" + getUsedArchiveSpace() +"' bytes',"+toString() + "}");
            
 
-			if (getStatus() == Status.ACTIVE) 
+			if (getStatus() == Status.ACTIVE) {
 				enoughDiskSpace(); // warning
+			}
 			
            currentlyCheckingDiskSpace = false;
 	   }

@@ -20,6 +20,7 @@ package com.stimulus.archiva.presentation;
 import com.stimulus.archiva.domain.*;
 import com.stimulus.archiva.domain.EmailFilter.Condition;
 import com.stimulus.archiva.domain.Volume.Status;
+import com.stimulus.archiva.domain.Volumes.AutoCreateEvent;
 import com.stimulus.archiva.domain.fields.EmailField;
 import com.stimulus.archiva.domain.fields.EmailFields;
 import com.stimulus.archiva.exception.*;
@@ -71,7 +72,8 @@ public class ConfigBean extends BaseBean  implements HttpSessionBindingListener,
   protected String lookupError;
   protected String logFile;
   
-  public ConfigBean() {
+
+public ConfigBean() {
   		
   }
 
@@ -355,6 +357,28 @@ public class ConfigBean extends BaseBean  implements HttpSessionBindingListener,
   public List<String> getOpenIndexLabels() {
 	  return translateList(EnumUtil.enumToList(Search.OpenIndex.values(),"config.gen_search_open_index_per_"));
   }
+  
+	public boolean getAutoCreateVolume() {
+		return config.getVolumes().getAutoCreate();
+	}
+
+	public void setAutoCreateVolume(boolean autoCreateVolume) {
+		config.getVolumes().setAutoCreate(autoCreateVolume);
+	}
+	
+	public String getAutoCreateEvent() {
+		return config.getVolumes().getAutoCreateEvent().name();
+	}
+
+	public void setAutoCreateEvent(String autoCreateEventName) {
+		Volumes.AutoCreateEvent autoCreateEvent = Volumes.AutoCreateEvent.valueOf(autoCreateEventName);
+		config.getVolumes().setAutoCreateEvent(autoCreateEvent);
+	}
+	
+	
+	public AutoCreateEvent[] getAutoCreateEvents() {
+		return Volumes.AutoCreateEvent.values();
+	}
   
   public void reset() {
   	
