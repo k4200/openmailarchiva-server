@@ -405,14 +405,16 @@ public class Volumes  implements Serializable, Props, Cloneable {
  	    		  }
  	    		  break;
  	    	  case RUNOUT:
-// 	    		  if (Config.getConfig().getVolumes().getAutoCreate()) {
-// 	    			  createNewVolumeIfNone();
-// 	    		  }
  	    		 logger.info("closing volume. volume has run out of disk space. {"+activeVolume+"}");
  	    		 closeVolume(activeVolume);
  	    		 activateUnusedVolume();
+ 	    		 saveAllVolumeInfo(false);
  	    		 break;
 	 	      }
+ 	      } else {
+			if (Config.getConfig().getVolumes().getAutoCreate()) {
+				createNewVolumeIfNone();
+			}
  	      }
  	   }
  	 
