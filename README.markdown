@@ -7,7 +7,7 @@ http://sourceforge.net/projects/openmailarchiva/
 
 ## Why fork?
 
-The Enterprise Edition has many advanced features, which is great. But I just need one or two of them, and it seems natural to me to implement them by myself, which I hope won't take too long.
+Two reasons. The one reason is they seem to have stopped updating the Open Source Edition. The other is the Enterprise Edition has many advanced features, which is great, but I just need a few of them. So why not implement them by myself?
 
 ## Why Github?
 
@@ -15,6 +15,8 @@ Most developer folks around me use Github but not sf.
 
 # License
 
-GPL
+GPL v3
 
-dunno about the version though... Ask the author of the original version if you need. The same license/version applies to this forked version, of course.
+Below is from the license of the original version:
+
+MailArchiva Open Source Edition is licensed under the terms of the GNU Public License (GPL) as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
