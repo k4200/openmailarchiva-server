@@ -291,7 +291,8 @@ cal2.setTodayText("<bean:message key="calendar.today"/>");
 					 	</td></tr></table>
 	        </div>
   
-  
+
+		<div><input type="submit" name="submit.export" id="submit.export" value="<bean:message key="searchresults.export"/>"></div>
   
   </td></tr>
 
@@ -300,7 +301,7 @@ cal2.setTodayText("<bean:message key="calendar.today"/>");
    
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
   <tr class="columnheadings" > 
-
+    <td width="2%" class="columnspacing">x</td>
 	<logic:iterate id="field" name="searchBean" property="availableFields" indexId="fieldsIndex"> 
 			<c:if test="${field.showConditional==true}">
 				<c:choose>
@@ -361,6 +362,7 @@ cal2.setTodayText("<bean:message key="calendar.today"/>");
   <logic:iterate id="searchResults" offset="${searchBean.firstHitIndex}" length="${searchBean.pageSize}" name="searchBean" property="searchResults" indexId="resultsIndex" type="com.stimulus.archiva.presentation.SearchResultBean">             
     <c:if test="${searchResults.display==true}">
       <tr>
+        <td width="2%"><html:checkbox name="searchResults" indexed="true" property="selected" value="true" /><html:hidden indexed="true" name="searchResults" property="selected" value="false"/></td>
 
         <logic:iterate id="value" name="searchResults" property="fieldValues" indexId="valueIndex"> 
           <c:if test="${value.field.showConditional==true}">

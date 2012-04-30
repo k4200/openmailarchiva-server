@@ -28,10 +28,11 @@ import com.stimulus.util.*;
 import java.util.*;
 import java.text.*;
 import org.apache.commons.logging.*;
+import org.apache.struts.action.ActionForm;
+
 import com.stimulus.archiva.exception.*;
 import java.io.Serializable;
 import javax.servlet.http.*;
-import javax.servlet.http.HttpSessionBindingListener;
 
 public class SearchBean extends BaseBean implements HttpSessionBindingListener, Serializable {
   	
@@ -44,6 +45,9 @@ public class SearchBean extends BaseBean implements HttpSessionBindingListener, 
   protected int totalHits;
   protected int resultSize;
   protected List<Result> results;
+  protected List<SearchResultBean> searchResults;
+  
+  protected String[] selected;
   
 
  
@@ -634,10 +638,13 @@ public class SearchBean extends BaseBean implements HttpSessionBindingListener, 
   		return "success";
   	} else if (button.action!=null && button.action.equals("reset")) {
 		return resetsearch();
+  	} else if (button.action!=null && button.action.equals("export")) {
+		return "export";
   	} 
   	
   	return searchMessages();
   }
+  
   
   protected String searchMessages() {
 	  try {
@@ -654,6 +661,7 @@ public class SearchBean extends BaseBean implements HttpSessionBindingListener, 
 			resultSize = search.getResultSize();
 			totalHits = search.getTotalHits();
 			results = search.getResults();
+			searchResults = SearchResultBean.getSearchResultBeans(results,getLocale());
 		  	logger.debug("searchmessages() end");
 	  	} catch (Exception e) {
 	  	}
@@ -663,7 +671,8 @@ public class SearchBean extends BaseBean implements HttpSessionBindingListener, 
  
   public List<SearchResultBean> getSearchResults() {
 	  //logger.debug("getSearchResults() {size='"+results.size()+"'}");
-	  return SearchResultBean.getSearchResultBeans(results,getLocale());
+	  return searchResults;
+//	  return SearchResultBean.getSearchResultBeans(results,getLocale());
   }
   
   public List<EmailField> getAvailableFields() {
@@ -677,6 +686,14 @@ public class SearchBean extends BaseBean implements HttpSessionBindingListener, 
 	 }
   
   public boolean getNotSearched() { return notSearched; }
+  
+  public String[] getSelected() {
+	  return selected;
+  }
+  public void setSelected(String selected[]) {
+	  logger.debug("SearchBean.setChecked()");
+	  this.selected = selected;
+  }
   
   public void valueUnbound(HttpSessionBindingEvent event) {
 	  	if (search!=null) {

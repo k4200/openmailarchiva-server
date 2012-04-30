@@ -195,6 +195,13 @@
       <forward name="success" path="/message/viewmail.jsp"/>
     </action>
     
+    
+    <!--   -->
+    <action path="/export" type="com.stimulus.archiva.presentation.ExportBean"
+      name="searchBean" scope="session" 
+      validate="false">
+      <forward name="success" path="/search/search.jsp"/>
+    </action>
  
     <!-- ACCOUNT ACTIONS -->
 

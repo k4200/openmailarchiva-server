@@ -33,7 +33,7 @@ public class SearchResultBean implements Serializable {
 	protected static Log logger = LogFactory.getLog(SearchResultBean.class.getName());
 	protected Locale locale;
 	protected boolean display = false;
-	
+	protected boolean selected = false;
 	
 	public SearchResultBean() {
 		display = false;
@@ -42,12 +42,22 @@ public class SearchResultBean implements Serializable {
 		this.searchResult = searchResult;
 		this.locale = locale;
 		this.display = true;
+		this.selected = true;
 	}
 	
 	public boolean getDisplay() {
 		return display;
 	}
 	
+	public boolean getSelected() {
+		return selected;
+	}
+	  
+	  public void setSelected(boolean selected) {
+		  logger.debug("SearchResultBean.setChecked():" + getUniqueID() + "," + selected);
+		  this.selected = selected;
+	  }
+
 	 public List<DisplayField> getFieldValues() {
 		 ArrayList<DisplayField>  list = new ArrayList<DisplayField>();
 		 EmailFields emailFields = Config.getConfig().getEmailFields();
