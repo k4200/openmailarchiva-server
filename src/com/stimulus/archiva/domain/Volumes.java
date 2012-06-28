@@ -34,11 +34,22 @@ public class Volumes  implements Serializable, Props, Cloneable {
 	
     public enum Priority { PRIORITY_HIGHER, PRIORITY_LOWER };
     public enum AutoCreateEvent {
-    	WHENFULL("when full"), MONTHLY("monthly"), QUARTERLY("quarterly"), YEARLY("yearly");
+    	WHENFULL("when full", 0, 0),
+    	EVERY3MIN("every 3 minutes", Calendar.MINUTE, 3), //Debug
+    	MONTHLY("monthly", Calendar.MONTH, 1),
+    	QUARTERLY("quarterly", Calendar.MONTH, 3),
+    	YEARLY("yearly", Calendar.YEAR, 1);
     	
     	private String label;
-    	private AutoCreateEvent(String label) {
+    	/**
+    	 * eg. Calendar.MONTH
+    	 */
+    	private int intervalField;
+    	private int intervalAmount;
+    	private AutoCreateEvent(String label, int intervalField, int intervalAmount) {
     		this.label = label;
+    		this.intervalField = intervalField;
+    		this.intervalAmount = intervalAmount;
     	}
     	public String getLabel() {
     		return label;
@@ -394,13 +405,26 @@ public class Volumes  implements Serializable, Props, Cloneable {
  	   
  	   public synchronized void spaceCheck() throws ConfigurationException {
  		  Volume activeVolume = getVolume(Volume.Status.ACTIVE);
+ 		  AutoCreateEvent autoCreateEvent = Config.getConfig().getVolumes().getAutoCreateEvent();
  	      if (activeVolume!=null) {
+ 	    	  if (Config.getConfig().getVolumes().getAutoCreate()
+ 	    			  && autoCreateEvent != Volumes.AutoCreateEvent.WHENFULL
+ 	    			  && shouldRotateActive(activeVolume, autoCreateEvent)) {
+  	    		 closeVolume(activeVolume);
+  	    		 activateUnusedVolume();
+  	    		 Volume newVolume = newVolume();
+  	    		 newVolume.save();
+  	    		 saveAllVolumeInfo(false);
+//  	    		 createNewVolumeIfNone();
+  	    		 return;
+ 	    	  }
  	    	  switch (activeVolume.enoughDiskSpace()) {
  	    	  case ENOUGH:
  	    		//logger.debug("volume has enough disk space {"+activeVolume+"}");
  	    		  break;
  	    	  case LOW:
- 	    		  if (Config.getConfig().getVolumes().getAutoCreate()) {
+ 	    		  if (Config.getConfig().getVolumes().getAutoCreate() 
+ 	    				  && autoCreateEvent == Volumes.AutoCreateEvent.WHENFULL) {
  	    			  createNewVolumeIfNone();
  	    		  }
  	    		  break;
@@ -412,13 +436,21 @@ public class Volumes  implements Serializable, Props, Cloneable {
  	    		 break;
 	 	      }
  	      } else {
-			if (Config.getConfig().getVolumes().getAutoCreate()) {
+			if (Config.getConfig().getVolumes().getAutoCreate()
+					&& autoCreateEvent == Volumes.AutoCreateEvent.WHENFULL) {
 				createNewVolumeIfNone();
 			}
  	      }
  	   }
  	 
-	 	 
+ 	   private boolean shouldRotateActive(Volume activeVolume, AutoCreateEvent event) {
+	   		Date now = new Date();
+	   		Calendar dateToClose = Calendar.getInstance();
+	   		dateToClose.setTime(activeVolume.getCreatedDate());
+	   		dateToClose.add(event.intervalField, event.intervalAmount);
+	   		return now.after(dateToClose.getTime());
+ 	   }
+ 	 
 	 @Override
 	protected void finalize() throws Throwable {
 		 super.finalize();
