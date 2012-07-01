@@ -18,7 +18,7 @@
 <link href="common/mailarchiva.css" rel="stylesheet" type="text/css">
 <% int nocheckboxes = 0; %>
 <script language="JavaScript" src="common/CalendarPopup.js"></script>
-<script language="JavaScript" src="common/jquery-1.7.1.min.js"></script>
+<script language="JavaScript" src="common/jquery-1.7.2.min.js"></script>
 
 <script type="text/javascript">
 	
@@ -148,7 +148,12 @@ cal2.setDayHeaders('<bean:message key="calendar.su"/>',
 cal2.setWeekStartDay(1);
 cal2.setTodayText("<bean:message key="calendar.today"/>");
 			
-		
+$(document).ready(function() {
+	$('#submit\\.delete').click(function() {
+		return confirm('<bean:message key="searchresults.confirm_delete"/>');
+	});
+});
+
 </script>
 
 
@@ -292,7 +297,10 @@ cal2.setTodayText("<bean:message key="calendar.today"/>");
 	        </div>
   
 
-		<div><input type="submit" name="submit.export" id="submit.export" value="<bean:message key="searchresults.export"/>"></div>
+		<div>
+			<input type="submit" name="submit.export" id="submit.export" value="<bean:message key="searchresults.export_button"/>">
+			<input type="submit" name="submit.delete" id="submit.delete" value="<bean:message key="searchresults.delete_button"/>">
+		</div>
   
   </td></tr>
 

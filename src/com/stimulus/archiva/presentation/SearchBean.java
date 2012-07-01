@@ -599,6 +599,17 @@ public class SearchBean extends BaseBean implements HttpSessionBindingListener, 
      ((StandardSearch)search).newCriteria();
 }
 
+  public void delete() throws Exception {
+	  logger.debug("SearchBean.delete");
+      for(SearchResultBean searchResult :getSearchResults()) {
+      	if (searchResult.getSelected()) {
+			Email email = MessageService.getMessageByID(searchResult.getVolumeID(), searchResult.getUniqueID(), false);
+			logger.debug("deleting message: " + email.getEmailId());
+			Config.getConfig().getIndex().deleteMessage(email.getEmailId());
+      	}
+      }
+  }
+  
   public List<CriteriaBean> getCriteria() {
 	return CriteriaBean.getCriteriaBeans(((StandardSearch)search).getCriteria());
   }
@@ -638,6 +649,10 @@ public class SearchBean extends BaseBean implements HttpSessionBindingListener, 
   		return "success";
   	} else if (button.action!=null && button.action.equals("reset")) {
 		return resetsearch();
+  	} else if (button.action!=null && button.action.equals("delete")) {
+		delete();
+//		searchMessages();
+		return "success";
   	} else if (button.action!=null && button.action.equals("export")) {
 		return "export";
   	} 
