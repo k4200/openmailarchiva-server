@@ -203,14 +203,15 @@ public class Volumes  implements Serializable, Props, Cloneable {
  		 return addVolume(storePath,indexPath,volumeSize,false);
  	  }
  	  
- 	 public synchronized void createNewVolumeIfNone() throws ConfigurationException {
- 		if (getVolume(Volume.Status.UNUSED) == null && getVolume(Volume.Status.NEW) == null) {
- 			logger.debug("no unused volume. creating one.");
- 			Volume newVolume = newVolume();
- 			logger.debug("saving new volume:" + newVolume.path + "," + newVolume.getStatus());
- 			newVolume.save();
- 		}
- 	 }
+	public synchronized void createNewVolumeIfNone()
+			throws ConfigurationException {
+		if (getVolume(Volume.Status.UNUSED) == null && getVolume(Volume.Status.NEW) == null) {
+			logger.debug("no unused volume. creating one.");
+			Volume newVolume = newVolume();
+			logger.debug("saving new volume:" + newVolume.path + "," + newVolume.getStatus());
+			newVolume.save();
+		}
+	}
  	  
  	 public synchronized void addVolume(Volume volume) {
  			 volumes.add(volume);
@@ -380,77 +381,79 @@ public class Volumes  implements Serializable, Props, Cloneable {
  		return null;
  	 }
 
-		public synchronized void activateUnusedVolume() {
-	 	     Volume unusedVolume =  getVolume(Volume.Status.UNUSED);
-	 	     if (unusedVolume!=null) {
-	 	    	  try {
-	 	    		  activateVolume(unusedVolume);
-	 	    	  } catch (ConfigurationException e) {
-	 	    		  logger.error("failed to active volume:"+e.getMessage()+" {"+unusedVolume+"}",e);
-	 	    	  }
-		     } 
+	public synchronized void activateUnusedVolume() {
+		Volume unusedVolume = getVolume(Volume.Status.UNUSED);
+		if (unusedVolume != null) {
+			try {
+				activateVolume(unusedVolume);
+			} catch (ConfigurationException e) {
+				logger.error("failed to active volume:" + e.getMessage() + " {" + unusedVolume + "}", e);
+			}
 		}
+	}
 		
- 	   public synchronized void readyActiveVolume() {
- 		   		try {
- 		   			spaceCheck();
- 		   		} catch (ConfigurationException ce) {
- 		   			logger.error("error occurred during space check procedure:"+ce.getMessage(),ce);
- 		   		}
- 		   	    Volume activeVolume = getVolume(Volume.Status.ACTIVE);
- 		   	    if (activeVolume==null) {
- 		   	    	activateUnusedVolume();
- 		   	    }
- 	   }
- 	   
- 	   public synchronized void spaceCheck() throws ConfigurationException {
- 		  Volume activeVolume = getVolume(Volume.Status.ACTIVE);
- 		  AutoCreateEvent autoCreateEvent = Config.getConfig().getVolumes().getAutoCreateEvent();
- 	      if (activeVolume!=null) {
- 	    	  if (Config.getConfig().getVolumes().getAutoCreate()
- 	    			  && autoCreateEvent != Volumes.AutoCreateEvent.WHENFULL
- 	    			  && shouldRotateActive(activeVolume, autoCreateEvent)) {
-  	    		 closeVolume(activeVolume);
-  	    		 activateUnusedVolume();
-  	    		 Volume newVolume = newVolume();
-  	    		 newVolume.save();
-  	    		 saveAllVolumeInfo(false);
-//  	    		 createNewVolumeIfNone();
-  	    		 return;
- 	    	  }
- 	    	  switch (activeVolume.enoughDiskSpace()) {
- 	    	  case ENOUGH:
- 	    		//logger.debug("volume has enough disk space {"+activeVolume+"}");
- 	    		  break;
- 	    	  case LOW:
- 	    		  if (Config.getConfig().getVolumes().getAutoCreate() 
- 	    				  && autoCreateEvent == Volumes.AutoCreateEvent.WHENFULL) {
- 	    			  createNewVolumeIfNone();
- 	    		  }
- 	    		  break;
- 	    	  case RUNOUT:
- 	    		 logger.info("closing volume. volume has run out of disk space. {"+activeVolume+"}");
- 	    		 closeVolume(activeVolume);
- 	    		 activateUnusedVolume();
- 	    		 saveAllVolumeInfo(false);
- 	    		 break;
-	 	      }
- 	      } else {
+	public synchronized void readyActiveVolume() {
+		try {
+			spaceCheck();
+		} catch (ConfigurationException ce) {
+			logger.error("error occurred during space check procedure:" + ce.getMessage(), ce);
+		}
+		Volume activeVolume = getVolume(Volume.Status.ACTIVE);
+		if (activeVolume == null) {
+			activateUnusedVolume();
+		}
+	}
+
+	public synchronized void spaceCheck() throws ConfigurationException {
+		Volume activeVolume = getVolume(Volume.Status.ACTIVE);
+		AutoCreateEvent autoCreateEvent = Config.getConfig().getVolumes()
+				.getAutoCreateEvent();
+		if (activeVolume != null) {
+			if (Config.getConfig().getVolumes().getAutoCreate()
+					&& autoCreateEvent != Volumes.AutoCreateEvent.WHENFULL
+					&& shouldRotateActive(activeVolume, autoCreateEvent)) {
+				closeVolume(activeVolume);
+				activateUnusedVolume();
+				Volume newVolume = newVolume();
+				newVolume.save();
+				saveAllVolumeInfo(false);
+				// createNewVolumeIfNone();
+				return;
+			}
+			switch (activeVolume.enoughDiskSpace()) {
+			case ENOUGH:
+				// logger.debug("volume has enough disk space {"+activeVolume+"}");
+				break;
+			case LOW:
+				if (Config.getConfig().getVolumes().getAutoCreate()
+						&& autoCreateEvent == Volumes.AutoCreateEvent.WHENFULL) {
+					createNewVolumeIfNone();
+				}
+				break;
+			case RUNOUT:
+				logger.info("closing volume. volume has run out of disk space. {"
+						+ activeVolume + "}");
+				closeVolume(activeVolume);
+				activateUnusedVolume();
+				saveAllVolumeInfo(false);
+				break;
+			}
+		} else {
 			if (Config.getConfig().getVolumes().getAutoCreate()
 					&& autoCreateEvent == Volumes.AutoCreateEvent.WHENFULL) {
 				createNewVolumeIfNone();
 			}
- 	      }
- 	   }
- 	 
- 	   private boolean shouldRotateActive(Volume activeVolume, AutoCreateEvent event) {
-	   		Date now = new Date();
-	   		Calendar dateToClose = Calendar.getInstance();
-	   		dateToClose.setTime(activeVolume.getCreatedDate());
-	   		dateToClose.add(event.intervalField, event.intervalAmount);
-	   		return now.after(dateToClose.getTime());
- 	   }
- 	 
+		}
+	}
+
+	private boolean shouldRotateActive(Volume activeVolume, AutoCreateEvent event) {
+		Date now = new Date();
+		Calendar dateToClose = Calendar.getInstance();
+		dateToClose.setTime(activeVolume.getCreatedDate());
+		dateToClose.add(event.intervalField, event.intervalAmount);
+		return now.after(dateToClose.getTime());
+	}
+	
 	 @Override
 	protected void finalize() throws Throwable {
 		 super.finalize();
