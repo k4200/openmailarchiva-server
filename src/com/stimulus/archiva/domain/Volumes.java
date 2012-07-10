@@ -23,6 +23,9 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.stimulus.archiva.domain.Volume.Space;
+import com.stimulus.archiva.domain.Volume.Status;
 import com.stimulus.archiva.exception.*;
 import com.stimulus.util.*;
 import com.stimulus.archiva.monitor.*;
@@ -439,17 +442,33 @@ public class Volumes  implements Serializable, Props, Cloneable {
 				break;
 			}
 		} else {
-			if (Config.getConfig().getVolumes().getAutoCreate()
-					&& autoCreateEvent == Volumes.AutoCreateEvent.WHENFULL) {
+			if (Config.getConfig().getVolumes().getAutoCreate()) {
 				createNewVolumeIfNone();
 			}
 		}
 	}
 
 	private boolean shouldRotateActive(Volume activeVolume, AutoCreateEvent event) {
+		Date baseDate = activeVolume.getCreatedDate();
+		// Check volumes from last to first
+		for(ListIterator<Volume> li = getVolumes().listIterator(getVolumes().size()); li.hasPrevious(); ) {
+			Volume vol = li.previous();
+			if (vol.getStatus() != Status.CLOSED) { // Skip unclosed volumes
+				continue;
+			}
+			
+			if (vol.enoughDiskSpace() != Space.RUNOUT) { // Scheduled close
+				baseDate = vol.getClosedDate();
+				break;
+			} else {
+				// Unscheduled
+				baseDate = vol.getCreatedDate();
+			}
+		}
+		
 		Date now = new Date();
 		Calendar dateToClose = Calendar.getInstance();
-		dateToClose.setTime(activeVolume.getCreatedDate());
+		dateToClose.setTime(baseDate);
 		dateToClose.add(event.intervalField, event.intervalAmount);
 		return now.after(dateToClose.getTime());
 	}
