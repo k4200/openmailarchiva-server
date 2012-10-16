@@ -287,7 +287,10 @@ function lookup(index) {
       	<html:checkbox name="configBean" property="autoCreateVolume"/><html:hidden name="configBean" property="autoCreateVolume" value="no"/>
       	<bean:message key="config.volume_autocreate"/>
       	<html:select styleId="autoCreateEvent" name="configBean" property="autoCreateEvent"  onchange='OnChange(this);'>
-      		<html:optionsCollection name="configBean" property="autoCreateEvents" label="label" value="value"/>
+      		<html:option value="WHENFULL" key="config.volume_autocreate_event_whenfull"/>
+      		<html:option value="MONTHLY" key="config.volume_autocreate_event_monthly"/>
+      		<html:option value="QUARTERLY" key="config.volume_autocreate_event_quarterly"/>
+      		<html:option value="YEARLY" key="config.volume_autocreate_event_yearly"/>
       	</html:select>
       </td>
       	<td align="right"></td>
