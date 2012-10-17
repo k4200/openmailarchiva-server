@@ -148,10 +148,21 @@ cal2.setDayHeaders('<bean:message key="calendar.su"/>',
 cal2.setWeekStartDay(1);
 cal2.setTodayText("<bean:message key="calendar.today"/>");
 			
+
+function toggleCheckboxes() {
+	if ($(this).attr('checked')) {
+		$('.searchResultCheckbox').attr('checked', true);
+	} else {
+		$('.searchResultCheckbox').attr('checked', false);
+	}
+}
+
 $(document).ready(function() {
 	$('#submit\\.delete').click(function() {
 		return confirm('<bean:message key="searchresults.confirm_delete"/>');
 	});
+	
+	$('#toggleCheckboxes').click(toggleCheckboxes);
 });
 
 </script>
@@ -309,7 +320,7 @@ $(document).ready(function() {
    
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
   <tr class="columnheadings" > 
-    <td width="2%" class="columnspacing">x</td>
+    <td width="2%" class="columnspacing"><input type="checkbox" id="toggleCheckboxes" checked="checked" /></td>
 	<logic:iterate id="field" name="searchBean" property="availableFields" indexId="fieldsIndex"> 
 			<c:if test="${field.showConditional==true}">
 				<c:choose>
@@ -370,7 +381,7 @@ $(document).ready(function() {
   <logic:iterate id="searchResults" offset="${searchBean.firstHitIndex}" length="${searchBean.pageSize}" name="searchBean" property="searchResults" indexId="resultsIndex" type="com.stimulus.archiva.presentation.SearchResultBean">             
     <c:if test="${searchResults.display==true}">
       <tr>
-        <td width="2%"><html:checkbox name="searchResults" indexed="true" property="selected" value="true" /><html:hidden indexed="true" name="searchResults" property="selected" value="false"/></td>
+        <td width="2%"><html:checkbox name="searchResults" indexed="true" property="selected" value="true" styleClass="searchResultCheckbox" /><html:hidden indexed="true" name="searchResults" property="selected" value="false"/></td>
 
         <logic:iterate id="value" name="searchResults" property="fieldValues" indexId="valueIndex"> 
           <c:if test="${value.field.showConditional==true}">
