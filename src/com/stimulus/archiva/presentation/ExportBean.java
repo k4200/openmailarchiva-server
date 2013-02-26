@@ -90,8 +90,10 @@ public class ExportBean extends DownloadAction implements Serializable {
 //        		writer.println(searchResult.toString());
 //        		writer.println(messageExtraction.getFileName());
     	  		
-    	  		//TODO Check duplicate entry
-    	  		files.add(new File(outputDir, messageExtraction.getFileName()));
+    	  		File fileToAdd = new File(outputDir, messageExtraction.getFileName());
+    	  		if (!files.contains(fileToAdd)) {
+        	  		files.add(fileToAdd);
+    	  		}
         	}
         }
         
