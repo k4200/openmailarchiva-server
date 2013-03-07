@@ -80,22 +80,6 @@
     	setcursoratend(obj);
     }
 
-var NS = (document.layers) ? 1 : 0;
-var IE = (document.all)    ? 1 : 0;
-if (NS) document.captureEvents(Event.KEYPRESS); // uncomment if you wish to cancel the key
-document.onkeypress = keyhandler;
-function keyhandler(e) {
-  if (NS) {
-    Key = e.which;
-  } else {
-    Key = window.event.keyCode;
-  }
-  if (Key==13) {
-    document.forms[0].search.click();
-    return false; //swallow it if we processed it
-  }
-}
-
  </script>
  
 <script language="JavaScript">
@@ -163,6 +147,13 @@ $(document).ready(function() {
 	});
 	
 	$('#toggleCheckboxes').click(toggleCheckboxes);
+	
+	$('#searchForm').keypress(function(e) {
+		if(e.keyCode == 13){
+			$('#search').trigger('click');
+			return false;
+		}
+	})
 });
 
 </script>
@@ -171,7 +162,7 @@ $(document).ready(function() {
 
 </head>
 
-<body onload="setfocus();" onkeydown="if(event.keyCode == 13){document.getElementById('search').click();}">
+<body onload="setfocus();">
 
 <html:form  styleId="searchForm" action="/search" method="POST" autocomplete="false">
 <%@include file="../common/menu.jsp"%>
@@ -252,7 +243,7 @@ $(document).ready(function() {
 	                      <td  nowrap align="left"><html:text styleId="before" name="searchBean" property="before" size="20"/></td>
 	                      <td  nowrap align="left"><a href="javascript:cal2.select(document.forms[0].before,'anchor2','<c:out value="${searchBean.dateFormat}"/>');"><img src="images/cal.gif" width="16" height="16" border="0" alt="Click Here to Pick up the date" name="anchor2" id="anchor2"></a></td> 
 	                      <td  nowrap>(<c:out value="${searchBean.localizedDateFormat}"/>)</td>
-	                      <td  nowrap align="left"><input type="submit" name="submit.search" id="search" value="<bean:message key="searchresults.submit"/>"></td>
+	                      <td  nowrap align="left"><input type="submit" name="submit.search" id="search" value="<bean:message key="searchresults.submit"/>" default></td>
 	    				  <td  nowrap align="left"><input type="submit" name="submit.showOptions" id="showOptions" value="<bean:message key="searchresults.options"/>" onclick="showhide(); return(false);"></td>
 	    				  <td  nowrap align="left"><input type="submit" name="submit.reset" id="submit.reset" value="<bean:message key="searchresults.reset"/>"></td>
 					  	  <td  nowrap align="left" width="95%">&nbsp;</td>
