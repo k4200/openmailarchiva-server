@@ -157,7 +157,8 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 					try {
 						if (searchers!=null) {
 							try {
-								searchers.close();
+					    		logger.debug("//closing searchers");
+//								searchers.close();
 							} catch (Exception e) {}
 						}
 				    	searchers = getVolumeSearchers();
@@ -578,6 +579,7 @@ public class StandardSearch extends Search  implements Serializable, Config.Upda
 		    	  count += indexReader.numDocs();
 		    	  indexReader.close();
 		      } catch (IOException e ) {
+		    	  logger.debug("failed to open index to calculate total email count", e);
 		    	  //throw new MessageSearchException("failed to open index to calculate total email count",e,logger);
 		      }
 			  return count;
