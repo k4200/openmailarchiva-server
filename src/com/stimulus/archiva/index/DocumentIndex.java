@@ -429,8 +429,9 @@ public class DocumentIndex {
 		int index = mimeType.indexOf(";");
 		if (index!=-1)
 			mimeType = mimeType.substring(0,index);
-		mimeType.toLowerCase(Locale.ENGLISH);
-		mimeType.trim();
+		mimeType = mimeType.toLowerCase(Locale.ENGLISH);
+		mimeType = mimeType.trim();
+		mimeType = mimeType.replaceAll("[\\r\\n\\s]", "");
 	  	return mimeType;
 	  }
 	
