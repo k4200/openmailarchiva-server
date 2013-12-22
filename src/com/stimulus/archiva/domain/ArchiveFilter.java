@@ -30,9 +30,11 @@ public class ArchiveFilter extends EmailFilter implements Props {
 		protected static final String archiveInboundKey 		= "archive.inbound";
 	    protected static final String archiveOutboundKey 		= "archive.outbound";
 	    protected static final String archiveInternalKey 		= "archive.internal";
+	    protected static final String archiveRetentionDaysKey 	= "archive.retention.days";
 	    protected static final String defaultArchiveInbound		= "yes";
 	    protected static final String defaultArchiveOutbound 	= "yes";
 	    protected static final String defaultArchiveInternal 	= "yes";
+	    protected static final String defaultArchiveRetentionDays = "0";
 	    
 	    protected static final String archiveRuleKey				= "archive.newrule";
    		protected static final String archiveRuleActionKey			= "archive.newrule.action";
@@ -52,6 +54,7 @@ public class ArchiveFilter extends EmailFilter implements Props {
 		protected boolean 	 archiveInbound;
      	protected boolean 	 archiveOutbound;
      	protected boolean 	 archiveInternal;
+     	protected int 		 archiveRetentionDays;
        
      	public enum Location { INTERNAL, EXTERNAL };
      	public enum Action { SKIP, ARCHIVE, NOARCHIVE };  // action_label_
@@ -62,11 +65,15 @@ public class ArchiveFilter extends EmailFilter implements Props {
 
         public void setArchiveInternal(boolean archiveInternal) { this.archiveInternal = archiveInternal; }
 
+        public void setArchiveRetentionDays(int archiveRetentionDays) { this.archiveRetentionDays = archiveRetentionDays; }
+
         public boolean getArchiveInbound() {return archiveInbound; }
 
         public boolean getArchiveOutbound() {return archiveOutbound; }
 
         public boolean getArchiveInternal() {return archiveInternal; }
+
+        public int getArchiveRetentionDays() {return archiveRetentionDays; }
         
 
   	    public List<FilterRule> getArchiveRules() {
@@ -244,6 +251,7 @@ public class ArchiveFilter extends EmailFilter implements Props {
   			prop.setProperty(archiveInboundKey,ConfigUtil.getYesNo(getArchiveInbound()));
   			prop.setProperty(archiveOutboundKey,ConfigUtil.getYesNo(getArchiveOutbound()));
   			prop.setProperty(archiveInternalKey,ConfigUtil.getYesNo(getArchiveInternal()));
+  			prop.setProperty(archiveRetentionDaysKey, String.valueOf(getArchiveRetentionDays()));
   			int r = 1;
   			for (FilterRule rule : filterRules) {
    	  		  int c = 1;
@@ -263,6 +271,7 @@ public class ArchiveFilter extends EmailFilter implements Props {
   			setArchiveInbound(ConfigUtil.getBoolean(prop.getProperty(archiveInboundKey),defaultArchiveInbound));
   			setArchiveOutbound(ConfigUtil.getBoolean(prop.getProperty(archiveOutboundKey),defaultArchiveOutbound));
   			setArchiveInternal(ConfigUtil.getBoolean(prop.getProperty(archiveInternalKey),defaultArchiveInternal));
+  			setArchiveRetentionDays(ConfigUtil.getInteger(prop.getProperty(archiveRetentionDaysKey),defaultArchiveRetentionDays));
   			filterRules.clear();
   			int r = 1;
   			do {

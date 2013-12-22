@@ -224,12 +224,16 @@ public ConfigBean() {
 
   public void setArchiveInternal(boolean archiveInternal) { config.getArchiveFilter().setArchiveInternal(archiveInternal); };
 
+  public void setArchiveRetentionDays(int archiveRetentionDays) { config.getArchiveFilter().setArchiveRetentionDays(archiveRetentionDays); };
+
+
   public boolean getArchiveInbound() {  return config.getArchiveFilter().getArchiveInbound(); }
 
   public boolean getArchiveOutbound() {return config.getArchiveFilter().getArchiveOutbound(); }
 
   public boolean getArchiveInternal() { return config.getArchiveFilter().getArchiveInternal(); }
 
+  public int getArchiveRetentionDays() {return config.getArchiveFilter().getArchiveRetentionDays(); }
 
   public void setIndexAttachments(boolean indexAttachments) { config.getIndex().setIndexAttachments(indexAttachments); };
   
