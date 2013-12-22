@@ -1037,6 +1037,19 @@ function lookup(index) {
 	          			</td>
 	         		</tr>
 	         		
+	         		<tr> 
+	          			<td  align="right" valign="top" nowrap></td>
+	          			<td>&nbsp;</td>
+	          			<td align="center">
+	           	  			<table width="100%" border="0" cellspacing="2" cellpadding="0">
+	              				<tr> 
+	                				<td width="4%"></td>
+	                				<td width="91%">&nbsp;<bean:message key="config.autopurge"/>&nbsp;<html:text name="configBean" property="archiveRetentionDays" size="5"/> <bean:message key="config.days"/></td>
+	              				</tr>
+	            			</table>	 
+	          			</td>
+	         		</tr>
+	         		
 	         	  </table>
 	          </td>
 	        </tr>
