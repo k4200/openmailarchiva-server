@@ -56,10 +56,10 @@ public class SearchBean extends BaseBean implements HttpSessionBindingListener, 
   /* advanced search attributes */
 
 
-  protected static final List PAGE_SIZE_LIST;
-  protected static final List PAGE_SIZE_LABEL_LIST;
-  protected static final List MAX_RESULTS_LABEL_LIST;
-  protected static final List MAX_RESULTS_LIST;
+  protected static final List<String> PAGE_SIZE_LIST;
+  protected static final List<String> PAGE_SIZE_LABEL_LIST;
+  protected static final List<String> MAX_RESULTS_LABEL_LIST;
+  protected static final List<String> MAX_RESULTS_LIST;
 
   
   static {
