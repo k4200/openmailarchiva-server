@@ -3,6 +3,19 @@
 <web-app xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd" version="2.4">
 <display-name>SecurityFilter Example Application</display-name>
 
+    <filter>
+        <filter-name>ParamFilter</filter-name>
+        <filter-class>com.stimulus.struts.filter.ParamFilter</filter-class>
+        <init-param>
+            <param-name>excludeParams</param-name>
+            <param-value>(.*\.|^|.*|\[('|"))(c|C)lass(\.|('|")]|\[).*</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>ParamFilter</filter-name>
+        <servlet-name>action</servlet-name>
+    </filter-mapping>
+
    <filter>
       <filter-name>Security Filter</filter-name>
       <filter-class>org.securityfilter.filter.SecurityFilter</filter-class>
