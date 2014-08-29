@@ -57,6 +57,7 @@ public abstract class Search implements java.io.Serializable, Props
 	protected Principal 		principal  	  	= null;
 	protected DateType			dateType 	   	= DateType.ARCHIVEDATE;
 	protected OpenIndex			openIndex  		= OpenIndex.SEARCH;
+	protected boolean			extendedDeliveredTo = false;
 	protected ViewFilter 		viewFilter  	= new ViewFilter();
     protected static final String maxSearchResultsKey 			= "search.max.searchresults";
     protected static final String searchAnalyzerLanguageKey		= "search.analyzer.language";
@@ -65,6 +66,7 @@ public abstract class Search implements java.io.Serializable, Props
     protected static final String searchSortInitialFieldKey		= "search.sort.initial.field";
     protected static final String searchInitialDateTypeKey		= "search.sort.initial.datetype";
     protected static final String searchOpenIndexKey			= "search.open.index";
+    protected static final String searchExtendedDeliveredToKey	= "search.extended.deliveredto";
     
     
     protected static Map<String,String> defaultSearchAnalyzers;
@@ -74,6 +76,7 @@ public abstract class Search implements java.io.Serializable, Props
     protected static final String defaultSearchInitialDateType="sentdate";
     protected static final String defaultSearchOpenIndex="search";
     protected static final String defaultSortDateType="search";
+    protected static final String defaultExtendedDeliveredTo="no";
     protected int maxSearchResults;
     protected Map<String,String> searchAnalyzers;
 
@@ -286,6 +289,14 @@ public abstract class Search implements java.io.Serializable, Props
 		this.openIndex = openIndex;
 	}
 	
+	public boolean isExtendedDeliveredTo() {
+		return extendedDeliveredTo;
+	}
+
+	public void setExtendedDeliveredTo(boolean extendedDeliveredTo) {
+		this.extendedDeliveredTo = extendedDeliveredTo;
+	}
+
 	public abstract long getTotalMessageCount(Volume v) throws MessageSearchException;
 	
 	
@@ -314,6 +325,7 @@ public abstract class Search implements java.io.Serializable, Props
 		prop.setProperty(searchSortInitialOrderKey, initialSortOrder.toString().toLowerCase(Locale.ENGLISH));
 		prop.setProperty(searchInitialDateTypeKey, initialDateType.toString().toLowerCase(Locale.ENGLISH));
 		prop.setProperty(searchOpenIndexKey, openIndex.toString().toLowerCase(Locale.ENGLISH) );
+		prop.setProperty(searchExtendedDeliveredToKey, ConfigUtil.getYesNo(isExtendedDeliveredTo()));
 	}
 	
 	public boolean loadSettings(String prefix, Settings prop, String suffix) {
@@ -346,7 +358,9 @@ public abstract class Search implements java.io.Serializable, Props
 
   	    String oi  = ConfigUtil.getString(prop.getProperty(searchOpenIndexKey),defaultSearchOpenIndex);
   	    openIndex = OpenIndex.valueOf(oi.toUpperCase(Locale.ENGLISH));
-  	    
+
+  	    extendedDeliveredTo = ConfigUtil.getBoolean(prop.getProperty(searchExtendedDeliveredToKey), defaultExtendedDeliveredTo);
+
   	    reset();
         return true;
 	}
@@ -381,6 +395,7 @@ public abstract class Search implements java.io.Serializable, Props
     	search.setInitialSortOrder(initialSortOrder);
     	search.setMaxSearchResults(maxSearchResults);
     	search.setType(searchType);
+    	search.setExtendedDeliveredTo(extendedDeliveredTo);
     	return search;
     }
     
@@ -400,6 +415,7 @@ public abstract class Search implements java.io.Serializable, Props
     	setInitialSortOrder(sourceSearch.getInitialSortOrder());
     	setMaxSearchResults(sourceSearch.getMaxSearchResults());
     	setType(sourceSearch.getType());
+    	setExtendedDeliveredTo(sourceSearch.isExtendedDeliveredTo());
     }
 	
 	 

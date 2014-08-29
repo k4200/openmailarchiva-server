@@ -355,6 +355,14 @@ public ConfigBean() {
       return config.getSearch().getOpenIndex().toString().toLowerCase(Locale.ENGLISH);
   }
   
+	public boolean isExtendedDeliveredTo() {
+		return config.getSearch().isExtendedDeliveredTo();
+	}
+
+	public void setExtendedDeliveredTo(boolean extendedDeliveredTo) {
+		config.getSearch().setExtendedDeliveredTo(extendedDeliveredTo);
+	}
+  
   public List<String> getOpenIndexes() {
 	  return EnumUtil.enumToList(Search.OpenIndex.values());
   }

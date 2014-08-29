@@ -1143,6 +1143,12 @@ function lookup(index) {
 						  	</html:select>
 					</td>
 	              </tr>
+	              <tr>
+	                <td width="15%" align="right"><bean:message key="config.gen_search_extended_delivered_to"/></td>
+	                <td width="85%">
+	                		<html:checkbox name="configBean" property="extendedDeliveredTo"/><html:hidden name="configBean" property="extendedDeliveredTo" value="false"/>
+					</td>
+	              </tr>
 	              
 	              
 	            </table>	 
