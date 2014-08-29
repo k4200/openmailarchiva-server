@@ -672,6 +672,11 @@ function lookup(index) {
 	                <td>&nbsp;</td>
 	                <td align="left"><bean:message key="config.sec_rules_internal"/></td>
 	              </tr>
+	              <tr> 
+	                <td  align="right"><html:checkbox name="configBean" property="archiveOther"/><html:hidden name="configBean" property="archiveOther" value="false"/></td>
+	                <td>&nbsp;</td>
+	                <td align="left"><bean:message key="config.sec_rules_other"/></td>
+	              </tr>
 	            </table>
 	          </td>
 	        </tr>

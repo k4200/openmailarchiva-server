@@ -30,9 +30,11 @@ public class ArchiveFilter extends EmailFilter implements Props {
 		protected static final String archiveInboundKey 		= "archive.inbound";
 	    protected static final String archiveOutboundKey 		= "archive.outbound";
 	    protected static final String archiveInternalKey 		= "archive.internal";
+	    protected static final String archiveOtherKey 			= "archive.other";
 	    protected static final String defaultArchiveInbound		= "yes";
 	    protected static final String defaultArchiveOutbound 	= "yes";
 	    protected static final String defaultArchiveInternal 	= "yes";
+	    protected static final String defaultArchiveOther 		= "yes";
 	    
 	    protected static final String archiveRuleKey				= "archive.newrule";
    		protected static final String archiveRuleActionKey			= "archive.newrule.action";
@@ -52,6 +54,7 @@ public class ArchiveFilter extends EmailFilter implements Props {
 		protected boolean 	 archiveInbound;
      	protected boolean 	 archiveOutbound;
      	protected boolean 	 archiveInternal;
+     	protected boolean 	 archiveOther;
        
      	public enum Location { INTERNAL, EXTERNAL };
      	public enum Action { SKIP, ARCHIVE, NOARCHIVE };  // action_label_
@@ -62,11 +65,15 @@ public class ArchiveFilter extends EmailFilter implements Props {
 
         public void setArchiveInternal(boolean archiveInternal) { this.archiveInternal = archiveInternal; }
 
+        public void setArchiveOther(boolean archiveOther) { this.archiveOther = archiveOther; }
+
         public boolean getArchiveInbound() {return archiveInbound; }
 
         public boolean getArchiveOutbound() {return archiveOutbound; }
 
         public boolean getArchiveInternal() {return archiveInternal; }
+
+        public boolean getArchiveOther() {return archiveOther; }
         
 
   	    public List<FilterRule> getArchiveRules() {
@@ -96,14 +103,15 @@ public class ArchiveFilter extends EmailFilter implements Props {
 
   	    
         protected Action checkBasicRules(Email email, Domains domains) {
-  	       logger.debug("checkBasicRules() {archiveOutbound='"+archiveOutbound+"', archiveInbound='"+archiveInbound+"', archiveInternal='"+archiveInternal+"'}");
+  	       logger.debug("checkBasicRules() {archiveOutbound='"+archiveOutbound+"', archiveInbound='"+archiveInbound
+  	    		   +"', archiveInternal='"+archiveInternal+"', archiveOther='"+ archiveOther + "', domains=" + domains.domains.toString() + "}");
   	      try {
 
-  	           if (archiveOutbound && archiveInternal && archiveInbound) {
+  	           if (archiveOutbound && archiveInternal && archiveInbound && archiveOther) {
   	                logger.debug("message will be archived. basic archive rules are set to archive everything");
   	                return Action.ARCHIVE;
   	           }
-  	           if (!archiveOutbound && !archiveInternal && !archiveInbound)
+  	           if (!archiveOutbound && !archiveInternal && !archiveInbound && !archiveOther)
   	           {
   	               logger.debug("message will not be archived. basic archive rules stipulate no archiving");
   	               return Action.NOARCHIVE;
@@ -144,9 +152,16 @@ public class ArchiveFilter extends EmailFilter implements Props {
  	 	      } else
  	 	           logger.debug("message is not internal");
 
- 	 	      try {
- 	               logger.debug("none of the basic archiving rules apply. message will not be archived {"+email+"}");
- 	         } catch (Exception e) {}
+ 	 	      if (archiveOther) {
+ 	 	 	      try {
+ 	 	               logger.debug("archiveOther is enabled. message will be archived {"+email+"}");
+ 	 	         } catch (Exception e) {}
+ 	 	    	  return Action.ARCHIVE;
+ 	 	      } else {
+ 	 	 	      try {
+ 	 	               logger.debug("none of the basic archiving rules apply. message will not be archived {"+email+"}");
+ 	 	         } catch (Exception e) {}
+ 	 	      }
 
  	 	      return Action.NOARCHIVE;
 
@@ -200,7 +215,7 @@ public class ArchiveFilter extends EmailFilter implements Props {
 	    
   	    protected Location findAddress(Address[] addresses, Domains domain) throws MessageException {
   		
-           logger.debug("findAddress()");
+           logger.debug("findAddress(" + addresses + ", " + domain.domains + ")");
 
            try {
  	           for (int account=0;account<addresses.length;account++) {
@@ -244,6 +259,7 @@ public class ArchiveFilter extends EmailFilter implements Props {
   			prop.setProperty(archiveInboundKey,ConfigUtil.getYesNo(getArchiveInbound()));
   			prop.setProperty(archiveOutboundKey,ConfigUtil.getYesNo(getArchiveOutbound()));
   			prop.setProperty(archiveInternalKey,ConfigUtil.getYesNo(getArchiveInternal()));
+  			prop.setProperty(archiveOtherKey,ConfigUtil.getYesNo(getArchiveOther()));
   			int r = 1;
   			for (FilterRule rule : filterRules) {
    	  		  int c = 1;
@@ -263,6 +279,7 @@ public class ArchiveFilter extends EmailFilter implements Props {
   			setArchiveInbound(ConfigUtil.getBoolean(prop.getProperty(archiveInboundKey),defaultArchiveInbound));
   			setArchiveOutbound(ConfigUtil.getBoolean(prop.getProperty(archiveOutboundKey),defaultArchiveOutbound));
   			setArchiveInternal(ConfigUtil.getBoolean(prop.getProperty(archiveInternalKey),defaultArchiveInternal));
+  			setArchiveOther(ConfigUtil.getBoolean(prop.getProperty(archiveOtherKey),defaultArchiveOther));
   			filterRules.clear();
   			int r = 1;
   			do {
