@@ -93,6 +93,13 @@ public class Criteria implements Serializable {
 			   " bcc:" + escapeToken(token)+" )";
 	}
 	
+	private String deliveredTo(String token) {
+		String address = token;
+		if (Config.getConfig().getSearch().isExtendedDeliveredTo()) {
+			address = Config.getConfig().getMailboxConnections().getConnection().getUsername() + "+" + address.replace('@', '=');
+		}
+		return "deliveredto:" + escapeToken(address);
+	}
 	
 	public String getConstructedQuery() {
 	    StringBuffer constructedQuery = new StringBuffer();
@@ -107,8 +114,10 @@ public class Criteria implements Serializable {
 		  		    } else if(Compare.equalsIgnoreCase(field, "addresses")) {
 		  		    	constructedQuery.append(anyAddress(allWordsTokenizer.nextToken()).toLowerCase(Locale.ENGLISH));
 		  		    	constructedQuery.append(" ");
+		  		    } else if(Compare.equalsIgnoreCase(field, "deliveredto")) {
+		  		    	constructedQuery.append(deliveredTo(allWordsTokenizer.nextToken()).toLowerCase(Locale.ENGLISH));
+		  		    	constructedQuery.append(" ");
 		  		    } else {
-		  		    	
 		  	   			constructedQuery.append(field);
 		  	   			constructedQuery.append(":");
 		  	   			constructedQuery.append(escapeToken(allWordsTokenizer.nextToken().toLowerCase(Locale.ENGLISH)));
@@ -122,6 +131,8 @@ public class Criteria implements Serializable {
 				constructedQuery.append(allFields("","\"" + query + "\" "));
 		 	} else if (Compare.equalsIgnoreCase(field, "addresses")) {
   		    	constructedQuery.append(anyAddress("\"" + query + "\" "));
+  		    } else if(Compare.equalsIgnoreCase(field, "deliveredto")) {
+  		    	constructedQuery.append(deliveredTo(query).toLowerCase(Locale.ENGLISH));
   		    } else {
 				constructedQuery.append(field);
 				constructedQuery.append(":\"");
@@ -137,6 +148,9 @@ public class Criteria implements Serializable {
 			  	   	} else if (Compare.equalsIgnoreCase(field, "addresses")) {
 		  		    	constructedQuery.append(anyAddress(anyWordsTokenizer.nextToken()).toLowerCase(Locale.ENGLISH));
 		  		    	constructedQuery.append(" "); 
+		  		    } else if(Compare.equalsIgnoreCase(field, "deliveredto")) {
+		  		    	constructedQuery.append(deliveredTo(anyWordsTokenizer.nextToken()).toLowerCase(Locale.ENGLISH));
+		  		    	constructedQuery.append(" ");
 		  		    } else {
 			  	   			constructedQuery.append(field);
 			  	   			constructedQuery.append(":");
@@ -154,6 +168,10 @@ public class Criteria implements Serializable {
 		 		} else if (Compare.equalsIgnoreCase(field, "addresses")) {
 	  		    	constructedQuery.append(anyAddress(noWordsTokenizer.nextToken()).toLowerCase(Locale.ENGLISH));
 	  		    	constructedQuery.append(" "); 
+	  		    } else if(Compare.equalsIgnoreCase(field, "deliveredto")) {
+		 			constructedQuery.append("!");
+	  		    	constructedQuery.append(deliveredTo(noWordsTokenizer.nextToken()).toLowerCase(Locale.ENGLISH));
+	  		    	constructedQuery.append(" ");
 	  		   } else {
 		 			constructedQuery.append("!");
 		 			constructedQuery.append(field);
