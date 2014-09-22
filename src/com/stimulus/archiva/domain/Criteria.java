@@ -96,7 +96,8 @@ public class Criteria implements Serializable {
 	private String deliveredTo(String token) {
 		String address = token;
 		if (Config.getConfig().getSearch().isExtendedDeliveredTo()) {
-			address = Config.getConfig().getMailboxConnections().getConnection().getUsername() + "+" + address.replace('@', '=');
+			String username = Config.getConfig().getMailboxConnections().getConnection().getUsername().split("@")[0];
+			address = username + "+" + address.replace('@', '=');
 		}
 		return "deliveredto:" + escapeToken(address);
 	}
