@@ -19,8 +19,11 @@ import net.freeutils.tnef.mime.TNEFMime;
 import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
+
+import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Part;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeUtility;
 import org.apache.commons.logging.*;
 import com.stimulus.archiva.domain.Config;
@@ -124,9 +127,9 @@ public class MessageExtraction implements Serializable
 			String str = "";
 			if (inlines.containsKey("text/plain")) 
 				str = (String) inlines.get("text/plain") + "\n\n-------------------------------\n";
-			inlines.put("text/plain", str + (String) p.getContent());
+			inlines.put("text/plain", str + getTextContent(p));
 		} else if (p.isMimeType("text/html")) {
-			inlines.put("text/html", (String) p.getContent());
+			inlines.put("text/html", getTextContent(p));
 		} else if (p.isMimeType("text/xml")) {
 			attachments.put(getFilename(subject,p), p);
 		} else if (p.isMimeType("multipart/*")) {
@@ -168,7 +171,27 @@ public class MessageExtraction implements Serializable
 		}
 	}
 
-	// Find the next position of a URI in input text.
+    private static String getTextContent(Part p) throws IOException, MessagingException {
+    	try {
+			return (String)p.getContent();
+		} catch (UnsupportedEncodingException  e) {
+			OutputStream os = new ByteArrayOutputStream();
+			p.writeTo(os);
+			String raw = os.toString();
+			os.close();
+
+			//cp932 -> Windows-31J
+			raw = raw.replaceAll("cp932", "Windows-31J");
+
+			InputStream is = new ByteArrayInputStream(raw.getBytes());
+			Part newPart = new MimeBodyPart(is);
+			is.close();
+
+			return (String)newPart.getContent();
+		}
+    }
+
+    // Find the next position of a URI in input text.
 	private int getNextURIPos(String input, int pos)
 	{
 		String protocols[] =
