@@ -24,24 +24,36 @@ package com.stimulus.archiva.store;
 
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+
 import com.stimulus.archiva.domain.*;
 import com.stimulus.archiva.exception.MessageStoreException;
 import com.stimulus.archiva.exception.ProcessException;
 import com.stimulus.util.*;
+
 import java.io.*;
 import java.util.Date;
 import java.util.Locale;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+
 import javax.mail.MessagingException;
 import javax.mail.Part;
+
 import org.apache.commons.logging.*;
+
 import java.util.*;
+
 import javax.crypto.*;
 import javax.crypto.spec.*;
+
 import java.security.spec.*;
+
 import javax.mail.internet.*;
 import javax.mail.*;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -52,10 +64,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.security.*;
+
 import com.sun.mail.util.*;
 import com.stimulus.archiva.domain.Archiver;
 import com.stimulus.archiva.domain.Volume.SizeCounter;
-
 import com.stimulus.archiva.exception.*;
 
 public class MessageStore extends Archiver implements Serializable
@@ -368,7 +380,23 @@ public class MessageStore extends Archiver implements Serializable
     	logger.debug("backupMessage()");
     	File noArchiveFile = getNoArchiveFile();
     	logger.warn("copying email to no archive queue {dest='"+noArchiveFile.getAbsolutePath()+"'}");
-    	boolean renamed = file.renameTo(noArchiveFile);
+
+	  	//Mod start Seolhwa.kim 2017-04-13
+    	
+    	//boolean renamed = file.renameTo(noArchiveFile);
+    	
+    	boolean renamed;
+    	try {
+			Files.move(Paths.get(file.getAbsolutePath()), Paths.get(noArchiveFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+			renamed = true;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			renamed = false;
+			e.printStackTrace();
+		}
+    	
+    	//Mod End Seolhwa.kim 2017-04-13
+    	
     	if (!renamed) {
     		throw new MessageStoreException("failed to copy message to noarchive queue",logger);
     	}
@@ -501,8 +529,21 @@ public class MessageStore extends Archiver implements Serializable
 		              File delFile = new File(filepath);
 			  	      boolean deleted;
 			  	      deleted = delFile.delete();
-			  	      if (!deleted)
-			  	    	  delFile.renameTo(File.createTempFile("oldrecovery", "tmp"));   
+			  	      File tmpfile = null;
+					if (!deleted)
+			  	    	//Mod start Seolhwa.kim 2017-04-13
+				  	    	//delFile.renameTo(File.createTempFile("oldrecovery", "tmp"));
+
+					  	    	 tmpfile  =File.createTempFile("oldrecovery", "tmp");   
+					  	        
+					  	    try {
+								Files.move(Paths.get(delFile.getAbsolutePath()), Paths.get(tmpfile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+					  	        //Mod end Seolhwa.kim 2017-04-13
+					  	    
 			  	      delFile.deleteOnExit();
 	              } catch (IOException io) {
 	            	  logger.error("failed to delete email {filepath='"+filepath+"'");
@@ -779,7 +820,17 @@ public class MessageStore extends Archiver implements Serializable
 				 boolean deleted = file.delete();
 				   if (!deleted) {
 					   try {
-						   file.renameTo(File.createTempFile("ma", "tmp"));
+						   //Mod Start Seolhwa.kim 2017-04-13
+						   
+						   //file.renameTo(File.createTempFile("ma", "tmp"));
+						   
+						   File tmpfile = File.createTempFile("ma", "tmp");
+						   
+						   Files.move(Paths.get(file.getAbsolutePath()), Paths.get(tmpfile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+						   
+
+						   //Mod End Seolhwa.kim 2017-04-13
+						   
 						   Config.getFileSystem().getTempFiles().markForDeletion(file);
 					   } catch (Exception e3) {}
 			   	   }

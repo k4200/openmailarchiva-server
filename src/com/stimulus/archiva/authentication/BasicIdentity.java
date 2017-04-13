@@ -5,6 +5,7 @@ import com.stimulus.util.*;
 import org.apache.xerces.parsers.DOMParser;
 import org.subethamail.smtp.util.Base64;
 import org.w3c.dom.*;
+
 import com.stimulus.archiva.exception.*;
 import com.stimulus.archiva.authentication.ADIdentity.ADRoleMap;
 import com.stimulus.archiva.domain.*;
@@ -18,7 +19,11 @@ import javax.xml.parsers.*;
 import javax.xml.transform.dom.*;
 import javax.xml.transform.*;
 import javax.xml.transform.stream.*;
+
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.Key;
 import java.security.MessageDigest;
 import java.security.spec.AlgorithmParameterSpec;
@@ -79,7 +84,26 @@ public class BasicIdentity extends Identity implements Serializable,Props, Clone
         }
         File newFile = new File(filename);
         newFile.delete();
-        f.renameTo(newFile);
+
+        //Mod start Seolhwa.kim 2017-04-13
+        
+        /*
+         * I found If use Java7 or higher version on linux, there is problem in File.renameTo(File f).
+         * So i used Files.move() instead.
+         */
+        
+        //f.renameTo(newFile);
+        
+        try {
+        	logger.debug("####################################### Call Files.move");
+			Files.move(Paths.get(f.getAbsolutePath()), Paths.get(newFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			logger.debug("####################################### Call Files.move fails");
+			e.printStackTrace();
+		}   
+        
+        //Mod end Seolhwa.kim 2017-04-13
          
     }
     public void saveSettings(String prefix, Settings prop, String suffix) {	
