@@ -1,0 +1,161 @@
+@import url(http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css);
+
+
+
+
+body {  
+	font-family: "Malgun gothic",  sans-serif; 
+	padding-top: 70px;
+}
+
+th {  text-align: center;}
+
+/* ===================================
+Section: Custom_zois
+==================================== */
+
+.container {
+    margin-right: 10px;
+    margin-left: 10px;
+}
+
+/* ===================================
+Section: Featured
+==================================== */
+
+#carousel{
+	width: 100%;
+	background:#fcfcfc;
+	position:relative;
+	margin:0;
+	padding:0;
+}
+
+.top-submenu1 {
+	background:#f2f2f2;
+	padding:4px 6px 4px 6px;
+    margin-right:6px;
+    border-radius:8px;
+}
+.top-submenu2 {
+	background:#f2f2f2;
+	padding:4px 6px 4px 6px;
+    border-radius:8px;
+}
+
+/* ===================================
+Section: Content
+==================================== */
+#content {
+	position:relative;
+	background:#f2f2f2;
+	padding:50px 0 40px 0;
+}
+
+#content img {
+	max-width:100%;
+	height:auto;
+}
+
+/* --- Call to action --- */
+
+.cta-text {
+	text-align: center;
+	margin-top:10px;
+}
+
+
+.big-cta .cta {
+	margin-top:10px;
+}
+
+/* --- box --- */
+
+.box {
+	width: 100%;
+}
+.box-gray  {
+	background: #f8f8f8;
+	padding: 20px 20px 30px;
+}
+.box-gray  h4,.box-gray  i {
+	margin-bottom: 20px;
+}
+.box-bottom {
+	padding: 20px 0;
+	text-align: center;
+}
+.box-bottom a {
+	color: #fff;
+	font-weight: 700;
+}
+.box-bottom a:hover {
+	color: #eee;
+	text-decoration: none;
+}
+
+/* ===============================
+Footer
+================================ */
+footer{
+	padding:50px 0 0 0;
+	color:#000000;
+}
+
+footer a {
+	color:#000000;
+}
+
+footer a:hover {
+	color:#eee;
+}
+
+footer h1, footer h2, footer h3, footer h4, footer h5, footer h6{
+	color:#000000;
+}
+
+footer address {
+	line-height:1.6em;
+}
+
+footer h5 a:hover, footer a:hover {
+	text-decoration:none;
+}
+
+/* ===================================
+Section: Bottom
+==================================== */
+
+#bottom {
+	background:#fcfcfc;
+	padding:50px 0 0;
+
+}
+/* twitter */
+#twitter-wrapper {
+    text-align: center;
+    width: 70%;
+    margin: 0 auto;
+}
+#twitter em {
+    font-style: normal;
+    font-size: 13px;
+}
+
+#twitter em.twitterTime a {
+	font-weight:600;
+}
+
+#twitter ul {
+    padding: 0;
+	list-style:none;
+}
+#twitter ul li {
+    font-size: 20px;
+    line-height: 1.6em;
+    font-weight: 300;
+    margin-bottom: 20px;
+    position: relative;
+    word-break: break-word;
+}
+
