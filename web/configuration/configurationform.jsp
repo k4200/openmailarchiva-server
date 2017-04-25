@@ -1698,19 +1698,23 @@ configtabs.init()
                             </tr>
                        </c:if>     
                             <tr>
-                                <td style="text-align:right">콘솔 로그인 메소드:
+                                <td style="text-align:right">콘솔 로그인 메소드:</td>
+                                <td>
                                <html:select styleId="authMethod" name="configBean"  property="authMethod" styleClass="form-control input-sm"  onchange='OnChange(this);' style="width:15%; display:inline;">
                               <html:options name="configBean" property="authMethods" labelName="configBean" labelProperty="authMethodLabels" />
 					           </html:select>
                                 </td>
-                             </div>   
-                              </div>
+                             
                             </tr>
                             <tr> 
-                                <td style="text-align:right" colspan="3"> Assign Roles to User/s:
+                                <td style="text-align:right"> Assign Roles to User/s:</td>
+                                <td>
                                 <input type="submit" name="submit.newbasicrolemap" class="btn btn-default btn-sm" style="margin-bottom:4px;" >                                  
                                     <!-- 할당시 아래 추가 -->
                                </td>
+                               
+                               </div>   
+                              </div>
            
                        <div id="basic">
                             <table width="100%" border="0" cellpadding="0" cellspacing="0"> 
