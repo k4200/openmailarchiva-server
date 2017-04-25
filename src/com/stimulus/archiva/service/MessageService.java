@@ -21,16 +21,25 @@ import com.stimulus.archiva.domain.*;
 import com.stimulus.archiva.extraction.*;
 import com.stimulus.archiva.search.*;
 import com.stimulus.util.*;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.zip.GZIPInputStream;
 import java.io.*;
+
 import com.stimulus.archiva.index.MessageIndex;
+
 import org.apache.commons.logging.*;
+
 import com.stimulus.archiva.exception.*;
+
 import javax.mail.event.*;
 import javax.mail.*;
+
 import com.stimulus.util.*;
 
 
@@ -380,8 +389,18 @@ public class MessageService implements Serializable {
 					  boolean deleted;
 	  			  	  file.deleteOnExit();
 	  			  	  deleted = file.delete();
-	  			  	  if (!deleted)
-	  			  	    file.renameTo(File.createTempFile("oldrecovery", "tmp"));   
+	  			  	  File tmpfile = null;
+	  			  	  
+					if (!deleted)
+	  			  		 //Mod start Seolhwa.kim 2017-04-13
+		  			  	    //file.renameTo(File.createTempFile("oldrecovery", "tmp")); 	  			  		 
+		  			  		
+		  			  		tmpfile  = File.createTempFile("oldrecovery", "tmp"); 
+		  			  		  
+		  			  		Files.move(Paths.get(file.getAbsolutePath()), Paths.get(tmpfile.getAbsolutePath()) , StandardCopyOption.REPLACE_EXISTING);
+		  			  		
+		  			  		//Mod End Seolhwa.kim 2017-04-13 
+		  			  		
 	  	              update(email,true,"ok");
 		        	  audit.info("recovered email {"+email+"}");
 				  } catch (DiskSpaceException de) {

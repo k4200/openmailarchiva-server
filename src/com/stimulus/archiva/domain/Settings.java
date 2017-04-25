@@ -15,9 +15,15 @@
 package com.stimulus.archiva.domain;
 
 import com.stimulus.util.*;
+
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
+
 import org.apache.commons.logging.*;
+
 import com.stimulus.archiva.exception.ConfigurationException;
 
 
@@ -67,7 +73,19 @@ public class Settings extends java.util.LinkedHashMap<String,String> {
         }
         File newFile = new File(name);
         newFile.delete();
-        f.renameTo(newFile);
+        //Mod start Seolhwa.kim 2017-04-13
+        //f.renameTo(newFile);
+        
+        try {
+        	logger.debug("####################################### Call Files.move");
+			Files.move(Paths.get(f.getAbsolutePath()), Paths.get(newFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			logger.debug("####################################### Call Files.move fails");
+			e.printStackTrace();
+		}    
+
+      //Mod end Seolhwa.kim 2017-04-13
     }
   
     
